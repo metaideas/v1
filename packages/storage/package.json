@@ -1,0 +1,30 @@
+{
+  "name": "@v1/storage",
+  "private": true,
+  "description": "File storage policy, gateway, and React client using Files SDK",
+  "type": "module",
+  "imports": {
+    "#*": "./src/*"
+  },
+  "exports": {
+    "./constants": "./src/constants.ts",
+    "./react": "./src/react.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "bump:deps": "bun update --interactive",
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
+  },
+  "dependencies": {
+    "@v1/utils": "workspace:*",
+    "files-sdk": "2.2.2"
+  },
+  "devDependencies": {
+    "@tooling/tsconfig": "workspace:*",
+    "@types/bun": "1.4.2",
+    "typescript": "7.0.2"
+  },
+  "peerDependencies": {
+    "react": "*"
+  }
+}

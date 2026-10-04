@@ -27,18 +27,6 @@ Both scaffold template commands preserve existing files on a repeat run.
 
 Backend connections are not a generator. The `connect-backend` skill in `.agents/skills/connect-backend/` carries the supported connections, their environment keys, and reference sources. A coding agent applies it and verifies the result with `bun template doctor`.
 
-## Add a Files SDK client
-
-`apps/api` includes an authenticated Files SDK gateway. Its access policy (authentication, key scoping, accepted content types, and upload size) lives in the gateway composition in `apps/api/src/shared/`. Treat a change to that policy as a security change and review it as one.
-
-Generate the optional client in an application workspace that consumes the API:
-
-```bash
-bun run generate files-client
-```
-
-The template command can target any workspace under `apps/` and asks for the Files SDK endpoint. It creates an application-local module in `src/shared/` that exports authenticated React hooks for uploads, downloads, listings, and searches. A repeat run reports skips without replacing generated application code.
-
 ## Add Sentry
 
 Application workspaces log with evlog and need no external account. Error monitoring is opt-in. `sentry` adds the Sentry SDK to `apps/api`, `apps/app`, or `apps/mobile`:

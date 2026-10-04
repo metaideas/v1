@@ -18,11 +18,6 @@ export const NewPackageAnswersSchema = z.object({
   name: z.string().regex(/^[a-z]/i, "Start the package name with a letter"),
 })
 
-export const FilesClientAnswersSchema = z.object({
-  app: z.string().min(1),
-  endpoint: z.url(),
-})
-
 export const PostHogAnswersSchema = z.object({
   app: z.enum(["api", "app", "mobile"]),
 })

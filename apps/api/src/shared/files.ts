@@ -1,5 +1,5 @@
+import type { FilesActionEvent } from "@v1/storage/server"
 import type * as z from "@v1/utils/schema"
-import type { FilesActionEvent } from "files-sdk"
 import { operators } from "@v1/database/helpers/sql"
 import { assets } from "@v1/database/schema"
 import { UserIdSchema } from "@v1/database/schemas"
@@ -12,9 +12,6 @@ import { context } from "#shared/utils.ts"
 
 type ParsedUploadResult = z.infer<typeof UploadResultSchema>
 type ParsedStoredFile = z.infer<typeof StoredFileSchema>
-
-export const FILES_MAX_UPLOAD_SIZE = 10 * 1024 * 1024
-export const FILES_MAX_URL_AGE = 15 * 60
 
 async function recordAssets(
   operation: AssetRecordError["operation"],
