@@ -1,106 +1,35 @@
+import type * as z from "@v1/utils/schema"
+import type { FilesActionEvent } from "files-sdk"
 import { operators } from "@v1/database/helpers/sql"
-import { assets, type UserId, UserIdSchema } from "@v1/database/schema"
-import * as z from "@v1/utils/schema"
-import { createFiles } from "files-sdk"
-import { bunS3 } from "files-sdk/bun-s3"
-import { contentType } from "files-sdk/content-type"
-import { signedUrlPolicy } from "files-sdk/signed-url-policy"
-import { validation } from "files-sdk/validation"
+import { assets } from "@v1/database/schema"
+import { UserIdSchema } from "@v1/database/schemas"
 import * as try$ from "tryharder"
 import type { AuthenticatedAppContext } from "#shared/types.ts"
-import { ENV } from "#shared/env.generated.ts"
 import { AssetRecordError, FileActionError, FilesFault } from "#shared/errors.ts"
 import { log } from "#shared/logger.ts"
+import { DeleteManyResultSchema, StoredFileSchema, UploadResultSchema } from "#shared/schemas.ts"
 import { context } from "#shared/utils.ts"
+
+type ParsedUploadResult = z.infer<typeof UploadResultSchema>
+type ParsedStoredFile = z.infer<typeof StoredFileSchema>
 
 export const FILES_MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 export const FILES_MAX_URL_AGE = 15 * 60
 
-const UploadResultSchema = z.object({
-  contentType: z.string(),
-  etag: z.string().optional(),
-  lastModified: z.number().optional(),
-  size: z.number(),
-})
-const StoredFileSchema = z.object({
-  etag: z.string().optional(),
-  lastModified: z.number().optional(),
-  metadata: z.record(z.string(), z.string()).optional(),
-  name: z.string(),
-  size: z.number(),
-  type: z.string(),
-})
-const DeleteManyResultSchema = z.object({ deleted: z.array(z.string()) })
+async function recordAssets(
+  operation: AssetRecordError["operation"],
+  keys: string[],
+  write: () => Promise<unknown>
+) {
+  const result = await try$.run({
+    catch: (error) => FilesFault.wrap(error).as("AssetRecordError", { keys, operation }),
+    try: write,
+  })
 
-export const files = createFiles({
-  adapter: bunS3({
-    accessKeyId: ENV.S3_ACCESS_KEY_ID,
-    bucket: ENV.S3_BUCKET,
-    endpoint: ENV.S3_ENDPOINT,
-    region: ENV.S3_REGION,
-    secretAccessKey: ENV.S3_SECRET_ACCESS_KEY,
-    virtualHostedStyle: !ENV.S3_ENDPOINT,
-  }),
-  hooks: {
-    onAction(event) {
-      if (event.status !== "success") return
-
-      const result = try$.runSync({
-        catch: (error) => FilesFault.wrap(error).as("FileActionError", { action: event.type }),
-        try: () => {
-          switch (event.type) {
-            case "upload":
-              if (event.key) handleUpload(event.key, UploadResultSchema.parse(event.result))
-              break
-            case "head":
-              if (event.key) handleUpload(event.key, StoredFileSchema.parse(event.result))
-              break
-            case "delete": {
-              const keys = event.key
-                ? [event.key]
-                : DeleteManyResultSchema.parse(event.result).deleted
-
-              handleDelete(keys)
-              break
-            }
-            default:
-              break
-          }
-        },
-      })
-
-      if (result instanceof FileActionError) {
-        log.error({
-          error: result.toSerializable(),
-          message: "Failed to process successful file action",
-        })
-      }
-    },
-  },
-  plugins: [
-    signedUrlPolicy({
-      maxExpiresIn: FILES_MAX_URL_AGE,
-      maxUploadSize: FILES_MAX_UPLOAD_SIZE,
-    }),
-    validation({
-      allowedTypes: ["image/*", "application/pdf"],
-      key: (key) =>
-        z
-          .string()
-          .regex(/^[\w.-]+(?:\/[\w.-]+)*$/u)
-          .refine((value) =>
-            value.split("/").every((segment) => segment !== "." && segment !== "..")
-          )
-          .safeParse(key).success,
-      maxSize: FILES_MAX_UPLOAD_SIZE,
-      minSize: 1,
-    }),
-    contentType({ onMismatch: "reject" }),
-  ],
-})
-
-type ParsedUploadResult = z.infer<typeof UploadResultSchema>
-type ParsedStoredFile = z.infer<typeof StoredFileSchema>
+  if (result instanceof AssetRecordError) {
+    log.error({ error: result.toSerializable(), message: "Failed to record asset changes" })
+  }
+}
 
 function handleUpload(key: string, file: ParsedUploadResult | ParsedStoredFile) {
   const ctx = context<AuthenticatedAppContext>()
@@ -108,7 +37,7 @@ function handleUpload(key: string, file: ParsedUploadResult | ParsedStoredFile) 
   const mimeType = isUploadResult ? file.contentType : file.type
   const metadata = isUploadResult ? undefined : file.metadata
   const name = isUploadResult ? (key.split("/").at(-1) ?? key) : file.name
-  const userId: UserId = UserIdSchema.parse(ctx.var.session.user.id)
+  const userId = UserIdSchema.parse(ctx.var.session.user.id)
 
   void recordAssets("upsert", [key], () =>
     ctx.var.db
@@ -143,7 +72,7 @@ function handleDelete(keys: string[]) {
   if (keys.length === 0) return
 
   const ctx = context<AuthenticatedAppContext>()
-  const userId: UserId = UserIdSchema.parse(ctx.var.session.user.id)
+  const userId = UserIdSchema.parse(ctx.var.session.user.id)
 
   void recordAssets("delete", keys, () =>
     ctx.var.db
@@ -154,17 +83,35 @@ function handleDelete(keys: string[]) {
   )
 }
 
-async function recordAssets(
-  operation: AssetRecordError["operation"],
-  keys: string[],
-  write: () => Promise<unknown>
-) {
-  const result = await try$.run({
-    catch: (error) => FilesFault.wrap(error).as("AssetRecordError", { keys, operation }),
-    try: write,
+export function handleFileAction(event: FilesActionEvent) {
+  if (event.status !== "success") return
+
+  const result = try$.runSync({
+    catch: (error) => FilesFault.wrap(error).as("FileActionError", { action: event.type }),
+    try: () => {
+      switch (event.type) {
+        case "upload":
+          if (event.key) handleUpload(event.key, UploadResultSchema.parse(event.result))
+          break
+        case "head":
+          if (event.key) handleUpload(event.key, StoredFileSchema.parse(event.result))
+          break
+        case "delete": {
+          const keys = event.key ? [event.key] : DeleteManyResultSchema.parse(event.result).deleted
+
+          handleDelete(keys)
+          break
+        }
+        default:
+          break
+      }
+    },
   })
 
-  if (result instanceof AssetRecordError) {
-    log.error({ error: result.toSerializable(), message: "Failed to record asset changes" })
+  if (result instanceof FileActionError) {
+    log.error({
+      error: result.toSerializable(),
+      message: "Failed to process successful file action",
+    })
   }
 }

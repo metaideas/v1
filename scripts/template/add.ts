@@ -2,6 +2,7 @@ import { join } from "node:path"
 import consola from "consola"
 
 import { defineCommand } from "citty"
+import type { PackageJson } from "./schemas"
 import { renameProject } from "./rename"
 import {
   fetchTemplate,
@@ -13,7 +14,6 @@ import {
   readTemplateStamp,
   TEMPLATE_REPO,
   TEMPLATE_SCOPE,
-  type PackageJson,
   type WorkspaceKind,
 } from "./shared"
 

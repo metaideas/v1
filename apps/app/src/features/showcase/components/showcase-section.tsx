@@ -1,6 +1,10 @@
 import type { ReactNode } from "react"
 import { SHOWCASE_GROUPS, type ShowcaseSectionId } from "#features/showcase/constants.ts"
 
+const SECTION_TITLES = new Map<string, string>(
+  SHOWCASE_GROUPS.flatMap((group) => group.sections.map((section) => [section.id, section.title]))
+)
+
 export default function ShowcaseSection({
   children,
   description,
@@ -31,7 +35,3 @@ export default function ShowcaseSection({
     </section>
   )
 }
-
-const SECTION_TITLES = new Map<string, string>(
-  SHOWCASE_GROUPS.flatMap((group) => group.sections.map((section) => [section.id, section.title]))
-)

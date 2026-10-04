@@ -20,8 +20,6 @@ export function useSidebarState({
   const isMobile = useIsMobile()
   const [openMobile, setOpenMobile] = useState(false)
 
-  // This is the internal state of the sidebar.
-  // We use openProp and setOpenProp for control from outside the component.
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
   const open = openProp ?? uncontrolledOpen
 
@@ -33,7 +31,6 @@ export function useSidebarState({
       setUncontrolledOpen(openState)
     }
 
-    // This sets the cookie to keep the sidebar state.
     // oxlint-disable-next-line unicorn/no-document-cookie -- The Cookie Store API is asynchronous and not available in every supported browser.
     document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
   }
@@ -46,14 +43,13 @@ export function useSidebarState({
     }
   }
 
-  const onKeyboardShortcut = useEffectEvent(toggleSidebar)
+  const handleKeyboardShortcut = useEffectEvent(toggleSidebar)
 
-  // Adds a keyboard shortcut to toggle the sidebar.
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
         event.preventDefault()
-        onKeyboardShortcut()
+        handleKeyboardShortcut()
       }
     }
 

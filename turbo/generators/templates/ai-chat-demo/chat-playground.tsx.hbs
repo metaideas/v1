@@ -42,6 +42,62 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@v1/ui/components/tooltip"
 import { demoChat, demoChatTransport, initialDemoMessages } from "#features/demo/data.ts"
 
+function ChatMessage({ message }: { message: UIMessage }) {
+  const isUserMessage = message.role === "user"
+
+  return (
+    <MessageScrollerItem messageId={message.id} scrollAnchor={isUserMessage}>
+      <Message align={isUserMessage ? "end" : "start"}>
+        <MessageContent>
+          {message.parts.map((part) => {
+            if (part.type === "text") {
+              return (
+                <Bubble
+                  key={`${message.id}-text-${part.text}`}
+                  variant={isUserMessage ? "default" : "ghost"}
+                >
+                  <BubbleContent>
+                    {part.text.split(/\n\s*\n/).map((paragraph) => (
+                      <p key={paragraph} className="whitespace-pre-wrap">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </BubbleContent>
+                </Bubble>
+              )
+            }
+
+            if (part.type === "file") {
+              return (
+                <Attachment key={`${message.id}-file-${part.url}`} size="sm">
+                  <AttachmentTrigger
+                    render={
+                      <a
+                        aria-label={`Open ${part.filename ?? "attachment"}`}
+                        download={part.filename}
+                        href={part.url}
+                      />
+                    }
+                  />
+                  <AttachmentMedia>
+                    <span className="text-[0.625rem] font-semibold">MD</span>
+                  </AttachmentMedia>
+                  <AttachmentContent>
+                    <AttachmentTitle>{part.filename ?? "Attachment"}</AttachmentTitle>
+                    <AttachmentDescription>{part.mediaType}</AttachmentDescription>
+                  </AttachmentContent>
+                </Attachment>
+              )
+            }
+
+            return null
+          })}
+        </MessageContent>
+      </Message>
+    </MessageScrollerItem>
+  )
+}
+
 export default function ChatPlayground() {
   const { messages, sendMessage, setMessages, status, stop } = useChat({
     messages: initialDemoMessages,
@@ -170,61 +226,5 @@ export default function ChatPlayground() {
         </CardFooter>
       </Card>
     </MessageScrollerProvider>
-  )
-}
-
-function ChatMessage({ message }: { message: UIMessage }) {
-  const isUserMessage = message.role === "user"
-
-  return (
-    <MessageScrollerItem messageId={message.id} scrollAnchor={isUserMessage}>
-      <Message align={isUserMessage ? "end" : "start"}>
-        <MessageContent>
-          {message.parts.map((part) => {
-            if (part.type === "text") {
-              return (
-                <Bubble
-                  key={`${message.id}-text-${part.text}`}
-                  variant={isUserMessage ? "default" : "ghost"}
-                >
-                  <BubbleContent>
-                    {part.text.split(/\n\s*\n/).map((paragraph) => (
-                      <p key={paragraph} className="whitespace-pre-wrap">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </BubbleContent>
-                </Bubble>
-              )
-            }
-
-            if (part.type === "file") {
-              return (
-                <Attachment key={`${message.id}-file-${part.url}`} size="sm">
-                  <AttachmentTrigger
-                    render={
-                      <a
-                        aria-label={`Open ${part.filename ?? "attachment"}`}
-                        download={part.filename}
-                        href={part.url}
-                      />
-                    }
-                  />
-                  <AttachmentMedia>
-                    <span className="text-[0.625rem] font-semibold">MD</span>
-                  </AttachmentMedia>
-                  <AttachmentContent>
-                    <AttachmentTitle>{part.filename ?? "Attachment"}</AttachmentTitle>
-                    <AttachmentDescription>{part.mediaType}</AttachmentDescription>
-                  </AttachmentContent>
-                </Attachment>
-              )
-            }
-
-            return null
-          })}
-        </MessageContent>
-      </Message>
-    </MessageScrollerItem>
   )
 }

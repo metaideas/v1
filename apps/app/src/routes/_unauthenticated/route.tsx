@@ -2,6 +2,10 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
 import { AUTHENTICATED_PATHNAME } from "#features/auth/constants.ts"
 import { validateSession } from "#features/auth/handlers.ts"
 
+function LayoutComponent() {
+  return <Outlet />
+}
+
 export const Route = createFileRoute("/_unauthenticated")({
   beforeLoad: async () => {
     const session = await validateSession()
@@ -15,7 +19,3 @@ export const Route = createFileRoute("/_unauthenticated")({
   },
   component: LayoutComponent,
 })
-
-function LayoutComponent() {
-  return <Outlet />
-}

@@ -35,7 +35,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 export default function RootLayout() {
-  useHideSplashScreen(true)
+  useHideSplashScreen()
 
   return (
     <Providers>

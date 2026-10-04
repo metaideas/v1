@@ -4,6 +4,30 @@ import { createTransport } from "nodemailer"
 import { Resend } from "resend"
 import * as try$ from "tryharder"
 
+export type EmailMessage = {
+  from: string
+  to: string[]
+  subject: string
+  html: string
+  text: string
+}
+
+/**
+ * Per-send details for transports. The idempotency key stays the same across retries of one send.
+ */
+export type SendContext = {
+  idempotencyKey: string
+}
+
+export type EmailTransport = {
+  send: (message: EmailMessage, context: SendContext) => Promise<{ id: string }>
+}
+
+type TransportConfig = {
+  resendApiKey?: string
+  smtpUrl?: string
+}
+
 /**
  * Resend 4xx errors that can clear on their own. Server errors and network failures are temporary
  * too. Everything else, such as a validation error or an exhausted quota, fails the same way on
@@ -13,6 +37,16 @@ const RETRYABLE_RESEND_ERRORS = new Set<ErrorResponse["name"]>([
   "concurrent_idempotent_requests",
   "rate_limit_exceeded",
 ])
+
+// SMTP reply codes from 500 to 599 reject the message for good. Codes from 400 to 499 and
+// connection errors without a reply code are temporary.
+function isPermanentSmtpFailure(error: unknown) {
+  if (!(error instanceof Error) || !("responseCode" in error)) {
+    return false
+  }
+
+  return typeof error.responseCode === "number" && error.responseCode >= 500
+}
 
 export function resendTransport(apiKey: string): EmailTransport {
   const resend = new Resend(apiKey)
@@ -83,7 +117,7 @@ export function memoryTransport(): EmailTransport & { sent: EmailMessage[] } {
 /**
  * Sends through Resend when an API key is configured and through SMTP otherwise.
  */
-export function selectTransport({ resendApiKey, smtpUrl }: TransportConfig): EmailTransport {
+export function selectTransport({ resendApiKey, smtpUrl }: TransportConfig) {
   if (resendApiKey) {
     return resendTransport(resendApiKey)
   }
@@ -95,38 +129,4 @@ export function selectTransport({ resendApiKey, smtpUrl }: TransportConfig): Ema
   throw EmailFault.create("EmailConfigurationError").withMessage(
     "Set RESEND_API_KEY or SMTP_URL to send email."
   )
-}
-
-// SMTP reply codes from 500 to 599 reject the message for good. Codes from 400 to 499 and
-// connection errors without a reply code are temporary.
-function isPermanentSmtpFailure(error: unknown) {
-  if (!(error instanceof Error) || !("responseCode" in error)) {
-    return false
-  }
-
-  return typeof error.responseCode === "number" && error.responseCode >= 500
-}
-
-export type EmailMessage = {
-  from: string
-  to: string[]
-  subject: string
-  html: string
-  text: string
-}
-
-export type EmailTransport = {
-  send: (message: EmailMessage, context: SendContext) => Promise<{ id: string }>
-}
-
-/**
- * Per-send details for transports. The idempotency key stays the same across retries of one send.
- */
-export type SendContext = {
-  idempotencyKey: string
-}
-
-type TransportConfig = {
-  resendApiKey?: string
-  smtpUrl?: string
 }

@@ -10,12 +10,7 @@ import {
 import { Icon } from "@v1/ui/components/icon"
 import { ThemeToggle } from "@v1/ui/components/theme"
 import SignOutButton from "#features/auth/components/sign-out-button.tsx"
-import { LocaleToggle } from "#shared/components/locale-toggle.tsx"
-
-export const Route = createFileRoute("/_authenticated/")({
-  component: RouteComponent,
-  loader: ({ context }) => ({ user: context.session.user }),
-})
+import LocaleToggle from "#shared/components/locale-toggle.tsx"
 
 function RouteComponent() {
   const { user } = Route.useLoaderData()
@@ -60,3 +55,8 @@ function RouteComponent() {
     </div>
   )
 }
+
+export const Route = createFileRoute("/_authenticated/")({
+  component: RouteComponent,
+  loader: ({ context }) => ({ user: context.session.user }),
+})

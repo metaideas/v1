@@ -2,19 +2,13 @@ import { relative } from "node:path"
 import { defineCommand } from "citty"
 import consola from "consola"
 
-import {
-  findTextReferences,
-  getWorkspaceGraph,
-  getWorkspacePath,
-  removePath,
-  type WorkspaceKind,
-} from "./shared"
+import { findTextReferences, getWorkspaceGraph, getWorkspacePath, removePath } from "./shared"
 
 function isProse(path: string) {
   return path.startsWith(".agents/") || path.endsWith(".md") || path.endsWith(".mdx")
 }
 
-function parseKind(value: string): WorkspaceKind | undefined {
+function parseKind(value: string) {
   return value === "app" || value === "package" ? value : undefined
 }
 

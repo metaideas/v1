@@ -11,6 +11,18 @@ import ShowcaseOverlays from "#features/showcase/components/showcase-overlays.ts
 import ShowcaseProviders from "#features/showcase/components/showcase-providers.tsx"
 import { SHOWCASE_GROUPS, type ShowcaseGroupId } from "#features/showcase/constants.ts"
 
+const GROUP_SECTIONS: Record<ShowcaseGroupId, ComponentType> = {
+  actions: ShowcaseActions,
+  conversation: ShowcaseConversation,
+  data: ShowcaseData,
+  feedback: ShowcaseFeedback,
+  forms: ShowcaseForms,
+  layout: ShowcaseLayout,
+  navigation: ShowcaseNavigation,
+  overlays: ShowcaseOverlays,
+  providers: ShowcaseProviders,
+}
+
 export default function Showcase() {
   return (
     <div className="min-h-svh bg-background text-foreground">
@@ -85,16 +97,4 @@ export default function Showcase() {
       </div>
     </div>
   )
-}
-
-const GROUP_SECTIONS: Record<ShowcaseGroupId, ComponentType> = {
-  actions: ShowcaseActions,
-  conversation: ShowcaseConversation,
-  data: ShowcaseData,
-  feedback: ShowcaseFeedback,
-  forms: ShowcaseForms,
-  layout: ShowcaseLayout,
-  navigation: ShowcaseNavigation,
-  overlays: ShowcaseOverlays,
-  providers: ShowcaseProviders,
 }

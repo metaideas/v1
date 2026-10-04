@@ -41,9 +41,9 @@ export default function SignInWithPasswordForm({ state }: { state: SignInFormSta
   return (
     <form
       method="post"
-      onSubmit={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
+      onSubmit={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
         void form.handleSubmit()
       }}
     >

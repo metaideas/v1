@@ -4,10 +4,6 @@ import { cleanDoubleSlashes, joinURL, normalizeURL, withQuery, withTrailingSlash
  * Creates a URL builder function for a given base URL.
  *
  * The builder normalizes paths, cleans double slashes, and handles query parameters.
- *
- * @throws {Error} If the base URL is invalid
- * @throws {Error} If the base URL contains a dangerous or unsupported protocol
- * @throws {Error} If the base URL contains credentials
  */
 export function createUrlBuilder(baseUrl: string, protocol: "http" | "https" = "https") {
   const trimmedBaseUrl = baseUrl.trim()
@@ -20,7 +16,7 @@ export function createUrlBuilder(baseUrl: string, protocol: "http" | "https" = "
     options?: {
       query?: Record<string, string | number | boolean | undefined>
     }
-  ): string {
+  ) {
     const joined = joinURL(base, pathname)
     const cleaned = cleanDoubleSlashes(joined)
     let normalized = normalizeURL(cleaned)

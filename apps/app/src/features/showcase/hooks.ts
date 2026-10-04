@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 import { CALENDAR_SELECTED_DATE, CALENDAR_SELECTED_RANGE } from "#features/showcase/constants.ts"
 
+type CalendarRange = {
+  from: Date | undefined
+  to?: Date | undefined
+}
+
 export function useOpenState() {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -39,9 +44,4 @@ export function useHasBeenInView<TElement extends Element>() {
   }, [hasBeenInView])
 
   return { hasBeenInView, ref }
-}
-
-type CalendarRange = {
-  from: Date | undefined
-  to?: Date | undefined
 }

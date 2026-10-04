@@ -3,8 +3,7 @@ import type { Serve } from "bun"
 
 import app from "#routes/index.ts"
 import { ENV } from "#shared/env.generated.ts"
-import { database, kv } from "#shared/services.ts"
-import { workflows } from "#shared/workflows.ts"
+import { database, kv, workflows } from "#shared/services.ts"
 
 await workflows.launch()
 

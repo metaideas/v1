@@ -4,9 +4,9 @@ import type { DataModel } from "#functions/_generated/dataModel.js"
 import type { ActionCtx, MutationCtx, QueryCtx } from "#functions/_generated/server.js"
 import { authComponent } from "#functions/shared/auth.ts"
 
-export const convex = createBuilder<DataModel>()
-
 export type GenericCtx = QueryCtx | ActionCtx | MutationCtx
+
+export const convex = createBuilder<DataModel>()
 
 export const withAuthentication = convex
   .$context<GenericCtx>()

@@ -9,6 +9,33 @@ import { authClient } from "#shared/auth.ts"
 import { publicFunction } from "#shared/server/functions.ts"
 import { buildUrl } from "#shared/utils.ts"
 
+/**
+ * Form state for a rejected native submission, shaped for TanStack Form's `mergeForm`. It keeps the
+ * email so the page can render it again, and never the password.
+ */
+export type SignInFormState = {
+  errorMap: { onServer?: string }
+  fieldMetaBase?: Record<string, AnyFieldLikeMetaBase>
+  values: { email: string; password: string }
+}
+
+// Request headers the auth server uses for its origin check, cookies, and session metadata.
+const FORWARDED_HEADERS = ["cookie", "origin", "referer", "user-agent", "x-forwarded-for"] as const
+
+function pickHeaders(headers: Headers, names: readonly string[]) {
+  const picked = new Headers()
+
+  for (const name of names) {
+    const value = headers.get(name)
+
+    if (value !== null) {
+      picked.set(name, value)
+    }
+  }
+
+  return picked
+}
+
 export const validateSession = createIsomorphicFn()
   .client(async () => {
     const { data: session } = await authClient.getSession()
@@ -47,19 +74,6 @@ export const forgotPassword = publicFunction
     }
     return { success: true }
   })
-
-// Request headers the auth server uses for its origin check, cookies, and session metadata.
-const FORWARDED_HEADERS = ["cookie", "origin", "referer", "user-agent", "x-forwarded-for"]
-
-/**
- * Form state for a rejected native submission, shaped for TanStack Form's `mergeForm`. It keeps the
- * email so the page can render it again, and never the password.
- */
-export type SignInFormState = {
-  errorMap: { onServer?: string }
-  fieldMetaBase?: Record<string, AnyFieldLikeMetaBase>
-  values: { email: string; password: string }
-}
 
 /**
  * Signs in from a native form submission. Returns a redirect on success, or the form state to
@@ -125,18 +139,4 @@ export async function signInWithPasswordForm(
   }
 
   return { response }
-}
-
-function pickHeaders(headers: Headers, names: readonly string[]) {
-  const picked = new Headers()
-
-  for (const name of names) {
-    const value = headers.get(name)
-
-    if (value !== null) {
-      picked.set(name, value)
-    }
-  }
-
-  return picked
 }

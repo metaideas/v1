@@ -6,26 +6,27 @@ import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanst
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import globals from "@v1/ui/globals.css?url"
 import type { RouterContext } from "#router.tsx"
-import { ThemeScript } from "#features/theme/components/theme-script.tsx"
+import ThemeScript from "#features/theme/components/theme-script.tsx"
 import { getTheme, setTheme } from "#features/theme/handlers.ts"
 import Providers from "#shared/components/providers.tsx"
 import { baseLocale } from "#shared/internationalization/runtime.js"
 
-export const Route = createRootRouteWithContext<RouterContext>()({
-  loader: async () => ({
-    theme: await getTheme(),
-  }),
+function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  const { theme } = Route.useLoaderData()
 
-  component: RootComponent,
-  head: () => ({
-    links: [{ href: globals, rel: "stylesheet" }],
-    meta: [
-      { charSet: "utf8" },
-      { content: "width=device-width, initial-scale=1", name: "viewport" },
-      { title: "v1" },
-    ],
-  }),
-})
+  return (
+    <html className={theme} lang={baseLocale} suppressHydrationWarning>
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        {children}
+
+        <Scripts />
+      </body>
+    </html>
+  )
+}
 
 function RootComponent() {
   const { theme } = Route.useLoaderData()
@@ -54,19 +55,18 @@ function RootComponent() {
   )
 }
 
-function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
-  const { theme } = Route.useLoaderData()
+export const Route = createRootRouteWithContext<RouterContext>()({
+  loader: async () => ({
+    theme: await getTheme(),
+  }),
 
-  return (
-    <html className={theme} lang={baseLocale} suppressHydrationWarning>
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-
-        <Scripts />
-      </body>
-    </html>
-  )
-}
+  component: RootComponent,
+  head: () => ({
+    links: [{ href: globals, rel: "stylesheet" }],
+    meta: [
+      { charSet: "utf8" },
+      { content: "width=device-width, initial-scale=1", name: "viewport" },
+      { title: "v1" },
+    ],
+  }),
+})

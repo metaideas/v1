@@ -6,11 +6,11 @@ import { forgotPassword } from "#features/auth/handlers.ts"
 import { EmailSchema, ForgotPasswordFormSchema } from "#features/auth/schemas.ts"
 
 export default function ForgotPasswordForm() {
-  const execute = useServerFn(forgotPassword)
+  const requestPasswordReset = useServerFn(forgotPassword)
   const form = useForm({
     defaultValues: { email: "" },
     onSubmit: async ({ value }) => {
-      await execute({
+      await requestPasswordReset({
         data: { email: value.email },
       })
 
@@ -28,9 +28,9 @@ export default function ForgotPasswordForm() {
 
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
+      onSubmit={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
         void form.handleSubmit()
       }}
     >

@@ -4,7 +4,7 @@ import type { EvlogVariables } from "evlog/hono"
 import type { Files } from "files-sdk"
 import type { Storage } from "unstorage"
 import type { Locale } from "#shared/internationalization/runtime.js"
-import type { Auth, Session } from "#shared/services.ts"
+import type { Auth, Session, workflows } from "#shared/services.ts"
 
 export type AppContext = DeepMerge<
   EvlogVariables,
@@ -15,6 +15,7 @@ export type AppContext = DeepMerge<
       files: Files
       kv: Storage
       language: Locale
+      workflows: typeof workflows
     }
   }
 >

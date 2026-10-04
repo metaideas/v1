@@ -1,13 +1,7 @@
 import type { PlopTypes } from "@turbo/gen"
 import Bun from "bun"
 
-import * as z from "zod"
-
-const AnswersSchema = z.object({
-  app: z.string().min(1),
-  files: z.array(z.string()),
-  name: z.string().min(1),
-})
+import { NewFeatureAnswersSchema } from "../schemas"
 
 const FRONTEND_APPS: readonly string[] = ["app", "desktop", "extension", "mobile", "web"]
 const REACT_APPS: readonly string[] = ["app", "desktop", "extension", "mobile"]
@@ -56,7 +50,7 @@ function templateFor(app: string, file: string) {
   return `${file}.ts.hbs`
 }
 
-export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI): void {
+export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
   const apps = [
     ...new Bun.Glob("*/package.json").scanSync({
       cwd: `${process.cwd()}/apps`,
@@ -70,7 +64,7 @@ export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI): void {
     actions: (rawAnswers) => {
       const { app, files: selectedFiles } = Object.assign(
         rawAnswers ?? {},
-        AnswersSchema.parse(rawAnswers)
+        NewFeatureAnswersSchema.parse(rawAnswers)
       )
       const featurePath = "apps/{{kebabCase app}}/src/features/{{kebabCase name}}"
       const actions: PlopTypes.Actions = []

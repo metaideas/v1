@@ -76,6 +76,12 @@ import ShowcaseDemo from "#features/showcase/components/showcase-demo.tsx"
 import ShowcaseSection from "#features/showcase/components/showcase-section.tsx"
 import { NAVIGATION_LINKS, SIDEBAR_ITEMS, SIDEBAR_PROJECTS } from "#features/showcase/constants.ts"
 
+function SidebarItemIcon({ name }: Readonly<{ name: keyof typeof Icon }>) {
+  const ItemIcon = Icon[name]
+
+  return <ItemIcon />
+}
+
 export default function ShowcaseNavigation() {
   return (
     <>
@@ -454,10 +460,4 @@ export default function ShowcaseNavigation() {
       </ShowcaseSection>
     </>
   )
-}
-
-function SidebarItemIcon({ name }: Readonly<{ name: keyof typeof Icon }>) {
-  const ItemIcon = Icon[name]
-
-  return <ItemIcon />
 }

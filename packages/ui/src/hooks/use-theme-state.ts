@@ -9,8 +9,12 @@ type ThemeStateOptions = {
   storageKey?: string
 }
 
+function isTheme(value: string): value is Theme {
+  return THEMES.some((theme) => theme === value)
+}
+
 export function useThemeState({ theme, setTheme, defaultTheme, storageKey }: ThemeStateOptions) {
-  const [userTheme, setUserTheme] = useState<Theme>(() => {
+  const [userTheme, setUserTheme] = useState(() => {
     if (theme !== undefined) {
       return theme
     }
@@ -63,8 +67,4 @@ export function useThemeState({ theme, setTheme, defaultTheme, storageKey }: The
     },
     theme: userTheme,
   }
-}
-
-function isTheme(value: string): value is Theme {
-  return THEMES.some((theme) => theme === value)
 }

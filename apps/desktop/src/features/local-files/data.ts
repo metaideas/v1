@@ -2,7 +2,7 @@ import { mutationOptions } from "@tanstack/react-query"
 import type { LocalTextFile } from "#shared/desktop-bridge.ts"
 
 export const openTextFileOptions = mutationOptions({
-  mutationFn: (): Promise<LocalTextFile | null> => globalThis.desktop.openTextFile(),
+  mutationFn: () => globalThis.desktop.openTextFile(),
   mutationKey: ["local-files", "open"],
 })
 

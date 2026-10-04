@@ -1,27 +1,11 @@
 import type { PlopTypes } from "@turbo/gen"
 import Bun from "bun"
 
-import * as z from "zod"
+import type * as z from "zod"
 
-import { readPackageJson } from "../schemas"
+import { BundledModulesSchema, PostHogAnswersSchema, readPackageJson } from "../schemas"
 
-const POSTHOG_APPS = ["api", "app", "mobile"] as const
-
-// The Expo modules PostHog reads device, app, and locale details from.
-const EXPO_PEER_MODULES = [
-  "expo-application",
-  "expo-device",
-  "expo-file-system",
-  "expo-localization",
-] as const
-
-const AnswersSchema = z.object({
-  app: z.enum(POSTHOG_APPS),
-})
-
-const BundledModulesSchema = z.record(z.string(), z.string())
-
-type PostHogApp = (typeof POSTHOG_APPS)[number]
+type PostHogApp = z.infer<typeof PostHogAnswersSchema>["app"]
 
 type Edit = {
   path: string
@@ -38,6 +22,71 @@ type PostHogSetup = {
   environment: string
   edits: readonly Edit[]
   nextSteps: readonly string[]
+}
+
+const POSTHOG_APPS = PostHogAnswersSchema.shape.app.options
+
+// The Expo modules PostHog reads device, app, and locale details from.
+const EXPO_PEER_MODULES = [
+  "expo-application",
+  "expo-device",
+  "expo-file-system",
+  "expo-localization",
+] as const
+
+function addImport(source: string, line: string) {
+  if (source.includes(line)) {
+    return source
+  }
+
+  const lines = source.split("\n")
+  const lastImport = lines.findLastIndex((text) => /^(import .+|\}) from "[^"]+"$/.test(text))
+  lines.splice(lastImport + 1, 0, line)
+
+  return lines.join("\n")
+}
+
+async function applyEdit(path: string, edit: Edit) {
+  const file = Bun.file(path)
+
+  if (!(await file.exists())) {
+    return `[MANUAL] ${path} is missing. ${edit.manual}`
+  }
+
+  let source = await file.text()
+
+  if (source.includes(edit.marker)) {
+    return `[SKIPPED] ${path} already uses PostHog`
+  }
+
+  if (edit.replacements.some(([anchor]) => !source.includes(anchor))) {
+    return `[MANUAL] ${path} changed since generation. ${edit.manual}`
+  }
+
+  for (const [anchor, replacement] of edit.replacements) {
+    source = source.replace(anchor, replacement)
+  }
+
+  for (const line of edit.imports ?? []) {
+    source = addImport(source, line)
+  }
+
+  await Bun.write(path, source)
+  return `${path}: connected PostHog`
+}
+
+// `expo install` cannot edit a dynamic app.config.js and writes a range, so read the version the
+// installed Expo SDK supports and pin it.
+async function getExpoCompatibleVersion(appPath: string, name: string) {
+  const path = Bun.resolveSync("expo/bundledNativeModules.json", `${process.cwd()}/${appPath}`)
+  const versions = BundledModulesSchema.parse(await Bun.file(path).json())
+  const range = versions[name]
+
+  if (!range) {
+    throw new Error(`The installed Expo SDK does not declare a version of ${name}.`)
+  }
+
+  return range.replace(/^[~^]/, "")
 }
 
 const SETUPS: Record<PostHogApp, PostHogSetup> = {
@@ -160,7 +209,7 @@ EXPO_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
   },
 }
 
-export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI): void {
+export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI) {
   const apps = [
     ...new Bun.Glob("*/package.json").scanSync({
       cwd: `${process.cwd()}/apps`,
@@ -172,7 +221,7 @@ export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI): void {
 
   plop.setGenerator("posthog", {
     actions: (rawAnswers) => {
-      const { app } = AnswersSchema.parse(rawAnswers)
+      const { app } = PostHogAnswersSchema.parse(rawAnswers)
       const appPath = `apps/${app}`
       const setup = SETUPS[app]
 
@@ -229,59 +278,4 @@ export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI): void {
       },
     ],
   })
-}
-
-async function applyEdit(path: string, edit: Edit) {
-  const file = Bun.file(path)
-
-  if (!(await file.exists())) {
-    return `[MANUAL] ${path} is missing. ${edit.manual}`
-  }
-
-  let source = await file.text()
-
-  if (source.includes(edit.marker)) {
-    return `[SKIPPED] ${path} already uses PostHog`
-  }
-
-  if (edit.replacements.some(([anchor]) => !source.includes(anchor))) {
-    return `[MANUAL] ${path} changed since generation. ${edit.manual}`
-  }
-
-  for (const [anchor, replacement] of edit.replacements) {
-    source = source.replace(anchor, replacement)
-  }
-
-  for (const line of edit.imports ?? []) {
-    source = addImport(source, line)
-  }
-
-  await Bun.write(path, source)
-  return `${path}: connected PostHog`
-}
-
-function addImport(source: string, line: string) {
-  if (source.includes(line)) {
-    return source
-  }
-
-  const lines = source.split("\n")
-  const lastImport = lines.findLastIndex((text) => /^(import .+|\}) from "[^"]+"$/.test(text))
-  lines.splice(lastImport + 1, 0, line)
-
-  return lines.join("\n")
-}
-
-// `expo install` cannot edit a dynamic app.config.js and writes a range, so read the version the
-// installed Expo SDK supports and pin it.
-async function getExpoCompatibleVersion(appPath: string, name: string) {
-  const path = Bun.resolveSync("expo/bundledNativeModules.json", `${process.cwd()}/${appPath}`)
-  const versions = BundledModulesSchema.parse(await Bun.file(path).json())
-  const range = versions[name]
-
-  if (!range) {
-    throw new Error(`The installed Expo SDK does not declare a version of ${name}.`)
-  }
-
-  return range.replace(/^[~^]/, "")
 }

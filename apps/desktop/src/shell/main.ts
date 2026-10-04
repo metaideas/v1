@@ -1,11 +1,11 @@
 import { readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { app, BrowserWindow, dialog, ipcMain } from "electron"
-import started from "electron-squirrel-startup"
+import isSquirrelStartup from "electron-squirrel-startup"
 import { IPC_CHANNELS, type LocalTextFile } from "#shared/desktop-bridge.ts"
 import { LocalFilesFault } from "#shared/errors.ts"
 
-if (started) {
+if (isSquirrelStartup) {
   app.quit()
 }
 

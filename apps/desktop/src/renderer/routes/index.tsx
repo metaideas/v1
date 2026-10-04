@@ -3,10 +3,6 @@ import { ThemeToggle } from "@v1/ui/components/theme"
 import LocaleToggle from "#shared/components/locale-toggle.tsx"
 import { m } from "#shared/internationalization/messages.js"
 
-export const Route = createFileRoute("/")({
-  component: Index,
-})
-
 function Index() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
@@ -22,3 +18,7 @@ function Index() {
     </main>
   )
 }
+
+export const Route = createFileRoute("/")({
+  component: Index,
+})

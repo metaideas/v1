@@ -43,11 +43,15 @@ const MODULE_EXTENSIONS = new Set([
   ".tsx",
 ])
 
-export function findSourceRoot(filename: string): SourceRoot | undefined {
+function isBoundaryMap(value: unknown): value is Readonly<Record<string, Boundaries>> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+export function findSourceRoot(filename: string) {
   const groups = SOURCE_ROOT.exec(filename.replaceAll("\\", "/"))?.groups
 
   if (groups?.root === undefined || groups.app === undefined) {
-    return undefined
+    return
   }
 
   return { app: groups.app, path: groups.root }
@@ -67,7 +71,7 @@ export function resolveImport(root: SourceRoot, importer: string, specifier: str
     : undefined
 }
 
-export function isModule(file: string) {
+function isModule(file: string) {
   return MODULE_EXTENSIONS.has(path.posix.extname(file))
 }
 
@@ -145,8 +149,4 @@ export function findViolation(from: Location, to: Location, target: string): Vio
     case "composition":
       return undefined
   }
-}
-
-function isBoundaryMap(value: unknown): value is Readonly<Record<string, Boundaries>> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

@@ -13,6 +13,81 @@ import { Button, buttonVariants } from "#components/button.tsx"
 import { Icon } from "#components/icon.tsx"
 import { useFocusWhen } from "#hooks/use-focus-when.ts"
 
+function CalendarDayButton({
+  className,
+  day,
+  modifiers,
+  locale,
+  ...props
+}: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale> }) {
+  const { dayPickerProps } = useDayPicker()
+  const dayLocale = locale ?? dayPickerProps.locale
+  const defaultClassNames = getDefaultClassNames()
+
+  const ref = useFocusWhen<HTMLButtonElement>(modifiers.focused)
+
+  return (
+    <Button
+      ref={ref}
+      variant="ghost"
+      size="icon"
+      data-day={day.date.toLocaleDateString(dayLocale?.code)}
+      data-selected-single={
+        modifiers.selected
+        && !modifiers.range_start
+        && !modifiers.range_end
+        && !modifiers.range_middle
+      }
+      data-range-start={modifiers.range_start}
+      data-range-end={modifiers.range_end}
+      data-range-middle={modifiers.range_middle}
+      className={cn(
+        "relative isolate z-10 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 border-0 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-r-(--cell-radius) data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-muted data-[range-middle=true]:text-foreground data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-l-(--cell-radius) data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground dark:hover:text-foreground [&>span]:text-xs [&>span]:opacity-70",
+        defaultClassNames.day,
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CalendarChevron({
+  className,
+  orientation,
+  ...props
+}: React.ComponentProps<CustomComponents["Chevron"]>) {
+  if (orientation === "left") {
+    return <Icon.ChevronLeft className={cn("size-4", className)} {...props} />
+  }
+
+  if (orientation === "right") {
+    return <Icon.ChevronRight className={cn("size-4", className)} {...props} />
+  }
+
+  return <Icon.ChevronDown className={cn("size-4", className)} {...props} />
+}
+
+function CalendarRoot({
+  className,
+  rootRef,
+  ...props
+}: React.ComponentProps<CustomComponents["Root"]>) {
+  return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />
+}
+
+function CalendarWeekNumber({
+  children,
+  ...props
+}: React.ComponentProps<CustomComponents["WeekNumber"]>) {
+  return (
+    <td {...props}>
+      <div className="flex size-(--cell-size) items-center justify-center text-center">
+        {children}
+      </div>
+    </td>
+  )
+}
+
 function Calendar({
   className,
   classNames,
@@ -130,81 +205,6 @@ function Calendar({
       }}
       {...dayPickerProps}
     />
-  )
-}
-
-function CalendarDayButton({
-  className,
-  day,
-  modifiers,
-  locale,
-  ...props
-}: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale> }) {
-  const { dayPickerProps } = useDayPicker()
-  const dayLocale = locale ?? dayPickerProps.locale
-  const defaultClassNames = getDefaultClassNames()
-
-  const ref = useFocusWhen<HTMLButtonElement>(modifiers.focused)
-
-  return (
-    <Button
-      ref={ref}
-      variant="ghost"
-      size="icon"
-      data-day={day.date.toLocaleDateString(dayLocale?.code)}
-      data-selected-single={
-        modifiers.selected
-        && !modifiers.range_start
-        && !modifiers.range_end
-        && !modifiers.range_middle
-      }
-      data-range-start={modifiers.range_start}
-      data-range-end={modifiers.range_end}
-      data-range-middle={modifiers.range_middle}
-      className={cn(
-        "relative isolate z-10 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 border-0 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 data-[range-end=true]:rounded-(--cell-radius) data-[range-end=true]:rounded-r-(--cell-radius) data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-muted data-[range-middle=true]:text-foreground data-[range-start=true]:rounded-(--cell-radius) data-[range-start=true]:rounded-l-(--cell-radius) data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground dark:hover:text-foreground [&>span]:text-xs [&>span]:opacity-70",
-        defaultClassNames.day,
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function CalendarChevron({
-  className,
-  orientation,
-  ...props
-}: React.ComponentProps<CustomComponents["Chevron"]>) {
-  if (orientation === "left") {
-    return <Icon.ChevronLeft className={cn("size-4", className)} {...props} />
-  }
-
-  if (orientation === "right") {
-    return <Icon.ChevronRight className={cn("size-4", className)} {...props} />
-  }
-
-  return <Icon.ChevronDown className={cn("size-4", className)} {...props} />
-}
-
-function CalendarRoot({
-  className,
-  rootRef,
-  ...props
-}: React.ComponentProps<CustomComponents["Root"]>) {
-  return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />
-}
-
-function CalendarWeekNumber({
-  children,
-  ...props
-}: React.ComponentProps<CustomComponents["WeekNumber"]>) {
-  return (
-    <td {...props}>
-      <div className="flex size-(--cell-size) items-center justify-center text-center">
-        {children}
-      </div>
-    </td>
   )
 }
 

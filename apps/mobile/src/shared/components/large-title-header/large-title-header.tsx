@@ -23,9 +23,91 @@ import { useLargeTitleSearch } from "#shared/components/large-title-header/use-l
 
 const SCREEN_OPTIONS = {
   headerShown: false,
+} as const
+
+function focusOnMount(input: TextInput | null) {
+  input?.focus()
 }
 
-export function LargeTitleHeader(props: LargeTitleHeaderProps) {
+function searchBarInputTypeToKeyboardType(
+  inputType: NativeStackNavigationSearchBarOptions["inputType"]
+) {
+  switch (inputType) {
+    case "email":
+      return "email-address"
+    case "number":
+      return "numeric"
+    case "phone":
+      return "phone-pad"
+    default:
+      return "default"
+  }
+}
+
+function searchBarAutoCapitalizeToTextInput(
+  autoCapitalize: NativeStackNavigationSearchBarOptions["autoCapitalize"]
+): React.ComponentProps<typeof TextInput>["autoCapitalize"] {
+  switch (autoCapitalize) {
+    case "none":
+    case "words":
+    case "sentences":
+    case "characters":
+      return autoCapitalize
+    default:
+      return undefined
+  }
+}
+
+function customEntering() {
+  "worklet"
+  return {
+    animations: {
+      transform: [{ scale: withTiming(3, { duration: 400 }) }],
+    },
+    initialValues: {
+      transform: [{ scale: 1 }],
+    },
+  }
+}
+
+function customExiting() {
+  "worklet"
+  return {
+    animations: {
+      opacity: withTiming(0),
+      transform: [{ scale: withTiming(1) }],
+    },
+    initialValues: {
+      opacity: 1,
+      transform: [{ scale: 3 }],
+    },
+  }
+}
+
+function IconButton({
+  accessibilityLabel,
+  color,
+  icon,
+  onPress,
+}: {
+  accessibilityLabel: string
+  color: string | undefined
+  icon: Exclude<SymbolViewProps["name"], string>
+  onPress: () => void
+}) {
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      className="size-10 items-center justify-center rounded-full active:bg-muted/50"
+      onPress={onPress}
+    >
+      <SymbolView name={icon} size={24} tintColor={color} />
+    </Pressable>
+  )
+}
+
+export default function LargeTitleHeader(props: LargeTitleHeaderProps) {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const route = useRoute()
@@ -157,7 +239,7 @@ export function LargeTitleHeader(props: LargeTitleHeaderProps) {
                       blurOnSubmit={props.searchBar.materialBlurOnSubmit}
                       className="flex-1 rounded-r-full p-2 text-[17px] text-foreground"
                       keyboardType={searchBarInputTypeToKeyboardType(props.searchBar.inputType)}
-                      onBlur={search.blur}
+                      onBlur={search.handleBlur}
                       onChangeText={search.changeText}
                       onFocus={props.searchBar.onFocus}
                       onSubmitEditing={props.searchBar.materialOnSubmitEditing}
@@ -199,86 +281,4 @@ export function LargeTitleHeader(props: LargeTitleHeaderProps) {
       ) : null}
     </>
   )
-}
-
-function IconButton({
-  accessibilityLabel,
-  color,
-  icon,
-  onPress,
-}: {
-  accessibilityLabel: string
-  color: string | undefined
-  icon: Exclude<SymbolViewProps["name"], string>
-  onPress: () => void
-}) {
-  return (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      className="size-10 items-center justify-center rounded-full active:bg-muted/50"
-      onPress={onPress}
-    >
-      <SymbolView name={icon} size={24} tintColor={color} />
-    </Pressable>
-  )
-}
-
-function focusOnMount(input: TextInput | null) {
-  input?.focus()
-}
-
-function searchBarInputTypeToKeyboardType(
-  inputType: NativeStackNavigationSearchBarOptions["inputType"]
-) {
-  switch (inputType) {
-    case "email":
-      return "email-address"
-    case "number":
-      return "numeric"
-    case "phone":
-      return "phone-pad"
-    default:
-      return "default"
-  }
-}
-
-function searchBarAutoCapitalizeToTextInput(
-  autoCapitalize: NativeStackNavigationSearchBarOptions["autoCapitalize"]
-): React.ComponentProps<typeof TextInput>["autoCapitalize"] {
-  switch (autoCapitalize) {
-    case "none":
-    case "words":
-    case "sentences":
-    case "characters":
-      return autoCapitalize
-    default:
-      return undefined
-  }
-}
-
-function customEntering() {
-  "worklet"
-  return {
-    animations: {
-      transform: [{ scale: withTiming(3, { duration: 400 }) }],
-    },
-    initialValues: {
-      transform: [{ scale: 1 }],
-    },
-  }
-}
-
-function customExiting() {
-  "worklet"
-  return {
-    animations: {
-      opacity: withTiming(0),
-      transform: [{ scale: withTiming(1) }],
-    },
-    initialValues: {
-      opacity: 1,
-      transform: [{ scale: 3 }],
-    },
-  }
 }

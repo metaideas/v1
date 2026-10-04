@@ -3,4 +3,4 @@ import { buildApiUrl } from "#shared/utils.ts"
 
 export const authClient = createAuthClient(buildApiUrl("/auth"))
 
-export const { useSession, signIn, signOut, signUp } = authClient
+export const { signIn, signOut, signUp } = authClient

@@ -9,6 +9,46 @@ import {
   AUTH_SESSION_OPTIONS,
 } from "#constants.ts"
 
+export { APIError as AuthError } from "better-auth/api"
+export {
+  type BetterAuthOptions as AuthOptions,
+  betterAuth as createAuth,
+} from "better-auth/minimal"
+export { expo } from "@better-auth/expo"
+
+type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = {
+  /**
+   * Path where the application mounts the auth handler, such as `/api/auth`.
+   */
+  basePath: string
+  /**
+   * Public origin where the application serves auth.
+   */
+  baseUrl: string
+  /**
+   * Parent domain that shares the session cookie across subdomains, such as `example.com`.
+   */
+  cookieDomain?: string
+  /**
+   * Prefix for auth cookies. Applications that share a host use different prefixes.
+   */
+  cookiePrefix?: string
+  database: DB
+  logger?: Logger
+  /**
+   * Better Auth plugins. Pass `[]` for none, so the returned type keeps each plugin's endpoints and
+   * session fields.
+   */
+  plugins: Plugins
+  secret: string
+  /**
+   * Delivers a password reset link. Without it, password reset is unavailable.
+   */
+  sendPasswordReset?: (input: { email: string; url: string }) => Promise<unknown>
+  socialProviders?: SocialProviders
+  trustedOrigins: string[]
+}
+
 /**
  * Better Auth for a server that owns its user tables. The template's session, cookie, and
  * email-and-password policy lives here, so each application passes only where it serves auth, its
@@ -59,44 +99,4 @@ export function createServerAuth<const Plugins extends BetterAuthPlugin[] = []>(
   })
 }
 
-export { APIError as AuthError } from "better-auth/api"
-export {
-  type BetterAuthOptions as AuthOptions,
-  betterAuth as createAuth,
-} from "better-auth/minimal"
-export { expo } from "@better-auth/expo"
-
 export type ServerAuth = ReturnType<typeof createServerAuth>
-
-type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = {
-  /**
-   * Path where the application mounts the auth handler, such as `/api/auth`.
-   */
-  basePath: string
-  /**
-   * Public origin where the application serves auth.
-   */
-  baseUrl: string
-  /**
-   * Parent domain that shares the session cookie across subdomains, such as `example.com`.
-   */
-  cookieDomain?: string
-  /**
-   * Prefix for auth cookies. Applications that share a host use different prefixes.
-   */
-  cookiePrefix?: string
-  database: DB
-  logger?: Logger
-  /**
-   * Better Auth plugins. Pass `[]` for none, so the returned type keeps each plugin's endpoints and
-   * session fields.
-   */
-  plugins: Plugins
-  secret: string
-  /**
-   * Delivers a password reset link. Without it, password reset is unavailable.
-   */
-  sendPasswordReset?: (input: { email: string; url: string }) => Promise<unknown>
-  socialProviders?: SocialProviders
-  trustedOrigins: string[]
-}

@@ -44,6 +44,63 @@ import {
   VISITORS_CHART_CONFIG,
 } from "#features/showcase/constants.ts"
 
+const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", { currency: "USD", style: "currency" })
+
+function formatCurrency(amount: number) {
+  return CURRENCY_FORMATTER.format(amount)
+}
+
+function formatMonth(value: string) {
+  return value.slice(0, 3)
+}
+
+const PAYMENT_COLUMNS: DataTableProps<Payment>["columns"] = [
+  {
+    cell: ({ row }) => (
+      <Checkbox
+        aria-label="Select row"
+        checked={row.getIsSelected()}
+        onCheckedChange={(checked) => {
+          row.toggleSelected(checked)
+        }}
+      />
+    ),
+    header: ({ table }) => (
+      <Checkbox
+        aria-label="Select all"
+        checked={table.getIsAllRowsSelected()}
+        indeterminate={table.getIsSomeRowsSelected()}
+        onCheckedChange={(checked) => {
+          table.toggleAllRowsSelected(checked)
+        }}
+      />
+    ),
+    id: "select",
+  },
+  {
+    accessorKey: "status",
+    cell: ({ row }) => (
+      <Badge
+        className="capitalize"
+        variant={row.original.status === "failed" ? "destructive" : "secondary"}
+      >
+        {row.original.status}
+      </Badge>
+    ),
+    header: "Status",
+  },
+  { accessorKey: "email", header: "Email" },
+  {
+    accessorKey: "amount",
+    cell: ({ row }) => (
+      <div className="text-right font-medium tabular-nums">
+        {formatCurrency(row.original.amount)}
+      </div>
+    ),
+    header: () => <div className="text-right">Amount</div>,
+  },
+]
+
 export default function ShowcaseData() {
   return (
     <>
@@ -240,60 +297,3 @@ export default function ShowcaseData() {
     </>
   )
 }
-
-function formatCurrency(amount: number) {
-  return CURRENCY_FORMATTER.format(amount)
-}
-
-function formatMonth(value: string) {
-  return value.slice(0, 3)
-}
-
-const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", { currency: "USD", style: "currency" })
-
-const PAYMENT_COLUMNS: DataTableProps<Payment>["columns"] = [
-  {
-    cell: ({ row }) => (
-      <Checkbox
-        aria-label="Select row"
-        checked={row.getIsSelected()}
-        onCheckedChange={(checked) => {
-          row.toggleSelected(checked)
-        }}
-      />
-    ),
-    header: ({ table }) => (
-      <Checkbox
-        aria-label="Select all"
-        checked={table.getIsAllRowsSelected()}
-        indeterminate={table.getIsSomeRowsSelected()}
-        onCheckedChange={(checked) => {
-          table.toggleAllRowsSelected(checked)
-        }}
-      />
-    ),
-    id: "select",
-  },
-  {
-    accessorKey: "status",
-    cell: ({ row }) => (
-      <Badge
-        className="capitalize"
-        variant={row.original.status === "failed" ? "destructive" : "secondary"}
-      >
-        {row.original.status}
-      </Badge>
-    ),
-    header: "Status",
-  },
-  { accessorKey: "email", header: "Email" },
-  {
-    accessorKey: "amount",
-    cell: ({ row }) => (
-      <div className="text-right font-medium tabular-nums">
-        {formatCurrency(row.original.amount)}
-      </div>
-    ),
-    header: () => <div className="text-right">Amount</div>,
-  },
-]

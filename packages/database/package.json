@@ -10,6 +10,7 @@
   "exports": {
     "./helpers/*": "./src/helpers/*.ts",
     "./schema": "./src/schema.ts",
+    "./schemas": "./src/schemas.ts",
     "./client": "./src/client.ts"
   },
   "scripts": {

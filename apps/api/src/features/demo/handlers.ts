@@ -1,5 +1,5 @@
 import { log } from "#shared/logger.ts"
-import { workflows } from "#shared/workflows.ts"
+import { workflows } from "#shared/services.ts"
 
 export const greetUser = workflows.define("greetUser", async ({ userId }: { userId: string }) => {
   const greeting = await workflows.step("composeGreeting", () => `Hello, ${userId}`)

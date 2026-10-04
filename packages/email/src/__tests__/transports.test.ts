@@ -10,6 +10,11 @@ const message = {
   to: ["ada@example.com"],
 }
 
+function stubResendResponse(status: number, body: object) {
+  const fetch = spyOn(globalThis, "fetch")
+  fetch.mockResolvedValue(Response.json(body, { status }))
+}
+
 afterEach(() => {
   mock.restore()
 })
@@ -56,8 +61,3 @@ describe("smtpTransport", () => {
     expect(error).toMatchObject({ isRetryable: true, transport: "smtp" })
   })
 })
-
-function stubResendResponse(status: number, body: object) {
-  const fetch = spyOn(globalThis, "fetch")
-  fetch.mockResolvedValue(Response.json(body, { status }))
-}

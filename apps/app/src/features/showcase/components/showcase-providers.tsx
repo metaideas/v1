@@ -19,6 +19,45 @@ import ShowcaseDemo from "#features/showcase/components/showcase-demo.tsx"
 import ShowcaseSection from "#features/showcase/components/showcase-section.tsx"
 import { TEXT_DIRECTIONS } from "#features/showcase/constants.ts"
 
+function ThemeControls() {
+  const { setTheme, theme } = useTheme()
+
+  return (
+    <>
+      <ShowcaseDemo label="Theme toggle">
+        <ThemeToggle />
+        <p className="text-sm text-muted-foreground">
+          Current theme: <span className="font-medium text-foreground">{theme}</span>
+        </p>
+      </ShowcaseDemo>
+      <ShowcaseDemo label="Set the theme directly">
+        <ToggleGroup aria-label="Theme" spacing={0} value={[theme]} variant="outline">
+          {THEMES.map((value) => (
+            <ToggleGroupItem
+              className="capitalize"
+              key={value}
+              onClick={() => {
+                setTheme(value)
+              }}
+              value={value}
+            >
+              {value}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+        <Button
+          onClick={() => {
+            setTheme(theme === "dark" ? "light" : "dark")
+          }}
+          variant="secondary"
+        >
+          Flip light and dark
+        </Button>
+      </ShowcaseDemo>
+    </>
+  )
+}
+
 export default function ShowcaseProviders() {
   return (
     <>
@@ -69,45 +108,6 @@ export default function ShowcaseProviders() {
           ))}
         </div>
       </ShowcaseSection>
-    </>
-  )
-}
-
-function ThemeControls() {
-  const { setTheme, theme } = useTheme()
-
-  return (
-    <>
-      <ShowcaseDemo label="Theme toggle">
-        <ThemeToggle />
-        <p className="text-sm text-muted-foreground">
-          Current theme: <span className="font-medium text-foreground">{theme}</span>
-        </p>
-      </ShowcaseDemo>
-      <ShowcaseDemo label="Set the theme directly">
-        <ToggleGroup aria-label="Theme" spacing={0} value={[theme]} variant="outline">
-          {THEMES.map((value) => (
-            <ToggleGroupItem
-              className="capitalize"
-              key={value}
-              onClick={() => {
-                setTheme(value)
-              }}
-              value={value}
-            >
-              {value}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-        <Button
-          onClick={() => {
-            setTheme(theme === "dark" ? "light" : "dark")
-          }}
-          variant="secondary"
-        >
-          Flip light and dark
-        </Button>
-      </ShowcaseDemo>
     </>
   )
 }

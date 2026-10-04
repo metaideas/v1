@@ -5,9 +5,11 @@ import {
 } from "files-sdk/client"
 import { useFiles as useFilesBase } from "files-sdk/react"
 
+export { useFile, useList, useSearch } from "files-sdk/react"
+
 const endpoint = "{{endpoint}}"
 
-function checkIsGatewayRequest(requestUrl: string): boolean {
+function checkIsGatewayRequest(requestUrl: string) {
   const request = new URL(requestUrl, endpoint)
   const gateway = new URL(endpoint)
   return request.origin === gateway.origin && request.pathname === gateway.pathname
@@ -74,7 +76,7 @@ const transport: Transport = (request) =>
   })
 
 const fetchWithCredentials = Object.assign(
-  (input: RequestInfo | URL, init?: RequestInit): Promise<Response> =>
+  (input: RequestInfo | URL, init?: RequestInit) =>
     fetch(input, { ...init, credentials: "include" }),
   fetch
 )
@@ -86,5 +88,3 @@ export function useFiles() {
     transport,
   })
 }
-
-export { useFile, useList, useSearch } from "files-sdk/react"

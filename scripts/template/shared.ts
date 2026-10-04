@@ -1,11 +1,10 @@
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
-import * as z from "zod"
-
-export const TEMPLATE_SCOPE = "v1"
-export const TEMPLATE_REPO = "metaideas/v1"
-export const TEMPLATE_STAMP_FILE = ".template.json"
-
-const ignoredDirectories = new Set([".cache", ".git", ".turbo", "build", "dist", "node_modules"])
+import {
+  type PackageJson,
+  PackageJsonSchema,
+  type TemplateStamp,
+  TemplateStampSchema,
+} from "./schemas"
 
 export type WorkspaceKind = "app" | "package"
 
@@ -20,39 +19,26 @@ export type WorkspaceNode = Workspace & {
   packageName: string
 }
 
-const DependenciesSchema = z.record(z.string(), z.string()).optional()
+export const TEMPLATE_SCOPE = "v1"
+export const TEMPLATE_REPO = "metaideas/v1"
+export const TEMPLATE_STAMP_FILE = ".template.json"
 
-const PackageJsonSchema = z.looseObject({
-  dependencies: DependenciesSchema,
-  devDependencies: DependenciesSchema,
-  name: z.string().optional(),
-  peerDependencies: DependenciesSchema,
-})
+const TEMPLATE_REMOTE = "template"
+export const TEMPLATE_SECTION_START = "<!-- TEMPLATE:START -->"
+const TEMPLATE_SECTION_END = "<!-- TEMPLATE:END -->"
 
-export const TemplateCleanupSchema = z.object({
-  cleanupPaths: z.array(z.string()),
-  cleanupSections: z.array(z.string()),
-})
+const ignoredDirectories = new Set([".cache", ".git", ".turbo", "build", "dist", "node_modules"])
 
-const TemplateStampSchema = z.object({
-  commit: z.string().optional(),
-  createdAt: z.string(),
-  template: z.string(),
-})
-
-export type PackageJson = z.infer<typeof PackageJsonSchema>
-export type TemplateStamp = z.infer<typeof TemplateStampSchema>
+// Narrowing the original value instead of returning the parsed copy keeps the key order of manifests that are written back.
+function assertPackageJson(value: unknown): asserts value is PackageJson {
+  PackageJsonSchema.parse(value)
+}
 
 export async function readPackageJson(path: string) {
   const value: unknown = await Bun.file(path).json()
   assertPackageJson(value)
 
   return value
-}
-
-// Narrowing the original value instead of returning the parsed copy keeps the key order of manifests that are written back.
-function assertPackageJson(value: unknown): asserts value is PackageJson {
-  PackageJsonSchema.parse(value)
 }
 
 export async function writeJson(path: string, value: unknown) {
@@ -99,8 +85,8 @@ export async function getWorkspaces(rootDir: string, kind: WorkspaceKind) {
   return workspaces.toSorted((left, right) => left.name.localeCompare(right.name))
 }
 
-export async function getWorkspaceGraph(rootDir: string): Promise<WorkspaceNode[]> {
-  const kinds: WorkspaceKind[] = ["app", "package"]
+export async function getWorkspaceGraph(rootDir: string) {
+  const kinds = ["app", "package"] as const
   const nodes = await Promise.all(
     kinds.map(async (kind) => {
       const workspaces = await getWorkspaces(rootDir, kind)
@@ -128,7 +114,7 @@ export function getWorkspacePath(workspace: Pick<WorkspaceNode, "kind" | "name">
   return `${workspace.kind}s/${workspace.name}`
 }
 
-export async function readTemplateStamp(rootDir: string): Promise<TemplateStamp | undefined> {
+export async function readTemplateStamp(rootDir: string) {
   const path = join(rootDir, TEMPLATE_STAMP_FILE)
   if (!(await Bun.file(path).exists())) return
 
@@ -138,8 +124,6 @@ export async function readTemplateStamp(rootDir: string): Promise<TemplateStamp 
 export async function writeTemplateStamp(rootDir: string, stamp: TemplateStamp) {
   await writeJson(join(rootDir, TEMPLATE_STAMP_FILE), stamp)
 }
-
-export const TEMPLATE_REMOTE = "template"
 
 export async function fetchTemplate(rootDir: string) {
   const remote = await Bun.$`git remote get-url ${TEMPLATE_REMOTE}`.cwd(rootDir).quiet().nothrow()
@@ -154,7 +138,7 @@ export async function fetchTemplate(rootDir: string) {
   return head.trim()
 }
 
-export async function getTextFiles(rootDir: string) {
+async function getTextFiles(rootDir: string) {
   const files = new Bun.Glob("**/*")
   const paths: string[] = []
 
@@ -225,7 +209,7 @@ export async function getProjectScope(rootDir: string) {
   throw new Error("Could not determine the project npm scope from its workspaces.")
 }
 
-export function checkIsPathWithinRoot(rootDir: string, path: string) {
+function checkIsPathWithinRoot(rootDir: string, path: string) {
   const pathFromRoot = relative(rootDir, path)
 
   return (
@@ -264,8 +248,18 @@ export function checkIsRemovedByCleanup(
   })
 }
 
-export const TEMPLATE_SECTION_START = "<!-- TEMPLATE:START -->"
-const TEMPLATE_SECTION_END = "<!-- TEMPLATE:END -->"
+function joinAroundRemovedSection(before: string, after: string) {
+  const trailingNewlines = /\n*$/.exec(before)?.[0] ?? ""
+  const leadingNewlines = /^\n*/.exec(after)?.[0] ?? ""
+  const isAtStart = before.length === trailingNewlines.length
+  const isAtEnd = after.length === leadingNewlines.length
+
+  if (isAtStart) return after.slice(leadingNewlines.length)
+  if (isAtEnd) return `${before.slice(0, before.length - trailingNewlines.length)}\n`
+  if (trailingNewlines.length === 0 || leadingNewlines.length === 0) return before + after
+
+  return `${before.slice(0, before.length - trailingNewlines.length)}\n\n${after.slice(leadingNewlines.length)}`
+}
 
 export function removeTemplateSections(contents: string) {
   let remaining = contents
@@ -284,19 +278,6 @@ export function removeTemplateSections(contents: string) {
   }
 
   return remaining
-}
-
-function joinAroundRemovedSection(before: string, after: string) {
-  const trailingNewlines = /\n*$/.exec(before)?.[0] ?? ""
-  const leadingNewlines = /^\n*/.exec(after)?.[0] ?? ""
-  const isAtStart = before.length === trailingNewlines.length
-  const isAtEnd = after.length === leadingNewlines.length
-
-  if (isAtStart) return after.slice(leadingNewlines.length)
-  if (isAtEnd) return `${before.slice(0, before.length - trailingNewlines.length)}\n`
-  if (trailingNewlines.length === 0 || leadingNewlines.length === 0) return before + after
-
-  return `${before.slice(0, before.length - trailingNewlines.length)}\n\n${after.slice(leadingNewlines.length)}`
 }
 
 export async function runCommand(command: string[], rootDir: string) {

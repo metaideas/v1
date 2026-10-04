@@ -10,6 +10,7 @@ import {
 } from "@v1/auth/constants"
 import type { DataModel } from "#functions/_generated/dataModel.js"
 import { components, internal } from "#functions/_generated/api.js"
+import { env } from "#functions/_generated/server.js"
 import authConfig from "#functions/auth.config.ts"
 import authSchema from "#functions/components/better-auth/schema.ts"
 
@@ -29,4 +30,10 @@ export function createAuthOptions(ctx: GenericCtx<DataModel>) {
     plugins: [convex({ authConfig })],
     session: AUTH_SESSION_OPTIONS,
   } satisfies AuthOptions
+}
+
+export function getTrustedOrigins() {
+  return env.AUTH_TRUSTED_ORIGINS.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
 }

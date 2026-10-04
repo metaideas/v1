@@ -14,7 +14,7 @@ const storage = new AsyncLocalStorage<ReadonlyMap<Database, DatabaseTransaction>
 export async function withTransaction<T>(
   database: Database,
   operation: (transaction: DatabaseTransaction) => Promise<T>
-): Promise<T> {
+) {
   const active = storage.getStore()
   const current = active?.get(database)
 

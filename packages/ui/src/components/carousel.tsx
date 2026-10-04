@@ -48,7 +48,7 @@ function Carousel({
   ...props
 }: React.ComponentProps<"div"> & CarouselProps) {
   const { className, children, ...divProps } = props
-  const contextValue: CarouselContextProps = useCarouselState({
+  const contextValue = useCarouselState({
     opts,
     orientation,
     plugins,

@@ -7,13 +7,20 @@ import { PgTable } from "drizzle-orm/pg-core"
 import { reset, seed } from "drizzle-seed"
 import { ENV } from "#env.generated.ts"
 
-const database = createDatabase({ url: ENV.DATABASE_URL })
-
 type Tables = {
   [
     Name in keyof typeof schema as (typeof schema)[Name] extends PgTable ? Name : never
   ]: (typeof schema)[Name]
 }
+
+// The filter keeps exactly the schema exports that are PgTable instances, so checking the values confirms the shape.
+function assertTables(value: Record<string, unknown>): asserts value is Tables {
+  if (!Object.values(value).every((table) => is(table, PgTable))) {
+    throw new Error("Expected only Drizzle tables.")
+  }
+}
+
+const database = createDatabase({ url: ENV.DATABASE_URL })
 
 // drizzle-seed treats inverse `one()` relations as foreign keys, so it receives only tables.
 const tables = Object.fromEntries(Object.entries(schema).filter(([, value]) => is(value, PgTable)))
@@ -66,10 +73,3 @@ void main()
     console.error(`\n✖  ${error instanceof Error ? error.message : String(error)}\n`)
     process.exit(1)
   })
-
-// The filter keeps exactly the schema exports that are PgTable instances, so checking the values confirms the shape.
-function assertTables(value: Record<string, unknown>): asserts value is Tables {
-  if (!Object.values(value).every((table) => is(table, PgTable))) {
-    throw new Error("Expected only Drizzle tables.")
-  }
-}

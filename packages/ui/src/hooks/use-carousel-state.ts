@@ -30,19 +30,19 @@ export function useCarouselState({ opts, plugins, orientation, setApi }: Carouse
   useEffect(() => {
     if (!api) return
 
-    function onSelect(selectedApi: NonNullable<CarouselApi>) {
+    function handleSelect(selectedApi: NonNullable<CarouselApi>) {
       setCanScrollPrev(selectedApi.canScrollPrev())
       setCanScrollNext(selectedApi.canScrollNext())
     }
 
     // oxlint-disable-next-line react/set-state-in-effect -- Embla exposes scroll state only through its API, so read it once the API exists.
-    onSelect(api)
-    api.on("reInit", onSelect)
-    api.on("select", onSelect)
+    handleSelect(api)
+    api.on("reInit", handleSelect)
+    api.on("select", handleSelect)
 
     return () => {
-      api.off("reInit", onSelect)
-      api.off("select", onSelect)
+      api.off("reInit", handleSelect)
+      api.off("select", handleSelect)
     }
   }, [api])
 

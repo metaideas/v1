@@ -29,11 +29,6 @@ export function useLargeTitleSearch(searchBar: LargeTitleHeaderProps["searchBar"
   }
 
   return {
-    blur: () => {
-      setIsFocused(false)
-      if (searchValue.length === 0) setIsSearchBarShown(false)
-      searchBar?.onBlur?.()
-    },
     changeText,
     clearText: () => {
       changeText("")
@@ -43,7 +38,12 @@ export function useLargeTitleSearch(searchBar: LargeTitleHeaderProps["searchBar"
       setIsSearchBarShown(false)
       changeText("")
     },
-    focus: () => {
+    handleBlur: () => {
+      setIsFocused(false)
+      if (searchValue.length === 0) setIsSearchBarShown(false)
+      searchBar?.onBlur?.()
+    },
+    handleFocus: () => {
       setIsFocused(true)
       searchBar?.onFocus?.()
     },

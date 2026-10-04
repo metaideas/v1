@@ -8,17 +8,8 @@ import {
 import { type ColorValue, StatusBar } from "react-native"
 import { useCSSVariable, useUniwind } from "uniwind"
 
-export default function ThemeProvider({ children }: PropsWithChildren) {
-  const { theme } = useUniwind()
-  const isDark = theme === "dark"
-  const navigationTheme = useNavigationTheme(isDark ? DarkTheme : DefaultTheme)
-
-  return (
-    <NavigationThemeProvider value={navigationTheme}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-      {children}
-    </NavigationThemeProvider>
-  )
+function toColor(value: string | number | undefined, fallback: ColorValue) {
+  return typeof value === "string" ? value : fallback
 }
 
 function useNavigationTheme(baseTheme: Theme): Theme {
@@ -44,6 +35,15 @@ function useNavigationTheme(baseTheme: Theme): Theme {
   }
 }
 
-function toColor(value: string | number | undefined, fallback: ColorValue) {
-  return typeof value === "string" ? value : fallback
+export default function ThemeProvider({ children }: PropsWithChildren) {
+  const { theme } = useUniwind()
+  const isDark = theme === "dark"
+  const navigationTheme = useNavigationTheme(isDark ? DarkTheme : DefaultTheme)
+
+  return (
+    <NavigationThemeProvider value={navigationTheme}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+      {children}
+    </NavigationThemeProvider>
+  )
 }

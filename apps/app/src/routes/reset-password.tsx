@@ -1,16 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@v1/ui/components/card"
-import * as z from "@v1/utils/schema/mini"
 import ResetPasswordForm from "#features/auth/components/reset-password-form.tsx"
-
-const SearchSchema = z.object({
-  token: z.optional(z.string()),
-})
-
-export const Route = createFileRoute("/reset-password")({
-  component: RouteComponent,
-  validateSearch: SearchSchema,
-})
+import { ResetPasswordSearchSchema } from "#features/auth/schemas.ts"
 
 function RouteComponent() {
   const { token } = Route.useSearch()
@@ -41,3 +32,8 @@ function RouteComponent() {
     </div>
   )
 }
+
+export const Route = createFileRoute("/reset-password")({
+  component: RouteComponent,
+  validateSearch: ResetPasswordSearchSchema,
+})

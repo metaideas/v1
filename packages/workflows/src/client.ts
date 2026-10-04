@@ -8,6 +8,67 @@ import {
 } from "@dbos-inc/dbos-sdk"
 import { WorkflowsFault } from "@v1/core/errors"
 
+type LogMetadata = ContextualMetadata & StackTrace
+
+type Pool = NonNullable<DBOSConfig["systemDatabasePool"]>
+
+type QueueOptions = { concurrency?: number }
+
+type WorkflowsOptions<Queue extends string> = (
+  | { pool: Pool }
+  | { url: string; poolSize?: number }
+) & {
+  logger?: Logger
+  name?: string
+  queues?: Record<Queue, QueueOptions>
+}
+
+type StepOptions = {
+  attempts?: number
+  backoff?: number
+  delaySeconds?: number
+  timeoutMs?: number
+}
+
+type RunOptions<Queue extends string> = { id?: string; queue?: Queue }
+
+export type WorkflowRun<Result> = { id: string; result: () => Promise<Result> }
+
+// DBOS passes errors and stacks in metadata, and the running workflow as a span.
+function toEvent(entry: unknown, metadata?: LogMetadata) {
+  const event: Record<string, unknown> =
+    typeof entry === "string" ? { message: entry } : { details: entry }
+
+  if (metadata?.error) {
+    event.error = metadata.error
+  } else if (metadata?.stack) {
+    event.stack = metadata.stack
+  }
+
+  if (metadata?.span) {
+    event.workflow = metadata.span.attributes
+  }
+
+  return { scope: "workflows", ...event }
+}
+
+function toWorkflowLogger(log: Logger): DLogger {
+  return {
+    debug: (entry, metadata) => {
+      log.debug(toEvent(entry, metadata))
+    },
+    error: (entry, metadata) => {
+      log.error(toEvent(entry, metadata))
+    },
+    info: (entry, metadata) => {
+      log.info(toEvent(entry, metadata))
+    },
+    warn: (entry, metadata) => {
+      log.warn(toEvent(entry, metadata))
+    },
+  }
+}
+
 export class Workflows<Queue extends string = never> {
   static #isCreated = false
 
@@ -103,64 +164,3 @@ export class Workflows<Queue extends string = never> {
     this.#isLaunched = false
   }
 }
-
-// DBOS passes errors and stacks in metadata, and the running workflow as a span.
-function toEvent(entry: unknown, metadata?: LogMetadata): Record<string, unknown> {
-  const event: Record<string, unknown> =
-    typeof entry === "string" ? { message: entry } : { details: entry }
-
-  if (metadata?.error) {
-    event.error = metadata.error
-  } else if (metadata?.stack) {
-    event.stack = metadata.stack
-  }
-
-  if (metadata?.span) {
-    event.workflow = metadata.span.attributes
-  }
-
-  return { scope: "workflows", ...event }
-}
-
-function toWorkflowLogger(log: Logger): DLogger {
-  return {
-    debug: (entry, metadata) => {
-      log.debug(toEvent(entry, metadata))
-    },
-    error: (entry, metadata) => {
-      log.error(toEvent(entry, metadata))
-    },
-    info: (entry, metadata) => {
-      log.info(toEvent(entry, metadata))
-    },
-    warn: (entry, metadata) => {
-      log.warn(toEvent(entry, metadata))
-    },
-  }
-}
-
-type LogMetadata = ContextualMetadata & StackTrace
-
-type Pool = NonNullable<DBOSConfig["systemDatabasePool"]>
-
-type WorkflowsOptions<Queue extends string> = (
-  | { pool: Pool }
-  | { url: string; poolSize?: number }
-) & {
-  logger?: Logger
-  name?: string
-  queues?: Record<Queue, QueueOptions>
-}
-
-type QueueOptions = { concurrency?: number }
-
-type StepOptions = {
-  attempts?: number
-  backoff?: number
-  delaySeconds?: number
-  timeoutMs?: number
-}
-
-type RunOptions<Queue extends string> = { id?: string; queue?: Queue }
-
-export type WorkflowRun<Result> = { id: string; result: () => Promise<Result> }

@@ -6,7 +6,7 @@ import { registerNewPackageGenerator } from "./commands/new-package"
 import { registerPostHogGenerator } from "./commands/posthog"
 import { registerSentryGenerator } from "./commands/sentry"
 
-export default function generator(plop: PlopTypes.NodePlopAPI): void {
+export default function generator(plop: PlopTypes.NodePlopAPI) {
   registerNewFeatureGenerator(plop)
   registerNewPackageGenerator(plop)
   registerFilesClientGenerator(plop)
