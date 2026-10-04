@@ -1,5 +1,6 @@
 import { dirname, join, relative, resolve } from "node:path"
 import { defineCommand } from "citty"
+import { parseJSONC } from "confbox"
 import consola from "consola"
 
 import { type TemplateStamp, TemplateCleanupSchema, TurboJsonSchema } from "./schemas"
@@ -203,7 +204,9 @@ const checks: Check[] = [
   {
     name: "Turbo build env entries are declared by a schema",
     run: async ({ envFiles, rootDir }) => {
-      const turbo = TurboJsonSchema.parse(await Bun.file(join(rootDir, "turbo.json")).json())
+      const turbo = TurboJsonSchema.parse(
+        parseJSONC(await Bun.file(join(rootDir, "turbo.json")).text(), { allowTrailingComma: true })
+      )
       const patterns = turbo.tasks.build?.env ?? []
       const contents = await Promise.all(envFiles.map((file) => Bun.file(file).text()))
       const keys = contents.flatMap((text) =>

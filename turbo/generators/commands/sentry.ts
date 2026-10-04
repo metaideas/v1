@@ -1,11 +1,13 @@
 import type { PlopTypes } from "@turbo/gen"
+import type { ImportItemInput } from "magicast"
 import Bun from "bun"
+import { stringifyJSON } from "confbox"
 
 import type * as z from "zod"
 
+import { addImports } from "../imports"
 import {
   BundledModulesSchema,
-  ManifestSchema,
   readPackageJson,
   SentryAnswersSchema,
   TrustedDependenciesSchema,
@@ -16,7 +18,7 @@ type SentryApp = z.infer<typeof SentryAnswersSchema>["app"]
 type Edit = {
   path: string
   marker: string
-  imports?: readonly string[]
+  imports?: readonly ImportItemInput[]
   replacements: ReadonlyArray<readonly [anchor: string, replacement: string]>
   append?: string
   manual: string
@@ -32,18 +34,6 @@ type SentrySetup = {
 }
 
 const SENTRY_APPS = SentryAnswersSchema.shape.app.options
-
-function addImport(source: string, line: string) {
-  if (source.includes(line)) {
-    return source
-  }
-
-  const lines = source.split("\n")
-  const lastImport = lines.findLastIndex((text) => /^(import .+|\}) from "[^"]+"$/.test(text))
-  lines.splice(lastImport + 1, 0, line)
-
-  return lines.join("\n")
-}
 
 async function applyEdit(path: string, edit: Edit) {
   const file = Bun.file(path)
@@ -66,8 +56,13 @@ async function applyEdit(path: string, edit: Edit) {
     source = source.replace(anchor, replacement)
   }
 
-  for (const line of edit.imports ?? []) {
-    source = addImport(source, line)
+  if (edit.imports) {
+    const sourceWithImports = addImports(source, edit.imports)
+    if (sourceWithImports === undefined) {
+      return `[MANUAL] ${path} already binds a name this edit imports. ${edit.manual}`
+    }
+
+    source = sourceWithImports
   }
 
   await Bun.write(path, edit.append ? `${source.trimEnd()}\n${edit.append}` : source)
@@ -101,39 +96,36 @@ async function getDependencyVersion(appPath: string, packageName: string, depend
 }
 
 async function trustSentryCli() {
-  const manifest = ManifestSchema.parse(await Bun.file("package.json").json())
+  const manifest = await readPackageJson("package.json")
   const trusted = TrustedDependenciesSchema.parse(manifest.trustedDependencies) ?? []
 
   if (trusted.includes("@sentry/cli")) {
     return
   }
 
-  const trustedDependencies = [...trusted, "@sentry/cli"].toSorted()
-  await Bun.write(
-    "package.json",
-    `${JSON.stringify({ ...manifest, trustedDependencies }, null, 2)}\n`
-  )
+  manifest.trustedDependencies = [...trusted, "@sentry/cli"].toSorted()
+  await Bun.write("package.json", `${stringifyJSON(manifest).trimEnd()}\n`)
 }
 
 const SETUPS: Record<SentryApp, SentrySetup> = {
   api: {
     edits: [
       {
-        imports: ['import { drain } from "#shared/monitoring.ts"'],
+        imports: [{ from: "#shared/monitoring.ts", imported: "drain" }],
         manual: "Pass `drain` from #shared/monitoring.ts to `initLogger` in src/shared/logger.ts.",
         marker: "#shared/monitoring.ts",
         path: "src/shared/logger.ts",
         replacements: [["initLogger({\n", "initLogger({\n  drain,\n"]],
       },
       {
-        imports: ['import { drain } from "#shared/monitoring.ts"'],
+        imports: [{ from: "#shared/monitoring.ts", imported: "drain" }],
         manual: "Call `await drain?.flush()` in the shutdown handler of src/index.ts.",
         marker: "drain?.flush()",
         path: "src/index.ts",
         replacements: [["  process.exit(0)", "  await drain?.flush()\n  process.exit(0)"]],
       },
       {
-        imports: ['import { captureException } from "#shared/monitoring.ts"'],
+        imports: [{ from: "#shared/monitoring.ts", imported: "captureException" }],
         manual: "Call `captureException(error)` in `app.onError` in src/routes/index.ts.",
         marker: "captureException(error)",
         path: "src/routes/index.ts",
@@ -162,7 +154,7 @@ SENTRY_DEBUG=false
   app: {
     edits: [
       {
-        imports: ['import { initializeMonitoring } from "#shared/monitoring.ts"'],
+        imports: [{ from: "#shared/monitoring.ts", imported: "initializeMonitoring" }],
         manual:
           "Call `initializeMonitoring()` from #shared/monitoring.ts in `getRouter` in src/router.tsx when `router.isServer` is false.",
         marker: "initializeMonitoring()",
@@ -204,7 +196,7 @@ PUBLIC_SENTRY_DEBUG=false
       },
       {
         append: "\nexport default Sentry.wrap(RootLayout)\n",
-        imports: ['import * as Sentry from "@sentry/react-native"'],
+        imports: [{ from: "@sentry/react-native", imported: "*", local: "Sentry" }],
         manual: "Export the root layout in src/app/_layout.tsx wrapped with `Sentry.wrap`.",
         marker: "Sentry.wrap(",
         path: "src/app/_layout.tsx",
