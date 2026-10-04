@@ -1,8 +1,8 @@
-import { isProduction, isTest } from "@v1/utils/env"
 import * as Sentry from "@sentry/node"
 import type { DrainContext } from "evlog"
 import { createDrainPipeline } from "evlog/pipeline"
 import { createSentryDrain } from "evlog/sentry"
+import { isProduction, isTest } from "std-env"
 import { ENV } from "#shared/env.generated.ts"
 
 if (ENV.SENTRY_DSN) {

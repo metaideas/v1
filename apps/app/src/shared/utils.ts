@@ -1,5 +1,5 @@
-import { hasWindow } from "@v1/utils/env"
 import { createUrlBuilder } from "@v1/utils/url"
+import { hasWindow } from "std-env"
 import { ENV } from "#shared/env.generated.ts"
 
 function getProtocol(url: string) {
