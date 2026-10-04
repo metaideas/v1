@@ -5,6 +5,7 @@ import { queueNames } from "@v1/jobs/queue-names"
 import { Queue } from "bullmq"
 import { basicAuth } from "hono/basic-auth"
 import { serveStatic } from "hono/bun"
+import { csrf } from "hono/csrf"
 import { ENV } from "#shared/env.generated.ts"
 import { factory } from "#shared/utils.ts"
 
@@ -23,8 +24,11 @@ function createJobsDashboard(credentials: { password: string; username: string }
       await Promise.all(queues.map((queue) => queue.close()))
     },
     path: JOBS_DASHBOARD_PATH,
+    // Browsers resend cached Basic Auth credentials on cross-site form posts, so reject mutations
+    // that do not come from the dashboard's own origin.
     routes: factory
       .createApp()
+      .use(csrf())
       .use(basicAuth(credentials))
       .route("/", serverAdapter.registerPlugin()),
   }
