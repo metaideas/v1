@@ -119,10 +119,13 @@ const SETUPS: Record<SentryApp, SentrySetup> = {
       },
       {
         imports: [{ from: "#shared/monitoring.ts", imported: "drain" }],
-        manual: "Call `await drain?.flush()` in the shutdown handler of src/index.ts.",
+        manual:
+          "Call `await drain?.flush()` in the `close` that src/index.ts passes to `lifecycle`.",
         marker: "drain?.flush()",
         path: "src/index.ts",
-        replacements: [["  process.exit(0)", "  await drain?.flush()\n  process.exit(0)"]],
+        replacements: [
+          ["    },\n    logger: log,\n", "      await drain?.flush()\n    },\n    logger: log,\n"],
+        ],
       },
       {
         imports: [{ from: "#shared/monitoring.ts", imported: "captureException" }],
