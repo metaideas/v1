@@ -4,6 +4,7 @@ import consola from "consola"
 import * as z from "zod"
 
 import {
+  checkIsRemovedByCleanup,
   findTextReferences,
   getProjectScope,
   getScopePrefix,
@@ -296,12 +297,7 @@ const checks: Check[] = [
         [...references].map(async (path) => {
           if (!(await Bun.file(join(rootDir, path)).exists()))
             return `AGENTS.md references ${path}, which does not exist`
-          if (
-            cleanupPaths.some(
-              (cleanupPath) =>
-                path === cleanupPath || path.startsWith(`${cleanupPath.replace(/\/$/, "")}/`)
-            )
-          )
+          if (checkIsRemovedByCleanup(rootDir, path, cleanupPaths))
             return `AGENTS.md references ${path}, which v1.cleanupPaths removes during setup`
           return null
         })
