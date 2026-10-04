@@ -8,8 +8,8 @@ import { createFileStorage, createS3Adapter } from "@v1/storage/server"
 import { Workflows } from "@v1/workflows/client"
 import { createStorage } from "unstorage"
 import redisDriver from "unstorage/drivers/redis"
+import { deleteAsset, upsertAsset } from "#shared/assets.ts"
 import { ENV } from "#shared/env.generated.ts"
-import { handleFileAction } from "#shared/files.ts"
 import { log } from "#shared/logger.ts"
 import { allowedOrigins } from "#shared/utils.ts"
 
@@ -53,7 +53,9 @@ export const storage = createFileStorage({
     region: ENV.S3_REGION,
     secretAccessKey: ENV.S3_SECRET_ACCESS_KEY,
   }),
-  hooks: { onAction: handleFileAction },
+  logger: log,
+  onFileDeleted: deleteAsset,
+  onFileStored: upsertAsset,
 })
 
 export const workflows = new Workflows({

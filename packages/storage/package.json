@@ -16,8 +16,10 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "dependencies": {
+    "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
-    "files-sdk": "2.2.2"
+    "files-sdk": "2.2.2",
+    "tryharder": "0.4.0"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",

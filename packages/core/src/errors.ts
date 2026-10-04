@@ -3,6 +3,7 @@ import type { AuthenticationError } from "#domains/auth/errors.ts"
 import type { EmailError } from "#services/email/errors.ts"
 import type { JobsError } from "#services/jobs/errors.ts"
 import type { PaymentsError } from "#services/payments/errors.ts"
+import type { StorageError } from "#services/storage/errors.ts"
 import type { WorkflowsError } from "#services/workflows/errors.ts"
 import type { UtilityError } from "#shared/errors.ts"
 
@@ -10,6 +11,7 @@ import { AuthFault } from "#domains/auth/errors.ts"
 import { EmailFault } from "#services/email/errors.ts"
 import { JobsFault } from "#services/jobs/errors.ts"
 import { PaymentsFault } from "#services/payments/errors.ts"
+import { StorageFault } from "#services/storage/errors.ts"
 import { WorkflowsFault } from "#services/workflows/errors.ts"
 import { UtilityFault } from "#shared/errors.ts"
 
@@ -18,6 +20,7 @@ export const AppFault = Faultier.merge(
   EmailFault,
   JobsFault,
   PaymentsFault,
+  StorageFault,
   UtilityFault,
   WorkflowsFault
 )
@@ -26,6 +29,7 @@ export type AppError =
   | EmailError
   | JobsError
   | PaymentsError
+  | StorageError
   | UtilityError
   | WorkflowsError
 
@@ -33,6 +37,7 @@ export * from "#domains/auth/errors.ts"
 export * from "#services/email/errors.ts"
 export * from "#services/jobs/errors.ts"
 export * from "#services/payments/errors.ts"
+export * from "#services/storage/errors.ts"
 export * from "#services/workflows/errors.ts"
 export * from "#shared/errors.ts"
 

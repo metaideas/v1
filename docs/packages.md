@@ -96,8 +96,13 @@ export const storage = createFileStorage({
     region: ENV.S3_REGION,
     secretAccessKey: ENV.S3_SECRET_ACCESS_KEY,
   }),
+  logger: log,
+  onFileDeleted: deleteAsset,
+  onFileStored: upsertAsset,
 })
 ```
+
+`onFileStored` and `onFileDeleted` keep application records in sync with storage. `createFileStorage` calls `onFileStored` after an upload or `head` succeeds and `onFileDeleted` once for each deleted key, including each key of a bulk delete. The operation waits for the callback. Storage and the record are not atomic, so a failed callback is logged through `logger` as a `StorageSyncError` and the storage result stands. `apps/api` uses these callbacks to keep the `assets` table current.
 
 `createFileStorageRouter({ allowedOrigins, getKeyPrefix, secret, storage })` returns a router whose `handle(request)` serves the gateway. `apps/api` mounts it at `/files` behind its session middleware and scopes every key to `users/<id>/`. Locally, `S3_ENDPOINT` points at MinIO from Docker Compose. Tests pass `createMemoryAdapter()` instead of the S3 adapter.
 
