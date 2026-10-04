@@ -52,6 +52,9 @@ export function createJobWorker<Subscribed extends QueueName>({
         scope: "jobs",
       })
     })
+    worker.on("stalled", (id) => {
+      logger?.warn({ id, message: "Job stalled", queue, scope: "jobs" })
+    })
     worker.on("error", (error) => {
       logger?.error({ error, message: "Job worker error", queue, scope: "jobs" })
     })
