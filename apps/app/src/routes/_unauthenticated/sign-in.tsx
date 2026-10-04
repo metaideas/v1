@@ -48,7 +48,6 @@ function RouteComponent() {
   )
 }
 
-// oxlint-disable-next-line sort-keys -- TanStack infers the loader's `serverContext` type from `server`, so `server` must come first.
 export const Route = createFileRoute("/_unauthenticated/sign-in")({
   component: RouteComponent,
   server: {
@@ -70,5 +69,8 @@ export const Route = createFileRoute("/_unauthenticated/sign-in")({
         },
       }),
   },
+
+  // TanStack infers the loader's `serverContext` type from `server`, so `loader` goes in its own
+  // group after it.
   loader: ({ serverContext }) => serverContext?.signInFormState ?? null,
 })

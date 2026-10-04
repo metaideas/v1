@@ -20,6 +20,7 @@ description: Follow the TypeScript, service, import, UI, component, test, commen
 - Do not use a default export when a module exports multiple functions.
 - Order a module so that each part comes before the code that uses it: types, static content, helpers, subcomponents, and the exported component last.
 - Extract a component, helper, or constant when a second caller needs it or when it names a distinct part of the UI. Do not add props, options, or variants that no caller uses.
+- When the order of object keys matters, such as when a library infers a type from an earlier key, do not disable `sort-keys`. Put the keys that must come later in their own group after a blank line, and add a comment above the group that explains the order. `sort-keys` sorts each group separately.
 
 ## Services
 
