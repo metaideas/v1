@@ -1,21 +1,28 @@
 import type { Logger } from "@v1/core/services/logging"
 import * as try$ from "tryharder"
+import { isUnhandledException } from "tryharder/errors"
 
 // Below the 30 seconds that Kubernetes and most platforms allow between SIGTERM and SIGKILL.
 const DEFAULT_TIMEOUT_MS = 25_000
 
+// tryharder wraps an error that it does not map, which hides the original in the log.
+function unwrap(error: Error) {
+  return isUnhandledException(error) ? error.cause : error
+}
+
 /**
- * Stops a server process on SIGINT, SIGTERM, or an uncaught exception, and leaves the restart to
- * the process supervisor. `close` gets `timeoutMs` to release the process's services. The process
- * exits with code 1 when `close` fails, runs out of time, or follows an uncaught exception. A
- * second signal exits at once. An unhandled rejection is logged, and the process keeps running.
+ * Starts a server process with `run`, and stops it on SIGINT, SIGTERM, an uncaught exception, or a
+ * failed `run`, leaving the restart to the process supervisor. `close` gets `timeoutMs` to release
+ * the process's services. The process exits with code 1 when it stops after an error, or when
+ * `close` fails or runs out of time. A second signal exits at once. An unhandled rejection is
+ * logged, and the process keeps running.
+ *
+ * Resolves once `run` settles. A `run` that returns leaves the process running until it stops.
  */
-export function handleLifecycle({
-  close,
-  logger,
-  scope,
-  timeoutMs = DEFAULT_TIMEOUT_MS,
-}: LifecycleOptions) {
+export async function lifecycle(
+  run: () => unknown,
+  { close, logger, scope, timeoutMs = DEFAULT_TIMEOUT_MS }: LifecycleOptions
+) {
   let isStopping = false
 
   async function stop(exitCode: number) {
@@ -25,7 +32,7 @@ export function handleLifecycle({
     const closed = await try$.timeout(timeoutMs).run(() => close())
 
     if (closed instanceof Error) {
-      logger.error({ error: closed, message: "Process did not stop cleanly", scope })
+      logger.error({ error: unwrap(closed), message: "Process did not stop cleanly", scope })
     }
 
     process.exit(closed instanceof Error ? 1 : exitCode)
@@ -47,11 +54,13 @@ export function handleLifecycle({
     void stop(1)
   })
 
-  return {
-    /**
-     * Closes the process's services and exits with `exitCode`. Later calls do nothing.
-     */
-    stop,
+  const result = await try$.run(async () => {
+    await run()
+  })
+
+  if (result instanceof Error) {
+    logger.error({ error: unwrap(result), message: "Process failed", scope })
+    await stop(1)
   }
 }
 

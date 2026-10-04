@@ -20,7 +20,6 @@
     "@v1/workflows": "workspace:*",
     "evlog": "2.30.0",
     "std-env": "4.2.0",
-    "tryharder": "0.4.0",
     "varlock": "1.16.0"
   },
   "devDependencies": {

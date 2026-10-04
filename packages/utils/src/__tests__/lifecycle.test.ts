@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, type Mock, mock, spyOn, test } from "bun:test"
-import { handleLifecycle } from "#lifecycle.ts"
+import { lifecycle } from "#lifecycle.ts"
 
 const logger = { debug: mock(), error: mock(), info: mock(), warn: mock() }
 
 const hang = () => Promise.withResolvers<undefined>().promise
+
+const idle = () => Promise.resolve()
+
+const fail = () => Promise.reject(new Error("failed"))
 
 function countListeners() {
   return {
@@ -51,10 +55,10 @@ afterEach(() => {
   }
 })
 
-describe("handleLifecycle", () => {
+describe("lifecycle", () => {
   test("closes and exits with code 0 on SIGTERM", async () => {
     const close = mock(() => Promise.resolve())
-    handleLifecycle({ close, logger, scope: "test" })
+    await lifecycle(idle, { close, logger, scope: "test" })
 
     process.emit("SIGTERM")
 
@@ -63,7 +67,7 @@ describe("handleLifecycle", () => {
   })
 
   test("exits with code 1 when closing fails", async () => {
-    handleLifecycle({ close: () => Promise.reject(new Error("closed")), logger, scope: "test" })
+    await lifecycle(idle, { close: fail, logger, scope: "test" })
 
     process.emit("SIGINT")
 
@@ -72,7 +76,7 @@ describe("handleLifecycle", () => {
   })
 
   test("exits with code 1 when closing runs out of time", async () => {
-    handleLifecycle({ close: hang, logger, scope: "test", timeoutMs: 10 })
+    await lifecycle(idle, { close: hang, logger, scope: "test", timeoutMs: 10 })
 
     process.emit("SIGTERM")
 
@@ -81,7 +85,7 @@ describe("handleLifecycle", () => {
 
   test("closes and exits with code 1 after an uncaught exception", async () => {
     const close = mock(() => Promise.resolve())
-    handleLifecycle({ close, logger, scope: "test" })
+    await lifecycle(idle, { close, logger, scope: "test" })
 
     process.emit("uncaughtException", new Error("thrown"))
 
@@ -89,9 +93,28 @@ describe("handleLifecycle", () => {
     expect(close).toHaveBeenCalledTimes(1)
   })
 
-  test("logs an unhandled rejection and keeps running", () => {
+  test("closes and exits with code 1 when run fails", async () => {
     const close = mock(() => Promise.resolve())
-    handleLifecycle({ close, logger, scope: "test" })
+
+    await lifecycle(fail, { close, logger, scope: "test" })
+
+    expect(await exited).toBe(1)
+    expect(close).toHaveBeenCalledTimes(1)
+    expect(logger.error).toHaveBeenCalledTimes(1)
+  })
+
+  test("keeps running after run returns", async () => {
+    const close = mock(() => Promise.resolve())
+
+    await lifecycle(idle, { close, logger, scope: "test" })
+
+    expect(close).not.toHaveBeenCalled()
+    expect(exit).not.toHaveBeenCalled()
+  })
+
+  test("logs an unhandled rejection and keeps running", async () => {
+    const close = mock(() => Promise.resolve())
+    await lifecycle(idle, { close, logger, scope: "test" })
 
     process.emit("unhandledRejection", new Error("rejected"), Promise.resolve())
 
@@ -102,11 +125,12 @@ describe("handleLifecycle", () => {
 
   test("closes once when it stops more than once", async () => {
     const close = mock(() => Promise.resolve())
-    const lifecycle = handleLifecycle({ close, logger, scope: "test" })
+    await lifecycle(idle, { close, logger, scope: "test" })
 
-    await Promise.all([lifecycle.stop(1), lifecycle.stop(0)])
+    process.emit("uncaughtException", new Error("thrown"))
+    process.emit("SIGTERM")
 
+    expect(await exited).toBe(1)
     expect(close).toHaveBeenCalledTimes(1)
-    expect(exit).toHaveBeenCalledWith(1)
   })
 })

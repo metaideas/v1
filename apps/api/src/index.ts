@@ -1,17 +1,23 @@
-import { handleLifecycle } from "@v1/utils/lifecycle"
+import type { Server } from "bun"
+import { lifecycle } from "@v1/utils/lifecycle"
 import app from "#routes/index.ts"
 import { ENV } from "#shared/env.generated.ts"
 import { log } from "#shared/logger.ts"
 import { database, dispatcher, kv } from "#shared/services.ts"
 
-const server = Bun.serve({ fetch: app.fetch, port: ENV.PORT })
+let server: Server<undefined> | undefined
 
-// The server stops taking requests and finishes the ones in progress before the services close.
-handleLifecycle({
-  close: async () => {
-    await server.stop()
-    await Promise.all([dispatcher.close(), kv.dispose(), database.$client.close()])
+await lifecycle(
+  () => {
+    server = Bun.serve({ fetch: app.fetch, port: ENV.PORT })
   },
-  logger: log,
-  scope: "api",
-})
+  {
+    // The server stops taking requests and finishes the ones in progress before the services close.
+    close: async () => {
+      await server?.stop()
+      await Promise.all([dispatcher.close(), kv.dispose(), database.$client.close()])
+    },
+    logger: log,
+    scope: "api",
+  }
+)
