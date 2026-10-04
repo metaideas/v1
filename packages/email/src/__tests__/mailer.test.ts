@@ -3,7 +3,6 @@ import { EmailDeliveryError, SendEmailError } from "@v1/core/errors"
 import { isTimeoutError } from "tryharder/errors"
 import type { EmailMessage, SendContext } from "#transports.ts"
 import { createMailer } from "#mailer.ts"
-import { memoryTransport } from "#transports.ts"
 
 const props = { appName: "v1", resetUrl: "https://example.com/reset?token=abc" }
 const from = "v1 <dev@example.com>"
@@ -11,15 +10,17 @@ const to = ["ada@example.com"]
 
 describe("createMailer", () => {
   test("renders the template subject, HTML, and text and sends them through the transport", async () => {
-    const transport = memoryTransport()
-    const mailer = createMailer({ from, transport })
+    const send = mock((_message: EmailMessage, _context: SendContext) =>
+      Promise.resolve({ id: "sent" })
+    )
+    const mailer = createMailer({ from, transport: { send } })
 
     const result = await mailer.send("password-reset", props, { to })
 
-    expect(result).toEqual({ id: "memory-1" })
-    expect(transport.sent).toHaveLength(1)
+    expect(result).toEqual({ id: "sent" })
+    expect(send).toHaveBeenCalledTimes(1)
 
-    const [message] = transport.sent
+    const message = send.mock.calls[0]?.[0]
     expect(message?.from).toBe(from)
     expect(message?.to).toEqual(to)
     expect(message?.subject).toBe("Reset your v1 password")
