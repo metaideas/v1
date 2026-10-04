@@ -26,6 +26,17 @@ describe("addImports", () => {
     expect(output?.indexOf("drain")).toBeLessThan(output?.indexOf("log.info") ?? 0)
   })
 
+  test("separates an import from the first statement of a source without imports", () => {
+    const output = addImports("export default function RootLayout() {\n  return null\n}\n", [
+      { from: "@sentry/react-native", imported: "*", local: "Sentry" },
+    ])
+
+    expect(getImports(output)).toEqual([
+      { from: "@sentry/react-native", imported: "*", local: "Sentry" },
+    ])
+    expect(output).toMatch(/^import \* as Sentry from "@sentry\/react-native";?\nexport default/)
+  })
+
   test("merges a named import into a value import from the same module", () => {
     const output = addImports('import { captureException } from "#shared/monitoring.ts"\n', [
       { from: "#shared/monitoring.ts", imported: "drain" },

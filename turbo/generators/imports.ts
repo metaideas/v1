@@ -34,18 +34,13 @@ function checkCanMerge(mod: ProxifiedModule, item: ImportItemInput) {
     )
 }
 
-function formatImport({ from, imported, local = imported }: ImportItemInput) {
-  const source = JSON.stringify(from)
-
-  if (imported === "*") return `import * as ${local} from ${source}`
-  if (imported === "default") return `import ${local} from ${source}`
-
-  return `import { ${imported === local ? local : `${imported} as ${local}`} } from ${source}`
-}
-
+// Magicast builds the declaration without a source location, so the printer separates it from the
+// statement that follows instead of reusing text from another parse.
 function insertImport(mod: ProxifiedModule, item: ImportItemInput) {
   const program = getProgram(mod)
-  const declaration = getProgram(parseModule(formatImport(item))).body.at(0)
+  const scratch = parseModule("")
+  scratch.imports.$append(item)
+  const declaration = getProgram(scratch).body.at(0)
   if (!declaration) throw new Error(`Could not build an import from ${item.from}.`)
 
   const lastImport = program.body.findLastIndex((node) => node.type === "ImportDeclaration")
