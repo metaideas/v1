@@ -34,7 +34,7 @@ type S3AdapterOptions = {
  * A file that storage holds after a successful upload or `head`, in the shape an application
  * records it.
  */
-export type StoredFileRecord = {
+export type AssetRecord = {
   etag?: string
   key: string
   lastModified?: number
@@ -49,19 +49,19 @@ type SyncCallbacks = {
    * Records a file after an upload or `head` succeeds. The operation waits for it, and a failure is
    * logged without failing the operation.
    */
-  onFileStored?: (file: StoredFileRecord) => Promise<unknown>
+  onAssetStored?: (file: AssetRecord) => Promise<unknown>
   /**
    * Removes the record of a deleted key. A bulk delete calls it once for each key.
    */
-  onFileDeleted?: (key: string) => Promise<unknown>
+  onAssetDeleted?: (key: string) => Promise<unknown>
 }
 
-type FileStorageOptions = SyncCallbacks & {
+type AssetsStorageOptions = SyncCallbacks & {
   adapter: Adapter
   logger?: Logger
 }
 
-type FileStorageRouterOptions = {
+type AssetsStorageRouterOptions = {
   allowedOrigins: AllowedOrigins
   /**
    * Returns the key prefix that scopes the current request, such as `users/<id>/`. Every gateway
@@ -69,10 +69,10 @@ type FileStorageRouterOptions = {
    */
   getKeyPrefix: () => string
   secret: string
-  storage: FileStorage
+  storage: AssetsStorage
 }
 
-export type FileStorage = ReturnType<typeof createFileStorage>
+export type AssetsStorage = ReturnType<typeof createAssetsStorage>
 
 const GATEWAY_OPERATIONS = [
   "capabilities",
@@ -87,7 +87,7 @@ const GATEWAY_OPERATIONS = [
   "url",
 ] as const
 
-function getUploadedFileRecord(key: string, file: UploadResult): StoredFileRecord {
+function getUploadedAssetRecord(key: string, file: UploadResult): AssetRecord {
   return {
     etag: file.etag,
     key,
@@ -98,7 +98,7 @@ function getUploadedFileRecord(key: string, file: UploadResult): StoredFileRecor
   }
 }
 
-function getStoredFileRecord(key: string, file: StoredFile): StoredFileRecord {
+function getStoredAssetRecord(key: string, file: StoredFile): AssetRecord {
   return {
     etag: file.etag,
     key,
@@ -149,8 +149,8 @@ function createTypePolicyPlugin(adapter: Adapter): FilesPlugin {
 
 function createSyncPlugin({
   logger,
-  onFileDeleted,
-  onFileStored,
+  onAssetDeleted,
+  onAssetStored,
 }: SyncCallbacks & { logger?: Logger }): FilesPlugin {
   async function sync(
     operation: StorageSyncError["operation"],
@@ -177,24 +177,24 @@ function createSyncPlugin({
     wrap: handlers({
       delete: async (operation, next) => {
         await next(operation)
-        if (onFileDeleted) {
-          await sync("delete", operation.key, () => onFileDeleted(operation.key))
+        if (onAssetDeleted) {
+          await sync("delete", operation.key, () => onAssetDeleted(operation.key))
         }
       },
       head: async (operation, next) => {
         const file = await next(operation)
-        if (onFileStored) {
+        if (onAssetStored) {
           await sync("store", operation.key, () =>
-            onFileStored(getStoredFileRecord(operation.key, file))
+            onAssetStored(getStoredAssetRecord(operation.key, file))
           )
         }
         return file
       },
       upload: async (operation, next) => {
         const result = await next(operation)
-        if (onFileStored) {
+        if (onAssetStored) {
           await sync("store", operation.key, () =>
-            onFileStored(getUploadedFileRecord(operation.key, result))
+            onAssetStored(getUploadedAssetRecord(operation.key, result))
           )
         }
         return result
@@ -228,16 +228,16 @@ export function createMemoryAdapter(options?: MemoryAdapterOptions) {
  * what it can without seeing the bytes: the key, the size cap in the signed upload policy, and an
  * allowed type when an upload completes. A stored file of a disallowed type is deleted.
  */
-export function createFileStorage({
+export function createAssetsStorage({
   adapter,
   logger,
-  onFileDeleted,
-  onFileStored,
-}: FileStorageOptions) {
+  onAssetDeleted,
+  onAssetStored,
+}: AssetsStorageOptions) {
   return createFiles({
     adapter,
     plugins: [
-      createSyncPlugin({ logger, onFileDeleted, onFileStored }),
+      createSyncPlugin({ logger, onAssetDeleted, onAssetStored }),
       createTypePolicyPlugin(adapter),
       signedUrlPolicy({
         maxExpiresIn: STORAGE_MAX_URL_AGE,
@@ -248,12 +248,12 @@ export function createFileStorage({
   })
 }
 
-export function createFileStorageRouter({
+export function createAssetsStorageRouter({
   allowedOrigins,
   getKeyPrefix,
   secret,
   storage,
-}: FileStorageRouterOptions) {
+}: AssetsStorageRouterOptions) {
   return createFilesRouter({
     allowedOrigins,
     authorize: () => ({

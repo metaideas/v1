@@ -4,7 +4,7 @@ import { createDatabase } from "@v1/database/client"
 import { createMailer } from "@v1/email/mailer"
 import { selectTransport } from "@v1/email/transports"
 import { createDispatcher } from "@v1/jobs/dispatcher"
-import { createFileStorage, createS3Adapter } from "@v1/storage/server"
+import { createAssetsStorage, createS3Adapter } from "@v1/storage/server"
 import { createWorkflows } from "@v1/workflows/client"
 import { createStorage } from "unstorage"
 import redisDriver from "unstorage/drivers/redis"
@@ -45,7 +45,7 @@ export const auth = createServerAuth({
   trustedOrigins: allowedOrigins,
 })
 
-export const storage = createFileStorage({
+export const storage = createAssetsStorage({
   adapter: createS3Adapter({
     accessKeyId: ENV.S3_ACCESS_KEY_ID,
     bucket: ENV.S3_BUCKET,
@@ -54,8 +54,8 @@ export const storage = createFileStorage({
     secretAccessKey: ENV.S3_SECRET_ACCESS_KEY,
   }),
   logger: log,
-  onFileDeleted: deleteAsset,
-  onFileStored: upsertAsset,
+  onAssetDeleted: deleteAsset,
+  onAssetStored: upsertAsset,
 })
 
 export const workflows = createWorkflows({

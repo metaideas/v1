@@ -7,7 +7,7 @@ import type {
 import * as FilesReact from "files-sdk/react"
 import { createCachedAccessToken } from "#access-token.ts"
 
-type FileStorageClientOptions = {
+type AssetsStorageClientOptions = {
   /**
    * URL of the storage gateway, such as `http://localhost:3000/files`.
    */
@@ -25,7 +25,7 @@ type FileStorageClientOptions = {
  * module and imports the hooks from there. Uploads and downloads go directly to the bucket through
  * signed URLs, and only the gateway calls carry the access token.
  */
-export function createFileStorageClient({ endpoint, getToken }: FileStorageClientOptions) {
+export function createAssetsStorageClient({ endpoint, getToken }: AssetsStorageClientOptions) {
   const getAccessToken = createCachedAccessToken(getToken)
   const config = {
     endpoint,

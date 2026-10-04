@@ -88,9 +88,9 @@ Clients transfer bytes directly with the bucket. A keyless upload sends the file
 An application workspace that serves files creates one storage instance in its composition root:
 
 ```ts
-import { createFileStorage, createS3Adapter } from "@v1/storage/server"
+import { createAssetsStorage, createS3Adapter } from "@v1/storage/server"
 
-export const storage = createFileStorage({
+export const storage = createAssetsStorage({
   adapter: createS3Adapter({
     accessKeyId: ENV.S3_ACCESS_KEY_ID,
     bucket: ENV.S3_BUCKET,
@@ -99,21 +99,21 @@ export const storage = createFileStorage({
     secretAccessKey: ENV.S3_SECRET_ACCESS_KEY,
   }),
   logger: log,
-  onFileDeleted: deleteAsset,
-  onFileStored: upsertAsset,
+  onAssetDeleted: deleteAsset,
+  onAssetStored: upsertAsset,
 })
 ```
 
-`onFileStored` and `onFileDeleted` keep application records in sync with storage. `createFileStorage` calls `onFileStored` after an upload or `head` succeeds and `onFileDeleted` once for each deleted key, including each key of a bulk delete. The operation waits for the callback. Storage and the record are not atomic, so a failed callback is logged through `logger` as a `StorageSyncError` and the storage result stands. `apps/api` uses these callbacks to keep the `assets` table current.
+`onAssetStored` and `onAssetDeleted` keep application records in sync with storage. `createAssetsStorage` calls `onAssetStored` after an upload or `head` succeeds and `onAssetDeleted` once for each deleted key, including each key of a bulk delete. The operation waits for the callback. Storage and the record are not atomic, so a failed callback is logged through `logger` as a `StorageSyncError` and the storage result stands. `apps/api` uses these callbacks to keep the `assets` table current.
 
-`createFileStorageRouter({ allowedOrigins, getKeyPrefix, secret, storage })` returns a router whose `handle(request)` serves the gateway. `apps/api` mounts it at `/files` and scopes every key to `users/<id>/`. The gateway authenticates with an access token instead of the session cookie: clients on other origins cannot send the HttpOnly cookie without credentialed requests, and a credentialed download would fail at the bucket's CORS check after the redirect. `createAccessTokenPlugin()` from `@v1/auth/server` issues short-lived JWTs at `/auth/token` and stores their signing keys in the `jwks` table, and the gateway checks each token with `auth.api.verifyJWT`. Locally, `S3_ENDPOINT` points at MinIO from Docker Compose. Tests pass `createMemoryAdapter()` instead of the S3 adapter.
+`createAssetsStorageRouter({ allowedOrigins, getKeyPrefix, secret, storage })` returns a router whose `handle(request)` serves the gateway. `apps/api` mounts it at `/files` and scopes every key to `users/<id>/`. The gateway authenticates with an access token instead of the session cookie: clients on other origins cannot send the HttpOnly cookie without credentialed requests, and a credentialed download would fail at the bucket's CORS check after the redirect. `createAccessTokenPlugin()` from `@v1/auth/server` issues short-lived JWTs at `/auth/token` and stores their signing keys in the `jwks` table, and the gateway checks each token with `auth.api.verifyJWT`. Locally, `S3_ENDPOINT` points at MinIO from Docker Compose. Tests pass `createMemoryAdapter()` instead of the S3 adapter.
 
-A client application calls `createFileStorageClient` from `@v1/storage/react` once in a `shared` module, passing the gateway URL from its own `ENV` and a function that fetches an access token from its auth client, and exports the hooks it returns: `useFiles` for uploads, downloads, and deletes, and `useFile`, `useList`, and `useSearch` for reads. The client reuses a token until shortly before it expires and sends it only to the gateway.
+A client application calls `createAssetsStorageClient` from `@v1/storage/react` once in a `shared` module, passing the gateway URL from its own `ENV` and a function that fetches an access token from its auth client, and exports the hooks it returns: `useFiles` for uploads, downloads, and deletes, and `useFile`, `useList`, and `useSearch` for reads. The client reuses a token until shortly before it expires and sends it only to the gateway.
 
 ```ts
-import { createFileStorageClient } from "@v1/storage/react"
+import { createAssetsStorageClient } from "@v1/storage/react"
 
-export const { useFile, useFiles, useList, useSearch } = createFileStorageClient({
+export const { useFile, useFiles, useList, useSearch } = createAssetsStorageClient({
   endpoint: buildApiUrl("/files"),
   getToken: async () => {
     const { data, error } = await authClient.token()
