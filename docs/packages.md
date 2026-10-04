@@ -79,6 +79,30 @@ export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 
 `packages/payments` wraps Stripe with a subscription cache. `createPayments({ secretKey, webhookSecret, storage })` takes any [unstorage](https://unstorage.unjs.io/) instance for the cache, such as the Redis instance that `apps/api` creates in its composition root. `parseWebhook` verifies a webhook request and returns its event, or an `InvalidWebhookError` value. `syncSubscription` caches the latest subscription from Stripe, and `getSubscription` reads the cache and falls back to Stripe on a miss.
 
+## File Storage
+
+`packages/storage` owns file storage on top of [Files SDK](https://github.com/haydenbleasel/files-sdk): the access policy, the authenticated gateway, and the React client. The policy covers accepted content types, upload size, URL lifetime, list limits, and key rules, and lives in `src/constants.ts` and `src/server.ts`. Treat a change to it as a security change and review it as one.
+
+An application workspace that serves files creates one storage instance in its composition root:
+
+```ts
+import { createFileStorage, createS3Adapter } from "@v1/storage/server"
+
+export const storage = createFileStorage({
+  adapter: createS3Adapter({
+    accessKeyId: ENV.S3_ACCESS_KEY_ID,
+    bucket: ENV.S3_BUCKET,
+    endpoint: ENV.S3_ENDPOINT,
+    region: ENV.S3_REGION,
+    secretAccessKey: ENV.S3_SECRET_ACCESS_KEY,
+  }),
+})
+```
+
+`createFileStorageRouter({ allowedOrigins, getKeyPrefix, secret, storage })` returns a router whose `handle(request)` serves the gateway. `apps/api` mounts it at `/files` behind its session middleware and scopes every key to `users/<id>/`. Locally, `S3_ENDPOINT` points at MinIO from Docker Compose. Tests pass `createMemoryAdapter()` instead of the S3 adapter.
+
+A client application calls `createFileStorageClient({ endpoint })` from `@v1/storage/react` once in a `shared` module, passing the gateway URL from its own `ENV`, and exports the hooks it returns: `useFiles` for uploads, downloads, and deletes, and `useFile`, `useList`, and `useSearch` for reads. Requests to the gateway carry the session cookie. React Native file references need a native transport, which the package does not include.
+
 ## Key-Value Storage
 
 There is no key-value package workspace. An application workspace that needs one creates an [unstorage](https://unstorage.unjs.io/) instance in its composition root. `apps/api` uses the Redis driver against Redis from Docker Compose and passes the instance to handlers as `c.var.kv`. Namespace keys per feature with unstorage's `prefixStorage`. Values must be JSON-serializable; dates come back as strings.

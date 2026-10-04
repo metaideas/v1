@@ -11,7 +11,7 @@ import healthRoutes from "#routes/health.ts"
 import trpcRoutes from "#routes/trpc.ts"
 import v1Routes from "#routes/v1/index.ts"
 import { withLanguageDetection } from "#shared/middleware.ts"
-import { auth, database, dispatcher, files, kv, workflows } from "#shared/services.ts"
+import { auth, database, dispatcher, kv, storage, workflows } from "#shared/services.ts"
 import { allowedOrigins, factory, toContentfulStatusCode } from "#shared/utils.ts"
 
 const app = factory.createApp()
@@ -39,8 +39,8 @@ app.use(async (c, next) => {
   c.set("auth", auth)
   c.set("db", database)
   c.set("dispatcher", dispatcher)
-  c.set("files", files)
   c.set("kv", kv)
+  c.set("storage", storage)
   c.set("workflows", workflows)
   await next()
 })

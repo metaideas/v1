@@ -35,6 +35,7 @@ root
   │   ├── email                 # Email templates and delivery through Resend or SMTP
   │   ├── jobs                  # Fire-and-forget background jobs on Redis using BullMQ
   │   ├── payments              # Payment processing utilities using Stripe
+  │   ├── storage               # File storage gateway and React client using Files SDK
   │   ├── ui                    # Reusable UI components and design system using Shadcn/UI
   │   ├── utils                 # Shared helpers and constants for packages and apps
   │   └── workflows             # Durable background workflows using DBOS
@@ -106,7 +107,7 @@ Each application workspace below follows the layout above. The trees show the fo
 
 ### API
 
-A Hono server on Bun. It serves tRPC, versioned REST routes, and the Files SDK gateway, and runs durable workflows in process. `src/client.ts` is the only module that other application workspaces can import.
+A Hono server on Bun. It serves tRPC, versioned REST routes, and the file storage gateway from `@v1/storage`, and runs durable workflows in process. `src/client.ts` is the only module that other application workspaces can import.
 
 ```sh
 apps/api/src
