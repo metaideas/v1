@@ -1,0 +1,22 @@
+diff --git a/dist/audit-DlYCX6oa.mjs b/dist/audit-DlYCX6oa.mjs
+index 7fb7ac273cc69bdcd82fbcd8f1c3b62ada03866c..ba8d8759b6c2c222534e626ab85897dc5114419b 100644
+--- a/dist/audit-DlYCX6oa.mjs
++++ b/dist/audit-DlYCX6oa.mjs
+@@ -624,7 +624,7 @@ function createLogMethod(level) {
+ 			else if (hasMessageSpecifiers(tagOrEvent)) emitTaggedLog(level, "log", formatMessage(tagOrEvent, [message, ...args]));
+ 			else emitTaggedLog(level, tagOrEvent, formatMessage(message, args));
+ 		} else if (tagOrEvent instanceof Error) emitWideEvent(level, { error: serializeError(tagOrEvent) });
+-		else if (typeof tagOrEvent === "object") emitWideEvent(level, tagOrEvent);
++		else if (typeof tagOrEvent === "object") emitWideEvent(level, removeErrorCycles(tagOrEvent, new WeakSet()));
+ 		else emitTaggedLog(level, "log", String(tagOrEvent));
+ 	};
+ }
+@@ -728,7 +728,7 @@ function createLogger(initialContext = {}, internalOptions) {
+ 				warnPostEmit("log.set()", `Keys dropped: ${keys.length ? keys.join(", ") : "(empty)"}.`);
+ 				return;
+ 			}
+-			mergeInto(context, data);
++			mergeInto(context, removeErrorCycles(data, new WeakSet()));
+ 		},
+ 		setLevel(level) {
+ 			if (emitted) {

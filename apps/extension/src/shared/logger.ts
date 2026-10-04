@@ -1,5 +1,4 @@
-import { serializeErrors } from "@v1/utils/error"
-import { auditRedactPreset, log as evlog, initLogger } from "evlog"
+import { auditRedactPreset, initLogger } from "evlog"
 
 // The preset masks exact field names such as `secret` and `apiKey`. A bare word also masks the
 // whole field name in any casing, such as `passPhrase`. The globs mask credentials inside longer
@@ -36,20 +35,4 @@ initLogger({
   },
 })
 
-type LogEvent = Record<string, unknown>
-
-// evlog writes an `Error` inside an event as `{}`.
-export const log = {
-  debug: (event: LogEvent) => {
-    evlog.debug(serializeErrors(event))
-  },
-  error: (event: LogEvent) => {
-    evlog.error(serializeErrors(event))
-  },
-  info: (event: LogEvent) => {
-    evlog.info(serializeErrors(event))
-  },
-  warn: (event: LogEvent) => {
-    evlog.warn(serializeErrors(event))
-  },
-}
+export { log } from "evlog"

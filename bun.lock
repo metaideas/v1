@@ -38,7 +38,7 @@
         "@v1/storage": "workspace:*",
         "@v1/utils": "workspace:*",
         "@v1/workflows": "workspace:*",
-        "evlog": "2.29.0",
+        "evlog": "2.30.0",
         "hono": "4.12.32",
         "hono-openapi": "1.3.1",
         "hono-rate-limiter": "0.5.3",
@@ -72,7 +72,7 @@
         "@v1/ui": "workspace:*",
         "@v1/utils": "workspace:*",
         "cn": "0.3.0",
-        "evlog": "2.29.0",
+        "evlog": "2.30.0",
         "react": "19.2.3",
         "react-dom": "19.2.3",
         "recharts": "3.10.1",
@@ -112,9 +112,8 @@
         "@tanstack/react-router": "1.170.41",
         "@tanstack/react-router-devtools": "1.167.0",
         "@v1/ui": "workspace:*",
-        "@v1/utils": "workspace:*",
         "electron-squirrel-startup": "1.0.1",
-        "evlog": "2.29.0",
+        "evlog": "2.30.0",
         "faultier": "3.0.1",
         "react": "19.2.3",
         "react-dom": "19.2.3",
@@ -173,8 +172,7 @@
       "name": "extension",
       "dependencies": {
         "@v1/ui": "workspace:*",
-        "@v1/utils": "workspace:*",
-        "evlog": "2.29.0",
+        "evlog": "2.30.0",
         "react": "19.2.3",
         "react-dom": "19.2.3",
         "varlock": "1.16.0",
@@ -210,9 +208,8 @@
         "@tanstack/query-async-storage-persister": "5.90.18",
         "@tanstack/react-query": "5.101.4",
         "@tanstack/react-query-persist-client": "5.90.18",
-        "@v1/utils": "workspace:*",
         "cn": "0.3.0",
-        "evlog": "2.29.0",
+        "evlog": "2.30.0",
         "expo": "57.0.26",
         "expo-constants": "57.0.20",
         "expo-dev-client": "57.0.19",
@@ -282,9 +279,8 @@
       "name": "worker",
       "dependencies": {
         "@v1/jobs": "workspace:*",
-        "@v1/utils": "workspace:*",
         "@v1/workflows": "workspace:*",
-        "evlog": "2.29.0",
+        "evlog": "2.30.0",
         "inngest": "4.21.1",
         "std-env": "4.2.0",
         "varlock": "1.16.0",
@@ -520,6 +516,9 @@
     "extension",
     "docs",
   ],
+  "patchedDependencies": {
+    "evlog@2.30.0": "patches/evlog@2.30.0.patch",
+  },
   "overrides": {
     "@types/react": "19.2.4",
     "@types/react-dom": "19.2.4",
@@ -2984,7 +2983,7 @@
 
     "eventsource-parser": ["eventsource-parser@3.1.0", "", {}, "sha512-kJezFj9YFAMLeORyi7aCLxLbD5/qWMQnoMVlVPyHIll7lgRJCc3JVln9Vgl9nwQi0YkMnhdGTMNn7CkRRAptMg=="],
 
-    "evlog": ["evlog@2.29.0", "", { "peerDependencies": { "@nestjs/common": ">=11.2.3", "@nuxt/kit": "^4.4.2", "@orpc/server": ">=1.15.0", "@tanstack/start-client-core": "^1.170.28", "ai": ">=6.0.168 <8.0.0", "elysia": ">=1.4.30", "eve": ">=0.30.0", "express": ">=5.2.1", "fastify": ">=5.12.3", "h3": "^1.15.11", "hono": ">=4.13.7", "next": ">=16.3.4", "nitro": "^3.0.260311-beta", "nitropack": "^2.13.4", "ofetch": "^1.5.1", "react": ">=19.2.8", "react-router": ">=7.18.3", "vite": "^7.0.0 || ^8.0.0" }, "optionalPeers": ["@nestjs/common", "@nuxt/kit", "@orpc/server", "@tanstack/start-client-core", "ai", "elysia", "eve", "express", "fastify", "h3", "hono", "next", "nitro", "nitropack", "ofetch", "react", "react-router", "vite"] }, "sha512-1qk5W3lttyAUz326ptqRbasPyc19u/ECa8UULjtRihUUyKV8W2ihsr4kB2qkxfqaMY4dFNhH9iShrYy93jxt5A=="],
+    "evlog": ["evlog@2.30.0", "", { "peerDependencies": { "@nestjs/common": ">=11.2.3", "@nuxt/kit": "^4.4.2", "@orpc/server": ">=1.15.0", "@tanstack/start-client-core": "^1.170.29", "ai": ">=6.0.168 <8.0.0", "elysia": ">=1.4.30", "eve": ">=0.30.0", "express": ">=5.2.1", "fastify": ">=5.12.4", "h3": "^1.15.11", "hono": ">=4.13.7", "next": ">=16.3.4", "nitro": "^3.0.260311-beta", "nitropack": "^2.13.4", "ofetch": "^1.5.1", "react": ">=19.3.0", "react-router": ">=7.18.3", "vite": "^7.0.0 || ^8.0.0" }, "optionalPeers": ["@nestjs/common", "@nuxt/kit", "@orpc/server", "@tanstack/start-client-core", "ai", "elysia", "eve", "express", "fastify", "h3", "hono", "next", "nitro", "nitropack", "ofetch", "react", "react-router", "vite"], "bin": { "evlog": "./bin/evlog.mjs" } }, "sha512-5rfADenoi5YFDjEpljSxpPgqfJl0XAP5pPOCeJqCXA8BCN2gzeecqCXZB5uDJyB/4nvD52z4lCKfOCCXHh947A=="],
 
     "execa": ["execa@9.6.1", "", { "dependencies": { "@sindresorhus/merge-streams": "^4.0.0", "cross-spawn": "^7.0.6", "figures": "^6.1.0", "get-stream": "^9.0.0", "human-signals": "^8.0.1", "is-plain-obj": "^4.1.0", "is-stream": "^4.0.1", "npm-run-path": "^6.0.0", "pretty-ms": "^9.2.0", "signal-exit": "^4.1.0", "strip-final-newline": "^4.0.0", "yoctocolors": "^2.1.1" } }, "sha512-9Be3ZoN4LmYR90tUoVu2te2BsbzHfhJyfEiAVfz7N5/zv+jduIfLrV2xdQXOHbaD6KgpGdO9PRPM1Y4Q9QkPkA=="],
 
