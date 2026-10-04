@@ -39,18 +39,6 @@ bun run generate files-client
 
 The template command can target any workspace under `apps/` and asks for the Files SDK endpoint. It creates an application-local module in `src/shared/` that exports authenticated React hooks for uploads, downloads, listings, and searches. A repeat run reports skips without replacing generated application code.
 
-## Add the AI chat demo
-
-`ai-chat-demo` adds a scripted AI SDK chat that needs no model, API key, or network:
-
-```bash
-bun run generate ai-chat-demo
-```
-
-The template command adds a demo feature to an application workspace and the dependency on the AI package workspace. Render the generated component in a route. To use a real model, keep the chat interface and replace the scripted transport with one backed by a server route that uses the AI package's model registry.
-
-The demo uses full Zod in the browser. Adding it gives up the bundle savings of Zod Mini on every route, because the two share Zod's core modules. A repeat run reports skips without replacing generated application code.
-
 ## Add Sentry
 
 Application workspaces log with evlog and need no external account. Error monitoring is opt-in. `sentry` adds the Sentry SDK to `apps/api`, `apps/app`, or `apps/mobile`:

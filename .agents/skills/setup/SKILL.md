@@ -8,7 +8,7 @@ Turn the template into the user's project. `bun template setup` does the mechani
 1. Ask what the product is and which surfaces it needs. Map the answer to workspaces:
    - `apps/app` for a full-stack web application, `apps/web` for a marketing site, `apps/docs` for documentation, `apps/mobile` for Expo, `apps/desktop` for Electron, `apps/extension` for a browser extension.
    - `apps/api` for a separate Hono service, `packages/backend` for Convex. Neither is required; `apps/app` is full-stack on its own.
-   - Package workspaces such as `auth`, `database`, `email`, `payments`, `ai`, `workflows` only when the product needs them. Setup keeps any package a kept workspace depends on.
+   - Package workspaces such as `auth`, `database`, `email`, `payments`, `workflows` only when the product needs them. Setup keeps any package a kept workspace depends on.
 2. Confirm the project name. It becomes the root package name and the npm scope of every package workspace.
 3. Run setup non-interactively with the choices:
 
