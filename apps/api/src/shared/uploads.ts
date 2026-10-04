@@ -19,7 +19,7 @@ export async function upsertUpload(file: UploadRecord) {
 
   await ctx.var.db
     .insert(uploads)
-    .values({ ...record, key: file.key, ownerId: userId, uploaderId: userId })
+    .values({ ...record, key: file.key, ownerId: userId })
     .onConflictDoUpdate({ set: { ...record, updatedAt: new Date() }, target: uploads.key })
 }
 

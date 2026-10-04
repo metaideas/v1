@@ -1,5 +1,5 @@
 {
-  "id": "520adc5b-2f28-466d-bea9-a591064eaea0",
+  "id": "ac34d8f6-40f5-4fa9-8a78-35b49308b14d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -470,12 +470,6 @@
           "notNull": true,
           "default": "now()"
         },
-        "uploader_id": {
-          "name": "uploader_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "etag": {
           "name": "etag",
           "type": "text",
@@ -555,34 +549,9 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "storage_uploads_uploader_id_idx": {
-          "name": "storage_uploads_uploader_id_idx",
-          "columns": [
-            {
-              "expression": "uploader_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
-        "uploads_uploader_id_users_id_fk": {
-          "name": "uploads_uploader_id_users_id_fk",
-          "tableFrom": "uploads",
-          "tableTo": "users",
-          "schemaTo": "auth",
-          "columnsFrom": ["uploader_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "cascade"
-        },
         "uploads_owner_id_users_id_fk": {
           "name": "uploads_owner_id_users_id_fk",
           "tableFrom": "uploads",

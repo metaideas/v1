@@ -58,7 +58,6 @@ CREATE TABLE "storage"."uploads" (
 	"id" text PRIMARY KEY NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"uploader_id" text,
 	"etag" text,
 	"key" text NOT NULL,
 	"last_modified" bigint,
@@ -93,7 +92,6 @@ CREATE TABLE "auth"."verifications" (
 ALTER TABLE "auth"."accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "profiles" ADD CONSTRAINT "profiles_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "auth"."sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "storage"."uploads" ADD CONSTRAINT "uploads_uploader_id_users_id_fk" FOREIGN KEY ("uploader_id") REFERENCES "auth"."users"("id") ON DELETE set null ON UPDATE cascade;--> statement-breakpoint
 ALTER TABLE "storage"."uploads" ADD CONSTRAINT "uploads_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
 CREATE INDEX "auth_accounts_user_id_idx" ON "auth"."accounts" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "auth_accounts_provider_idx" ON "auth"."accounts" USING btree ("provider_id");--> statement-breakpoint
@@ -104,7 +102,6 @@ CREATE INDEX "auth_sessions_expires_at_idx" ON "auth"."sessions" USING btree ("e
 CREATE INDEX "auth_sessions_ip_address_idx" ON "auth"."sessions" USING btree ("ip_address");--> statement-breakpoint
 CREATE UNIQUE INDEX "storage_uploads_key_unique_idx" ON "storage"."uploads" USING btree ("key");--> statement-breakpoint
 CREATE INDEX "storage_uploads_owner_id_idx" ON "storage"."uploads" USING btree ("owner_id");--> statement-breakpoint
-CREATE INDEX "storage_uploads_uploader_id_idx" ON "storage"."uploads" USING btree ("uploader_id");--> statement-breakpoint
 CREATE INDEX "users_email_idx" ON "auth"."users" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "auth_verifications_identifier_idx" ON "auth"."verifications" USING btree ("identifier");--> statement-breakpoint
 CREATE INDEX "auth_verifications_expires_idx" ON "auth"."verifications" USING btree ("expires_at");--> statement-breakpoint

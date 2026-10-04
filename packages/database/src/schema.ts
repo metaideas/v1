@@ -174,14 +174,6 @@ export const uploads = storageSchema.table(
     ...id(z.branded("UploadId"), "upld"),
     ...timestamps,
 
-    uploaderId: pg
-      .text()
-      .references(() => users.id, {
-        onDelete: "set null",
-        onUpdate: "cascade",
-      })
-      .$type<UserId>(),
-
     etag: pg.text(),
 
     key: pg.text().notNull(),
@@ -208,7 +200,6 @@ export const uploads = storageSchema.table(
   (table) => [
     pg.uniqueIndex("storage_uploads_key_unique_idx").on(table.key),
     pg.index("storage_uploads_owner_id_idx").on(table.ownerId),
-    pg.index("storage_uploads_uploader_id_idx").on(table.uploaderId),
   ]
 )
 
@@ -254,10 +245,9 @@ export const profileRelations = relations(profiles, ({ one }) => ({
 
 export const userRelations = relations(users, ({ one, many }) => ({
   accounts: many(accounts),
-  ownedUploads: many(uploads, { relationName: "uploadOwner" }),
   profile: one(profiles),
   sessions: many(sessions),
-  uploads: many(uploads, { relationName: "uploader" }),
+  uploads: many(uploads),
 }))
 
 export const accountRelations = relations(accounts, ({ one }) => ({
@@ -278,11 +268,5 @@ export const uploadRelations = relations(uploads, ({ one }) => ({
   owner: one(users, {
     fields: [uploads.ownerId],
     references: [users.id],
-    relationName: "uploadOwner",
-  }),
-  uploader: one(users, {
-    fields: [uploads.uploaderId],
-    references: [users.id],
-    relationName: "uploader",
   }),
 }))
