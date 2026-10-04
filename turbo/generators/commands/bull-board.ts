@@ -1,12 +1,14 @@
 import type { PlopTypes } from "@turbo/gen"
+import type { ImportItemInput } from "magicast"
 import Bun from "bun"
 
+import { addImports } from "../imports"
 import { readPackageJson } from "../schemas"
 
 type Edit = {
   path: string
   marker: string
-  imports: readonly string[]
+  imports: readonly ImportItemInput[]
   replacements: ReadonlyArray<readonly [anchor: string, replacement: string]>
   manual: string
 }
@@ -24,7 +26,7 @@ JOBS_DASHBOARD_USERNAME=
 JOBS_DASHBOARD_PASSWORD=
 `
 
-const DASHBOARD_IMPORT = 'import { jobsDashboard } from "#shared/jobs-dashboard.ts"'
+const DASHBOARD_IMPORT = { from: "#shared/jobs-dashboard.ts", imported: "jobsDashboard" }
 
 const EDITS: readonly Edit[] = [
   {
@@ -49,18 +51,6 @@ const EDITS: readonly Edit[] = [
   },
 ]
 
-function addImport(source: string, line: string) {
-  if (source.includes(line)) {
-    return source
-  }
-
-  const lines = source.split("\n")
-  const lastImport = lines.findLastIndex((text) => /^(import .+|\}) from "[^"]+"$/.test(text))
-  lines.splice(lastImport + 1, 0, line)
-
-  return lines.join("\n")
-}
-
 async function applyEdit(path: string, edit: Edit) {
   const file = Bun.file(path)
 
@@ -82,9 +72,12 @@ async function applyEdit(path: string, edit: Edit) {
     source = source.replace(anchor, replacement)
   }
 
-  for (const line of edit.imports) {
-    source = addImport(source, line)
+  const sourceWithImports = addImports(source, edit.imports)
+  if (sourceWithImports === undefined) {
+    return `[MANUAL] ${path} already binds a name this edit imports. ${edit.manual}`
   }
+
+  source = sourceWithImports
 
   await Bun.write(path, source)
   return `${path}: connected bull-board`
