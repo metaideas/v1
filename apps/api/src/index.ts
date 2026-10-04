@@ -3,12 +3,13 @@ import type { Serve } from "bun"
 
 import app from "#routes/index.ts"
 import { ENV } from "#shared/env.generated.ts"
-import { database, kv, workflows } from "#shared/services.ts"
+import { database, dispatcher, kv, workflows } from "#shared/services.ts"
 
 await workflows.launch()
 
 async function shutdown() {
   await workflows.shutdown()
+  await dispatcher.close()
   await kv.dispose()
   await database.$client.close()
   process.exit(0)

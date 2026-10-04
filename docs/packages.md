@@ -1,6 +1,6 @@
 ---
 title: Package Guidance
-description: Understand the shared package workspaces, hosted backend package, key-value storage, and workflow conventions in v1.
+description: Understand the shared package workspaces, hosted backend package, key-value storage, job, and workflow conventions in v1.
 ---
 
 Shared libraries and hosted backends are in `packages/`. Application workspaces consume them through workspace dependencies. Package names use the configured scope of the project.
@@ -82,6 +82,68 @@ export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 ## Key-Value Storage
 
 There is no key-value package workspace. An application workspace that needs one creates an [unstorage](https://unstorage.unjs.io/) instance in its composition root. `apps/api` uses the Redis driver against Redis from Docker Compose and passes the instance to handlers as `c.var.kv`. Namespace keys per feature with unstorage's `prefixStorage`. Values must be JSON-serializable; dates come back as strings.
+
+## Jobs
+
+`packages/jobs` runs fire-and-forget background jobs on Redis through [BullMQ](https://docs.bullmq.io/). A dispatcher adds a job to a queue, and a worker in another process picks it up. Use a job for one unit of work that can run later and retry on its own, such as sending an email, resizing an upload, or calling a slow third-party API. Use a [workflow](#workflows) when the work has several steps whose progress must survive a crash, or when the caller waits for its result.
+
+Each queue lives in its own file under `src/queues/` and owns its jobs. `defineQueue` sets the concurrency of each worker process that consumes the queue and an optional rate limit across every worker. `defineJob` declares a job's payload schema and, optionally, its attempts. A job's name is its key in `jobs`, so a queue cannot list the same name twice:
+
+```ts
+// src/queues/email.ts
+export const emailQueue = defineQueue({
+  concurrency: 5,
+  limiter: { duration: 1000, max: 10 },
+  jobs: {
+    "send-welcome": defineJob({
+      attempts: 5,
+      payload: z.object({ email: z.email(), name: z.string() }),
+    }),
+    "send-digest": sendDigest,
+  },
+})
+```
+
+`src/catalog.ts` lists every queue, and a queue's name is its key there:
+
+```ts
+export const queues = { default: defaultQueue, email: emailQueue }
+```
+
+Write small jobs inline. When a queue grows large, declare each job with `defineJob` in its own file, such as `src/jobs/send-digest.ts`, and keep only the name-to-job entries in the queue file. The names stay in one object, so a duplicate is still a type error. Two queues can each have a job with the same name.
+
+Any server-side application workspace can dispatch. Create one dispatcher in its composition root and close it on shutdown:
+
+```ts
+import { createDispatcher } from "@v1/jobs/dispatcher"
+
+export const dispatcher = createDispatcher({ logger: log, url: ENV.JOBS_REDIS_URL })
+
+await c.var.dispatcher.dispatch("default", "greet-user", { userId }, { id: `greet-${userId}` })
+```
+
+`dispatch` type-checks the queue, the job name on that queue, and its payload, and validates the payload before it reaches Redis. Dispatches with the same `id` add one job while BullMQ keeps it. Pass `delayMs` to run a job later. A failed dispatch comes back as a `DispatchJobError` or `JobPayloadError` value instead of throwing. While Redis is unreachable, a dispatch fails after one reconnect attempt instead of holding the request open.
+
+`apps/worker` consumes queues. A worker takes handlers by queue and job, and consumes every queue it lists. It must handle every job on those queues, so adding a job to a queue fails type checking in each worker that consumes it until a handler exists:
+
+```ts
+import { createJobWorker } from "@v1/jobs/worker"
+
+const worker = createJobWorker({
+  handlers: {
+    default: { "greet-user": greetUser },
+    email: { "send-welcome": sendWelcome, "send-digest": sendDigest },
+  },
+  logger: log,
+  url: ENV.JOBS_REDIS_URL,
+})
+
+await worker.run()
+```
+
+Run more than one worker process to share a queue; BullMQ hands each job to one of them. To isolate a slow or rate-limited queue, run a process whose handlers list only that queue. A job retries with exponential backoff until it runs out of attempts, so keep handlers idempotent. Each handler receives the payload and a context with the `attempt` number and the job `id`, which stays the same across attempts and works as an idempotency key for a third-party API. A job whose payload no longer matches its schema, or whose name the worker does not handle, fails without a retry. That happens when a dispatcher and a worker run different versions during a deploy, so change a payload schema in a way that accepts both shapes until every process runs the new version. BullMQ removes completed jobs after a day and failed jobs after a week. `worker.close()` waits for the jobs in progress before the process exits.
+
+Jobs need Redis with `maxmemory-policy noeviction`, so Redis never drops a queued job to free memory. `JOBS_REDIS_URL` is separate from `REDIS_URL` so a project can point key-value storage at a cache that evicts keys. Locally, both point at Redis from Docker Compose, which runs with `noeviction`.
 
 ## Workflows
 

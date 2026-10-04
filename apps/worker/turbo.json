@@ -1,0 +1,5 @@
+{
+  "$schema": "https://v2-10-7.turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tags": ["application"]
+}

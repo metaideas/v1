@@ -5,7 +5,7 @@ import { NewFeatureAnswersSchema } from "../schemas"
 
 const FRONTEND_APPS: readonly string[] = ["app", "desktop", "extension", "mobile", "web"]
 const REACT_APPS: readonly string[] = ["app", "desktop", "extension", "mobile"]
-const SERVER_APPS: readonly string[] = ["api", "app"]
+const SERVER_APPS: readonly string[] = ["api", "app", "worker"]
 const APPS_WITHOUT_FEATURES = new Set(["docs"])
 const KNOWN_APPS = new Set([...APPS_WITHOUT_FEATURES, ...FRONTEND_APPS, ...SERVER_APPS])
 const DIRECTORY_ROLES = new Set(["assets", "components"])
@@ -44,7 +44,7 @@ function listRoles(app: string) {
 
 function templateFor(app: string, file: string) {
   if (file === "handlers") {
-    return `handlers/${app === "api" ? "api" : "app"}.ts.hbs`
+    return `handlers/${app === "api" || app === "worker" ? app : "app"}.ts.hbs`
   }
 
   return `${file}.ts.hbs`

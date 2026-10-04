@@ -1,0 +1,30 @@
+{
+  "name": "@v1/jobs",
+  "private": true,
+  "description": "Fire-and-forget background jobs on Redis using BullMQ",
+  "license": "MIT",
+  "type": "module",
+  "imports": {
+    "#*": "./src/*"
+  },
+  "exports": {
+    "./dispatcher": "./src/dispatcher.ts",
+    "./worker": "./src/worker.ts"
+  },
+  "scripts": {
+    "bump:deps": "bun update --interactive",
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
+  },
+  "dependencies": {
+    "@v1/core": "workspace:*",
+    "@v1/utils": "workspace:*",
+    "bullmq": "6.3.11",
+    "ioredis": "5.11.1",
+    "tryharder": "0.4.0"
+  },
+  "devDependencies": {
+    "@tooling/tsconfig": "workspace:*",
+    "@types/bun": "1.4.2",
+    "typescript": "7.0.2"
+  }
+}

@@ -3,6 +3,7 @@ import { createServerAuth } from "@v1/auth/server"
 import { createDatabase } from "@v1/database/client"
 import { createMailer } from "@v1/email/mailer"
 import { selectTransport } from "@v1/email/transports"
+import { createDispatcher } from "@v1/jobs/dispatcher"
 import { Workflows } from "@v1/workflows/client"
 import { createFiles } from "files-sdk"
 import { bunS3 } from "files-sdk/bun-s3"
@@ -20,6 +21,8 @@ import { allowedOrigins } from "#shared/utils.ts"
 export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 
 export const kv = createStorage({ driver: redisDriver({ url: ENV.REDIS_URL }) })
+
+export const dispatcher = createDispatcher({ logger: log, url: ENV.JOBS_REDIS_URL })
 
 export const mailer = createMailer({
   from: ENV.EMAIL_FROM,

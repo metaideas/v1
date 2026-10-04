@@ -14,6 +14,7 @@ const APP_BOUNDARIES = {
   extension: { folders: ["entrypoints"] },
   mobile: { routes: "app" },
   web: { routes: "pages" },
+  worker: {},
 }
 
 export default defineConfig({

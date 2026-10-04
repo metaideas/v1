@@ -1,0 +1,9 @@
+{
+  "extends": "@tooling/tsconfig/base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src", "reset.d.ts"]
+}

@@ -1,4 +1,5 @@
 import type { Database } from "@v1/database/client"
+import type { Dispatcher } from "@v1/jobs/dispatcher"
 import type { DeepMerge } from "@v1/utils/type"
 import type { EvlogVariables } from "evlog/hono"
 import type { Files } from "files-sdk"
@@ -12,6 +13,7 @@ export type AppContext = DeepMerge<
     Variables: {
       auth: Auth
       db: Database
+      dispatcher: Dispatcher
       files: Files
       kv: Storage
       language: Locale

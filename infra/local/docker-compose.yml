@@ -3,6 +3,8 @@ name: v1
 services:
   redis:
     image: redis:8.2.0
+    # Job queues need Redis to keep every key, so it never evicts under memory pressure.
+    command: redis-server --maxmemory-policy noeviction
     ports:
       - "8000:6379"
     volumes:
