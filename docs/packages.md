@@ -129,9 +129,9 @@ There is no key-value package workspace. An application workspace that needs one
 
 ## Jobs
 
-`packages/jobs` runs fire-and-forget background jobs on Redis through [BullMQ](https://docs.bullmq.io/). A dispatcher adds a job to a queue, and a worker in another process picks it up. Use a job for one unit of work that can run later and retry on its own, such as sending an email, resizing an upload, or calling a slow third-party API. Use a [workflow](#workflows) when the work has several steps whose progress must survive a crash, or waits between them.
+`packages/jobs` runs fire-and-forget background jobs on Redis through [BullMQ](https://docs.bullmq.io/). A dispatcher adds a job to a queue, and a jobs runner in another process, such as `apps/worker`, picks it up. Use a job for one unit of work that can run later and retry on its own, such as sending an email, resizing an upload, or calling a slow third-party API. Use a [workflow](#workflows) when the work has several steps whose progress must survive a crash, or waits between them.
 
-Each queue lives in its own file under `src/queues/` and owns its jobs. `defineQueue` sets the concurrency of each worker process that consumes the queue and an optional rate limit across every worker. `defineJob` declares a job's payload schema and, optionally, its attempts. A job's name is its key in `jobs`, so a queue cannot list the same name twice:
+Each queue lives in its own file under `src/queues/` and owns its jobs. `defineQueue` sets the concurrency of each runner that consumes the queue and an optional rate limit across every runner. `defineJob` declares a job's payload schema and, optionally, its attempts. A job's name is its key in `jobs`, so a queue cannot list the same name twice:
 
 ```ts
 // src/queues/email.ts
@@ -168,12 +168,12 @@ await c.var.dispatcher.dispatch("default", "greet-user", { userId }, { id: `gree
 
 `dispatch` type-checks the queue, the job name on that queue, and its payload, and validates the payload before it reaches Redis. Dispatches with the same `id` add one job while BullMQ keeps it. Pass `delayMs` to run a job later. A failed dispatch comes back as a `DispatchJobError` or `JobPayloadError` value instead of throwing. While Redis is unreachable, a dispatch fails after one reconnect attempt instead of holding the request open.
 
-`apps/worker` consumes queues. A worker takes handlers by queue and job, and consumes every queue it lists. It must handle every job on those queues, so adding a job to a queue fails type checking in each worker that consumes it until a handler exists:
+`apps/worker` consumes queues with a jobs runner. A runner takes handlers by queue and job, and consumes every queue it lists. It must handle every job on those queues, so adding a job to a queue fails type checking in each runner that consumes it until a handler exists:
 
 ```ts
-import { createJobWorker } from "@v1/jobs/worker"
+import { createJobsRunner } from "@v1/jobs/runner"
 
-const worker = createJobWorker({
+const jobs = createJobsRunner({
   handlers: {
     default: { "greet-user": greetUser },
     email: { "send-welcome": sendWelcome, "send-digest": sendDigest },
@@ -182,10 +182,10 @@ const worker = createJobWorker({
   url: ENV.JOBS_REDIS_URL,
 })
 
-await worker.run()
+await jobs.run()
 ```
 
-Run more than one worker process to share a queue; BullMQ hands each job to one of them. To isolate a slow or rate-limited queue, run a process whose handlers list only that queue. A job retries with exponential backoff until it runs out of attempts, so keep handlers idempotent. Each handler receives the payload and a context with the `attempt` number and the job `id`, which stays the same across attempts and works as an idempotency key for a third-party API. A job whose payload no longer matches its schema, or whose name the worker does not handle, fails without a retry. That happens when a dispatcher and a worker run different versions during a deploy, so change a payload schema in a way that accepts both shapes until every process runs the new version. BullMQ removes completed jobs after a day and failed jobs after a week. `worker.close()` waits for the jobs in progress before the process exits.
+Run more than one worker process to share a queue; BullMQ hands each job to one of them. To isolate a slow or rate-limited queue, run a process whose handlers list only that queue. A job retries with exponential backoff until it runs out of attempts, so keep handlers idempotent. Each handler receives the payload and a context with the `attempt` number and the job `id`, which stays the same across attempts and works as an idempotency key for a third-party API. A job whose payload no longer matches its schema, or whose name the runner does not handle, fails without a retry. That happens when a dispatcher and a runner run different versions during a deploy, so change a payload schema in a way that accepts both shapes until every process runs the new version. BullMQ removes completed jobs after a day and failed jobs after a week. `jobs.close()` waits for the jobs in progress before the process exits.
 
 Run the worker under a supervisor that restarts it when it exits, such as a container restart policy or a platform that restarts crashed services. On `SIGTERM` or `SIGINT`, the worker stops taking jobs, waits up to 25 seconds for the jobs and workflow steps in progress, and exits; set the platform's stop grace period longer than that, and pass a longer `timeoutMs` to `lifecycle` in `apps/worker/src/index.ts` when jobs need more time. The worker logs an unhandled promise rejection and keeps running. After an uncaught exception, it finishes its jobs the same way and exits with code 1. When a worker dies without finishing a job, BullMQ holds the job's lock for 30 seconds, then a running worker logs the job as stalled and runs it again. A job that stalls a second time fails, so a job that crashes every worker cannot crash them forever. Keep each handler from blocking the event loop for that long: a worker that cannot renew its lock loses the job to another worker while it still runs.
 
@@ -258,19 +258,19 @@ export const welcomeUser = workflows.createFunction(
 )
 ```
 
-`createWorkflowWorker` from `@v1/workflows/worker` opens a WebSocket to Inngest with [Connect](https://www.inngest.com/docs/setup/connect), so Inngest reaches the functions without a public endpoint. List every function in `functions`:
+`createWorkflowsRunner` from `@v1/workflows/runner` opens a WebSocket to Inngest with [Connect](https://www.inngest.com/docs/setup/connect), so Inngest reaches the functions without a public endpoint. Pass the client from `createWorkflows` as `client`, and list every function in `functions`:
 
 ```ts
-import { createWorkflowWorker } from "@v1/workflows/worker"
+import { createWorkflowsRunner } from "@v1/workflows/runner"
 
-const workflowWorker = createWorkflowWorker({
+const workflows = createWorkflowsRunner({
+  client: workflowsClient,
   functions: [welcomeUser],
   gatewayUrl: ENV.INNGEST_CONNECT_GATEWAY_URL,
   logger: log,
-  workflows,
 })
 
-workflowWorker.connect()
+workflows.connect()
 ```
 
 `connect()` returns at once and retries in the background until Inngest is reachable, so jobs run in the meantime. `close()` lets the steps in progress finish. Run more than one worker process to share the load; Inngest sends each step to one of them. Inngest Cloud plans limit how many workers connect at once.

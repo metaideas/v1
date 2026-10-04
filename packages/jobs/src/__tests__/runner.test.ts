@@ -3,23 +3,23 @@ import { mockQueues, UnrecoverableError } from "#__tests__/fakes.ts"
 
 const { processors, redis, worker } = await mockQueues()
 
-const { createJobWorker } = await import("#worker.ts")
+const { createJobsRunner } = await import("#runner.ts")
 
 const greetUser = mock((_payload: { userId: string }, _context: unknown) => Promise.resolve("hi"))
 
-const jobWorker = createJobWorker({
+const jobRunner = createJobsRunner({
   handlers: { default: { "greet-user": greetUser } },
   url: "redis://localhost:6379",
 })
 
 function processJob(job: { attemptsMade: number; data: unknown; id: string; name: string }) {
   const processor = processors.get("default")
-  if (!processor) throw new Error("The worker did not subscribe to the default queue")
+  if (!processor) throw new Error("The runner did not subscribe to the default queue")
 
   return processor(job)
 }
 
-describe("createJobWorker", () => {
+describe("createJobsRunner", () => {
   test("passes the parsed payload and the attempt to the job's handler", async () => {
     const result = await processJob({
       attemptsMade: 1,
@@ -51,7 +51,7 @@ describe("createJobWorker", () => {
   test("waits for running jobs when it closes while connected", async () => {
     redis.status = "ready"
 
-    await jobWorker.close()
+    await jobRunner.close()
 
     expect(worker.close).toHaveBeenLastCalledWith(false)
     expect(redis.quit).toHaveBeenCalled()
@@ -60,7 +60,7 @@ describe("createJobWorker", () => {
   test("closes at once while Redis is unreachable", async () => {
     redis.status = "reconnecting"
 
-    await jobWorker.close()
+    await jobRunner.close()
 
     expect(worker.close).toHaveBeenLastCalledWith(true)
     expect(redis.disconnect).toHaveBeenCalled()

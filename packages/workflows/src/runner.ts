@@ -4,19 +4,19 @@ import { connect as connectToInngest, type WorkerConnection } from "inngest/conn
 import * as try$ from "tryharder"
 import type { Workflows } from "#client.ts"
 
-export function createWorkflowWorker({
+export function createWorkflowsRunner({
+  client,
   functions,
   gatewayUrl,
   logger,
-  workflows,
-}: WorkflowWorkerOptions) {
+}: WorkflowsRunnerOptions) {
   let connection: WorkerConnection | undefined
   let isClosed = false
 
   async function open() {
     const opened = await try$.run(() =>
       connectToInngest({
-        apps: [{ client: workflows, functions }],
+        apps: [{ client, functions }],
         gatewayUrl,
         // The application owns the process lifecycle and closes the connection on shutdown.
         handleShutdownSignals: [],
@@ -56,14 +56,17 @@ export function createWorkflowWorker({
   }
 }
 
-export type WorkflowWorker = ReturnType<typeof createWorkflowWorker>
+export type WorkflowsRunner = ReturnType<typeof createWorkflowsRunner>
 
-type WorkflowWorkerOptions = {
+type WorkflowsRunnerOptions = {
   /**
-   * Every function that the worker runs.
+   * The client from `createWorkflows` that defines the functions.
+   */
+  client: Workflows
+  /**
+   * Every function that the runner executes.
    */
   functions: InngestFunction.Like[]
-  workflows: Workflows
   /**
    * The Connect gateway of a Dev Server or self-hosted server. Inngest Cloud is the default.
    */

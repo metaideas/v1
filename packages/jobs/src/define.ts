@@ -32,7 +32,7 @@ type QueueDefinition<Schemas extends Record<string, z.ZodType>> = {
   concurrency: number
   jobs: { [Name in keyof Schemas]: JobDefinition<Schemas[Name]> }
   /**
-   * At most `max` jobs start in each `duration` window in milliseconds, across every worker of the
+   * At most `max` jobs start in each `duration` window in milliseconds, across every runner of the
    * queue.
    */
   limiter?: { duration: number; max: number }

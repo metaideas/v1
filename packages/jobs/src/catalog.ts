@@ -2,7 +2,7 @@ import type * as z from "@v1/utils/schema"
 import { defaultQueue } from "#queues/default.ts"
 
 /**
- * Every queue that workers consume. A queue's name is its key here.
+ * Every queue that runners consume. A queue's name is its key here.
  */
 export const queues = {
   default: defaultQueue,
@@ -20,7 +20,7 @@ export type JobInput<Queue extends QueueName, Name extends JobName<Queue>> = z.i
 >
 
 /**
- * What a worker receives for a job, after its schema parses it.
+ * What a handler receives for a job, after its schema parses it.
  */
 export type JobPayload<Queue extends QueueName, Name extends JobName<Queue>> = z.output<
   JobSchema<Queue, Name>

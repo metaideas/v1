@@ -10,7 +10,7 @@
   "exports": {
     "./dispatcher": "./src/dispatcher.ts",
     "./queue-names": "./src/queue-names.ts",
-    "./worker": "./src/worker.ts"
+    "./runner": "./src/runner.ts"
   },
   "scripts": {
     "bump:deps": "bun update --interactive",

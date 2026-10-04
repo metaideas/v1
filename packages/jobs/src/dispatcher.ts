@@ -76,7 +76,7 @@ export function createDispatcher({ logger, url }: DispatcherOptions) {
 
       const result = await try$.run({
         catch: (error) => JobsFault.wrap(error).as("DispatchJobError", { job: name, queue }),
-        // The worker parses the payload again, so queue the input. Queueing the parsed output would
+        // The runner parses the payload again, so queue the input. Queueing the parsed output would
         // run the schema's transforms twice.
         try: () =>
           queueFor(queue).add(name, input, {

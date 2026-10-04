@@ -10,7 +10,7 @@
   "exports": {
     "./client": "./src/client.ts",
     "./events": "./src/events/index.ts",
-    "./worker": "./src/worker.ts"
+    "./runner": "./src/runner.ts"
   },
   "scripts": {
     "bump:deps": "bun update --interactive",

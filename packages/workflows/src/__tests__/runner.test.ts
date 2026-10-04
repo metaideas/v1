@@ -6,15 +6,15 @@ const connect = mock(() => Promise.resolve(connection))
 
 await mock.module("inngest/connect", () => ({ connect }))
 
-const { createWorkflowWorker } = await import("#worker.ts")
+const { createWorkflowsRunner } = await import("#runner.ts")
 
 const logger = { debug: mock(), error: mock(), info: mock(), warn: mock() }
 
-function createWorker() {
-  return createWorkflowWorker({
+function createRunner() {
+  return createWorkflowsRunner({
+    client: createWorkflows({ eventKey: "test", id: "test", signingKey: "test" }),
     functions: [],
     logger,
-    workflows: createWorkflows({ eventKey: "test", id: "test", signingKey: "test" }),
   })
 }
 
@@ -23,24 +23,24 @@ beforeEach(() => {
   logger.error.mockClear()
 })
 
-describe("createWorkflowWorker", () => {
+describe("createWorkflowsRunner", () => {
   test("closes the connection once it is open", async () => {
-    const worker = createWorker()
+    const runner = createRunner()
 
-    worker.connect()
+    runner.connect()
     await Bun.sleep(0)
-    await worker.close()
+    await runner.close()
 
     expect(connection.close).toHaveBeenCalledTimes(1)
   })
 
-  test("closes a connection that opens after the worker closes", async () => {
+  test("closes a connection that opens after the runner closes", async () => {
     const { promise, resolve } = Promise.withResolvers<typeof connection>()
     connect.mockImplementationOnce(() => promise)
-    const worker = createWorker()
+    const runner = createRunner()
 
-    worker.connect()
-    await worker.close()
+    runner.connect()
+    await runner.close()
     resolve(connection)
     await Bun.sleep(0)
 
@@ -49,9 +49,9 @@ describe("createWorkflowWorker", () => {
 
   test("logs a connection that fails", async () => {
     connect.mockImplementationOnce(() => Promise.reject(new Error("refused")))
-    const worker = createWorker()
+    const runner = createRunner()
 
-    worker.connect()
+    runner.connect()
     await Bun.sleep(0)
 
     expect(logger.error).toHaveBeenCalledTimes(1)

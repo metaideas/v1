@@ -5,11 +5,11 @@ import { Redis } from "ioredis"
 import { type JobName, type JobPayload, type QueueName, queues } from "#catalog.ts"
 import { getJob } from "#lookup.ts"
 
-export function createJobWorker<Subscribed extends QueueName>({
+export function createJobsRunner<Subscribed extends QueueName>({
   handlers,
   logger,
   url,
-}: JobWorkerOptions<Subscribed>) {
+}: JobsRunnerOptions<Subscribed>) {
   // BullMQ blocks on this connection while it waits for jobs, so commands must wait out a
   // reconnect instead of failing after a fixed number of retries.
   const connection = new Redis(url, { maxRetriesPerRequest: null })
@@ -56,7 +56,7 @@ export function createJobWorker<Subscribed extends QueueName>({
       logger?.warn({ id, message: "Job stalled", queue, scope: "jobs" })
     })
     worker.on("error", (error) => {
-      logger?.error({ error, message: "Job worker error", queue, scope: "jobs" })
+      logger?.error({ error, message: "Jobs runner error", queue, scope: "jobs" })
     })
 
     return worker
@@ -68,7 +68,7 @@ export function createJobWorker<Subscribed extends QueueName>({
 
   return {
     /**
-     * Starts consuming every queue in `handlers`. Resolves once `close` stops the workers.
+     * Starts consuming every queue in `handlers`. Resolves once `close` stops the runner.
      */
     async run() {
       await Promise.all(workers.map((worker) => worker.run()))
@@ -111,12 +111,12 @@ async function handle<Queue extends QueueName, Name extends JobName<Queue>>(
   return handler(parsed.data, context)
 }
 
-export type JobWorker = ReturnType<typeof createJobWorker>
+export type JobsRunner = ReturnType<typeof createJobsRunner>
 
 export type { JobName, JobPayload, QueueName } from "#catalog.ts"
 
 /**
- * A handler for every job on a queue. Adding a job to a queue fails type checking in each worker
+ * A handler for every job on a queue. Adding a job to a queue fails type checking in each runner
  * that consumes the queue until it handles the job.
  */
 type QueueHandlers<Queue extends QueueName> = {
@@ -137,9 +137,9 @@ type JobContext = {
   id: string
 }
 
-type JobWorkerOptions<Subscribed extends QueueName> = {
+type JobsRunnerOptions<Subscribed extends QueueName> = {
   /**
-   * Handlers by queue and job. The worker consumes every queue listed here.
+   * Handlers by queue and job. The runner consumes every queue listed here.
    */
   handlers: { [Queue in Subscribed]: QueueHandlers<Queue> }
   url: string
