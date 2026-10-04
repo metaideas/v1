@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1791041251146,
-      "tag": "0000_tan_arachne",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1791143554231,
-      "tag": "0001_outstanding_molten_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1791146913700,
-      "tag": "0002_rename_assets_to_uploads",
+      "when": 1791147182064,
+      "tag": "0000_bizarre_stephen_strange",
       "breakpoints": true
     }
   ]
