@@ -1,11 +1,11 @@
-import type { AssetRecord } from "@v1/storage/server"
+import type { UploadRecord } from "@v1/storage/server"
 import { operators } from "@v1/database/helpers/sql"
-import { assets } from "@v1/database/schema"
+import { uploads } from "@v1/database/schema"
 import { UserIdSchema } from "@v1/database/schemas"
 import type { AccessTokenAppContext } from "#shared/types.ts"
 import { context } from "#shared/utils.ts"
 
-export async function upsertAsset(file: AssetRecord) {
+export async function upsertUpload(file: UploadRecord) {
   const ctx = context<AccessTokenAppContext>()
   const userId = UserIdSchema.parse(ctx.var.userId)
   const record = {
@@ -18,16 +18,16 @@ export async function upsertAsset(file: AssetRecord) {
   }
 
   await ctx.var.db
-    .insert(assets)
+    .insert(uploads)
     .values({ ...record, key: file.key, ownerId: userId, uploaderId: userId })
-    .onConflictDoUpdate({ set: { ...record, updatedAt: new Date() }, target: assets.key })
+    .onConflictDoUpdate({ set: { ...record, updatedAt: new Date() }, target: uploads.key })
 }
 
-export async function deleteAsset(key: string) {
+export async function deleteUpload(key: string) {
   const ctx = context<AccessTokenAppContext>()
   const userId = UserIdSchema.parse(ctx.var.userId)
 
   await ctx.var.db
-    .delete(assets)
-    .where(operators.and(operators.eq(assets.key, key), operators.eq(assets.ownerId, userId)))
+    .delete(uploads)
+    .where(operators.and(operators.eq(uploads.key, key), operators.eq(uploads.ownerId, userId)))
 }

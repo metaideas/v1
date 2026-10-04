@@ -1,6 +1,6 @@
 import type { Database } from "@v1/database/client"
 import type { Dispatcher } from "@v1/jobs/dispatcher"
-import type { AssetsStorage } from "@v1/storage/server"
+import type { UploadStorage } from "@v1/storage/server"
 import type { DeepMerge } from "@v1/utils/type"
 import type { Workflows } from "@v1/workflows/client"
 import type { EvlogVariables } from "evlog/hono"
@@ -17,7 +17,7 @@ export type AppContext = DeepMerge<
       dispatcher: Dispatcher
       kv: Storage
       language: Locale
-      storage: AssetsStorage
+      storage: UploadStorage
       workflows: Workflows
     }
   }

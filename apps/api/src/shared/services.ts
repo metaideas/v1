@@ -4,13 +4,13 @@ import { createDatabase } from "@v1/database/client"
 import { createMailer } from "@v1/email/mailer"
 import { selectTransport } from "@v1/email/transports"
 import { createDispatcher } from "@v1/jobs/dispatcher"
-import { createAssetsStorage, createS3Adapter } from "@v1/storage/server"
+import { createUploadStorage, createS3Adapter } from "@v1/storage/server"
 import { createWorkflows } from "@v1/workflows/client"
 import { createStorage } from "unstorage"
 import redisDriver from "unstorage/drivers/redis"
-import { deleteAsset, upsertAsset } from "#shared/assets.ts"
 import { ENV } from "#shared/env.generated.ts"
 import { log } from "#shared/logger.ts"
+import { deleteUpload, upsertUpload } from "#shared/uploads.ts"
 import { allowedOrigins } from "#shared/utils.ts"
 
 export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
@@ -45,7 +45,7 @@ export const auth = createServerAuth({
   trustedOrigins: allowedOrigins,
 })
 
-export const storage = createAssetsStorage({
+export const storage = createUploadStorage({
   adapter: createS3Adapter({
     accessKeyId: ENV.S3_ACCESS_KEY_ID,
     bucket: ENV.S3_BUCKET,
@@ -54,8 +54,8 @@ export const storage = createAssetsStorage({
     secretAccessKey: ENV.S3_SECRET_ACCESS_KEY,
   }),
   logger: log,
-  onAssetDeleted: deleteAsset,
-  onAssetStored: upsertAsset,
+  onUploadDeleted: deleteUpload,
+  onUploadStored: upsertUpload,
 })
 
 export const workflows = createWorkflows({

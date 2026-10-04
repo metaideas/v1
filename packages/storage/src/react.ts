@@ -5,17 +5,16 @@ import type {
   UseFilesOptions,
 } from "files-sdk/react"
 import * as FilesReact from "files-sdk/react"
-import { createCachedAccessToken } from "#access-token.ts"
 
-type AssetsStorageClientOptions = {
+type UploadStorageClientOptions = {
   /**
    * URL of the storage gateway, such as `http://localhost:3000/files`.
    */
   endpoint: string
   /**
    * Returns an access token from the auth server, such as `authClient.token()` from
-   * `@v1/auth/client`. The client sends it as a bearer token and reuses it until shortly before it
-   * expires, so call the returned `resetAccessToken` whenever the session changes.
+   * `@v1/auth/client`. The client asks for a fresh token on every gateway call, so a call always
+   * acts as the current session, even after a sign-in or sign-out in another tab.
    */
   getToken: () => Promise<string>
 }
@@ -25,14 +24,13 @@ type AssetsStorageClientOptions = {
  * module and imports the hooks from there. Uploads and downloads go directly to the bucket through
  * signed URLs, and only the gateway calls carry the access token.
  */
-export function createAssetsStorageClient({ endpoint, getToken }: AssetsStorageClientOptions) {
-  const accessToken = createCachedAccessToken(getToken)
+export function createUploadStorageClient({ endpoint, getToken }: UploadStorageClientOptions) {
   const config = {
     endpoint,
-    headers: async () => ({ authorization: `Bearer ${await accessToken.get()}` }),
+    headers: async () => ({ authorization: `Bearer ${await getToken()}` }),
   }
 
-  function useFiles(options?: UseFilesOptions) {
+  function useUpload(options?: UseFilesOptions) {
     return FilesReact.useFiles({ ...options, ...config })
   }
 
@@ -52,5 +50,5 @@ export function createAssetsStorageClient({ endpoint, getToken }: AssetsStorageC
     return FilesReact.useSearch(pattern, searchOptions, { ...options, ...config })
   }
 
-  return { resetAccessToken: accessToken.reset, useFile, useFiles, useList, useSearch }
+  return { useFile, useList, useSearch, useUpload }
 }

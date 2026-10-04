@@ -17,9 +17,10 @@ export const AUTH_EMAIL_AND_PASSWORD_OPTIONS = {
 } as const
 
 // Access tokens let a client call a service on another origin, such as the storage gateway, without
-// reading the HttpOnly session cookie. A short lifetime limits a leaked token.
+// reading the HttpOnly session cookie. Clients fetch one per call, so a short lifetime costs nothing
+// and limits a leaked token.
 export const AUTH_ACCESS_TOKEN_OPTIONS = {
-  expirationTime: "15m",
+  expirationTime: "5m",
 } as const
 
 export const AUTH_SESSION_OPTIONS = {

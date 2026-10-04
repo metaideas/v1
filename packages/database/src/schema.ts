@@ -168,10 +168,10 @@ export type NewJwk = typeof jwks.$inferInsert
 // ==========================STORAGE==========================
 export const storageSchema = pg.pgSchema("storage")
 
-export const assets = storageSchema.table(
-  "assets",
+export const uploads = storageSchema.table(
+  "uploads",
   {
-    ...id(z.branded("AssetId"), "asst"),
+    ...id(z.branded("UploadId"), "upld"),
     ...timestamps,
 
     uploaderId: pg
@@ -206,15 +206,15 @@ export const assets = storageSchema.table(
     type: pg.text().notNull(),
   },
   (table) => [
-    pg.uniqueIndex("storage_assets_key_unique_idx").on(table.key),
-    pg.index("storage_assets_owner_id_idx").on(table.ownerId),
-    pg.index("storage_assets_uploader_id_idx").on(table.uploaderId),
+    pg.uniqueIndex("storage_uploads_key_unique_idx").on(table.key),
+    pg.index("storage_uploads_owner_id_idx").on(table.ownerId),
+    pg.index("storage_uploads_uploader_id_idx").on(table.uploaderId),
   ]
 )
 
-export type Asset = typeof assets.$inferSelect
-export type NewAsset = typeof assets.$inferInsert
-export type AssetId = Asset["id"]
+export type Upload = typeof uploads.$inferSelect
+export type NewUpload = typeof uploads.$inferInsert
+export type UploadId = Upload["id"]
 
 // Insert your tables here
 export const documents = createTable("documents", {
@@ -254,10 +254,10 @@ export const profileRelations = relations(profiles, ({ one }) => ({
 
 export const userRelations = relations(users, ({ one, many }) => ({
   accounts: many(accounts),
-  ownedAssets: many(assets, { relationName: "assetOwner" }),
+  ownedUploads: many(uploads, { relationName: "uploadOwner" }),
   profile: one(profiles),
   sessions: many(sessions),
-  uploadedAssets: many(assets, { relationName: "assetUploader" }),
+  uploads: many(uploads, { relationName: "uploader" }),
 }))
 
 export const accountRelations = relations(accounts, ({ one }) => ({
@@ -274,15 +274,15 @@ export const sessionRelations = relations(sessions, ({ one }) => ({
   }),
 }))
 
-export const assetRelations = relations(assets, ({ one }) => ({
+export const uploadRelations = relations(uploads, ({ one }) => ({
   owner: one(users, {
-    fields: [assets.ownerId],
+    fields: [uploads.ownerId],
     references: [users.id],
-    relationName: "assetOwner",
+    relationName: "uploadOwner",
   }),
   uploader: one(users, {
-    fields: [assets.uploaderId],
+    fields: [uploads.uploaderId],
     references: [users.id],
-    relationName: "assetUploader",
+    relationName: "uploader",
   }),
 }))
