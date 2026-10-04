@@ -24,6 +24,7 @@
     "@hono/standard-validator": "0.2.3",
     "@hono/trpc-server": "0.4.2",
     "@scalar/hono-api-reference": "0.9.48",
+    "@tanstack/workflow-core": "0.0.4",
     "@trpc/server": "11.8.1",
     "@v1/auth": "workspace:*",
     "@v1/database": "workspace:*",
@@ -41,7 +42,8 @@
     "superjson": "2.2.6",
     "tryharder": "0.4.0",
     "unstorage": "1.17.5",
-    "varlock": "1.16.0"
+    "varlock": "1.16.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@inlang/paraglide-js": "2.23.0",

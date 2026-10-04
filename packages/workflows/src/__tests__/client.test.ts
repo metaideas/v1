@@ -1,43 +1,44 @@
-import { describe, expect, mock, test } from "bun:test"
-import { WorkflowsNotLaunchedError } from "@v1/core/errors"
+import { afterAll, describe, expect, mock, test } from "bun:test"
+import { createWorkflow } from "@tanstack/workflow-core"
+import { inMemoryWorkflowExecutionStore } from "@tanstack/workflow-runtime"
+import { WorkflowDefinedAfterLaunchError, WorkflowsNotLaunchedError } from "@v1/core/errors"
+import { z } from "zod"
 
-const queueRegistration = Promise.withResolvers<undefined>()
-
-await mock.module("@dbos-inc/dbos-sdk", () => ({
-  DBOS: {
-    launch: () => Promise.resolve(),
-    registerQueue: () => queueRegistration.promise,
-    registerWorkflow: <Handler>(handler: Handler) => handler,
-    setConfig: mock(),
-    shutdown: () => Promise.resolve(),
-    startWorkflow:
-      <Input, Result>(workflow: (input: Input) => Promise<Result>) =>
-      (input: Input) =>
-        Promise.resolve({ getResult: () => workflow(input), workflowID: "child" }),
-  },
+await mock.module("@tanstack/workflow-store-drizzle-postgres", () => ({
+  createDrizzlePostgresWorkflowStore: inMemoryWorkflowExecutionStore,
 }))
 
-const { Workflows } = await import("#client.ts")
+const { createWorkflows } = await import("#client.ts")
 
-const workflows = new Workflows({
-  queues: { default: { concurrency: 1 } },
-  url: "postgresql://localhost/test",
-})
-const child = workflows.define("child", (input: number) => Promise.resolve(input * 2))
+const workflows = createWorkflows({ db: { execute: mock() }, sweepIntervalMs: 10 })
+const delivered = Promise.withResolvers<number>()
 
-describe("Workflows.run", () => {
-  test("starts workflows once the engine launches, before queues finish registering", async () => {
-    const earlyError = await workflows.run(child, 1).catch((error: unknown) => error)
-    expect(earlyError).toBeInstanceOf(WorkflowsNotLaunchedError)
+const double = workflows.define(
+  createWorkflow({ id: "double", input: z.number() }).handler(async (ctx) => {
+    await ctx.sleep(20, { id: "pause" })
 
-    const launching = workflows.launch()
-    await Promise.resolve()
+    return ctx.step("deliver", () => {
+      delivered.resolve(ctx.input * 2)
+      return ctx.input * 2
+    })
+  })
+)
 
-    const run = await workflows.run(child, 21)
-    expect(run.id).toBe("child")
-    expect(await run.result()).toBe(42)
+afterAll(() => workflows.shutdown())
 
-    queueRegistration.resolve()
-    await launching
+describe("createWorkflows", () => {
+  test("runs a workflow once launched and resumes it after a sleep", async () => {
+    expect(() => workflows.run(double, 1)).toThrow(WorkflowsNotLaunchedError)
+
+    workflows.launch()
+    workflows.run(double, 21)
+
+    expect(await delivered.promise).toBe(42)
+  })
+
+  test("rejects workflows defined after launch", () => {
+    const late = createWorkflow({ id: "late" }).handler(() => Promise.resolve(1))
+
+    expect(() => workflows.define(late)).toThrow(WorkflowDefinedAfterLaunchError)
   })
 })

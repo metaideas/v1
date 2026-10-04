@@ -1,7 +1,7 @@
 {
   "name": "@v1/workflows",
   "private": true,
-  "description": "Durable background workflows using DBOS",
+  "description": "Durable background workflows using TanStack Workflow",
   "license": "MIT",
   "type": "module",
   "imports": {
@@ -15,16 +15,20 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "codegen": "varlock codegen",
     "env:check": "varlock load",
+    "migrate": "varlock run -- bun --bun run ./scripts/migrate.ts",
     "reset": "varlock run -- bun --bun run ./scripts/reset.ts"
   },
   "dependencies": {
-    "@dbos-inc/dbos-sdk": "5.2.11",
+    "@tanstack/workflow-core": "0.0.4",
+    "@tanstack/workflow-runtime": "0.0.3",
+    "@tanstack/workflow-store-drizzle-postgres": "0.0.5",
     "@v1/core": "workspace:*",
     "varlock": "1.16.0"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",
     "@types/bun": "1.4.2",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "zod": "4.6.5"
   }
 }

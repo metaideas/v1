@@ -3,6 +3,7 @@ import { createServerAuth } from "@v1/auth/server"
 import { createDatabase } from "@v1/database/client"
 import { createMailer } from "@v1/email/mailer"
 import { selectTransport } from "@v1/email/transports"
+import { createWorkflows } from "@v1/workflows/client"
 import { createStorage } from "unstorage"
 import redisDriver from "unstorage/drivers/redis"
 import { ENV } from "#shared/env.generated.ts"
@@ -10,6 +11,8 @@ import { log } from "#shared/logger.ts"
 import { allowedOrigins, baseUrl } from "#shared/utils.ts"
 
 export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
+
+export const workflows = createWorkflows({ db: database, logger: log })
 
 export const kv = createStorage({ driver: redisDriver({ url: ENV.REDIS_URL }) })
 
