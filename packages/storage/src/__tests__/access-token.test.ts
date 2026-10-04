@@ -10,7 +10,7 @@ describe("createCachedAccessToken", () => {
   test("reuses a token until shortly before it expires", async () => {
     let now = 1_000_000
     const getToken = mock(() => Promise.resolve(createToken(now / 1000 + 15 * 60)))
-    const getAccessToken = createCachedAccessToken(getToken, () => now)
+    const getAccessToken = createCachedAccessToken(getToken, () => now).get
 
     const first = await getAccessToken()
     now += 10 * 60 * 1000
@@ -23,7 +23,7 @@ describe("createCachedAccessToken", () => {
   test("fetches a new token when the cached one is about to expire", async () => {
     let now = 1_000_000
     const getToken = mock(() => Promise.resolve(createToken(now / 1000 + 15 * 60)))
-    const getAccessToken = createCachedAccessToken(getToken, () => now)
+    const getAccessToken = createCachedAccessToken(getToken, () => now).get
 
     await getAccessToken()
     now += 15 * 60 * 1000 - 10_000
@@ -34,7 +34,7 @@ describe("createCachedAccessToken", () => {
 
   test("shares one request between concurrent callers", async () => {
     const getToken = mock(() => Promise.resolve(createToken(Date.now() / 1000 + 60 * 60)))
-    const getAccessToken = createCachedAccessToken(getToken)
+    const getAccessToken = createCachedAccessToken(getToken).get
 
     const tokens = await Promise.all([getAccessToken(), getAccessToken(), getAccessToken()])
 
@@ -44,7 +44,7 @@ describe("createCachedAccessToken", () => {
 
   test("fetches again after a failed request", async () => {
     const getToken = mock((): Promise<string> => Promise.reject(new Error("offline")))
-    const getAccessToken = createCachedAccessToken(getToken)
+    const getAccessToken = createCachedAccessToken(getToken).get
 
     const error = await getAccessToken().catch((error: unknown) => error)
     getToken.mockImplementation(() => Promise.resolve(createToken(Date.now() / 1000 + 60)))
@@ -52,6 +52,32 @@ describe("createCachedAccessToken", () => {
 
     expect(error).toBeInstanceOf(Error)
     expect(token).toContain("header.")
+    expect(getToken).toHaveBeenCalledTimes(2)
+  })
+
+  test("fetches a new token after a reset", async () => {
+    const getToken = mock(() => Promise.resolve(createToken(Date.now() / 1000 + 60 * 60)))
+    const accessToken = createCachedAccessToken(getToken)
+
+    await accessToken.get()
+    accessToken.reset()
+    await accessToken.get()
+
+    expect(getToken).toHaveBeenCalledTimes(2)
+  })
+
+  test("does not cache a token that was still being fetched during a reset", async () => {
+    const previous = Promise.withResolvers<string>()
+    const getToken = mock(() => previous.promise)
+    const accessToken = createCachedAccessToken(getToken)
+
+    const stale = accessToken.get()
+    accessToken.reset()
+    previous.resolve(createToken(Date.now() / 1000 + 60 * 60))
+    await stale
+    getToken.mockImplementation(() => Promise.resolve(createToken(Date.now() / 1000 + 60 * 60)))
+    await accessToken.get()
+
     expect(getToken).toHaveBeenCalledTimes(2)
   })
 })

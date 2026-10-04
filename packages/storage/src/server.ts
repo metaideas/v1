@@ -1,5 +1,5 @@
 import type { Logger } from "@v1/core/services/logging"
-import type { Adapter, FilesPlugin, StoredFile, UploadResult } from "files-sdk"
+import type { Adapter, Files, FilesPlugin, StoredFile, UploadResult } from "files-sdk"
 import type { AllowedOrigins } from "files-sdk/api"
 import type { MemoryAdapterOptions } from "files-sdk/memory"
 import { StorageFault, StorageSyncError } from "@v1/core/errors"
@@ -26,7 +26,7 @@ type S3AdapterOptions = {
    * URLs. Without it, the adapter addresses AWS S3 with virtual-hosted-style URLs.
    */
   endpoint?: string
-  region?: string
+  region: string
   secretAccessKey: string
 }
 
@@ -117,13 +117,26 @@ function checkIsAllowedType(type: string) {
   )
 }
 
-function createTypePolicyPlugin(adapter: Adapter): FilesPlugin {
+function assertAllowedType(type: string | undefined) {
+  if (type === undefined || !checkIsAllowedType(type)) {
+    throw new ValidationError("type", `Files of type ${type ?? "unknown"} are not allowed`)
+  }
+}
+
+function createTypePolicyPlugin(): FilesPlugin {
+  let storage: Files | undefined
+
+  // Deletes through the whole storage instance, so the sync plugin also removes the asset record.
   async function rejectStoredFile(key: string, type: string): Promise<never> {
-    await adapter.delete(key)
+    await storage?.delete(key)
     throw new ValidationError("type", `Files of type ${type || "unknown"} are not allowed`)
   }
 
   return {
+    extend: (files) => {
+      storage = files
+      return {}
+    },
     name: "type-policy",
     wrap: handlers({
       head: async (operation, next) => {
@@ -131,11 +144,14 @@ function createTypePolicyPlugin(adapter: Adapter): FilesPlugin {
         if (!checkIsAllowedType(file.type)) await rejectStoredFile(operation.key, file.type)
         return file
       },
+      // A direct upload never passes through storage, so the signed policy pins an allowed type.
+      signedUploadUrl: (operation, next) => {
+        assertAllowedType(operation.options?.contentType)
+        return next(operation)
+      },
       upload: async (operation, next) => {
         const declaredType = operation.options?.contentType
-        if (declaredType !== undefined && !checkIsAllowedType(declaredType)) {
-          throw new ValidationError("type", `Files of type ${declaredType} are not allowed`)
-        }
+        if (declaredType !== undefined) assertAllowedType(declaredType)
 
         const result = await next(operation)
         if (!checkIsAllowedType(result.contentType)) {
@@ -238,7 +254,7 @@ export function createAssetsStorage({
     adapter,
     plugins: [
       createSyncPlugin({ logger, onAssetDeleted, onAssetStored }),
-      createTypePolicyPlugin(adapter),
+      createTypePolicyPlugin(),
       signedUrlPolicy({
         maxExpiresIn: STORAGE_MAX_URL_AGE,
         maxUploadSize: STORAGE_MAX_UPLOAD_SIZE,

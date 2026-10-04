@@ -83,7 +83,7 @@ export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 
 `packages/storage` owns file storage on top of [Files SDK](https://github.com/haydenbleasel/files-sdk): the access policy, the authenticated gateway, and the React client. The policy covers accepted content types, upload size, URL lifetime, list limits, and key rules, and lives in `src/constants.ts` and `src/server.ts`. Treat a change to it as a security change and review it as one.
 
-Clients transfer bytes directly with the bucket. A keyless upload sends the file to a signed POST policy that caps its size, and a download redirects to a signed URL, so file bytes never pass through the application. Storage cannot inspect bytes it never receives, so it enforces the key rules, the size cap in the signed policy, and the allowed types when an upload completes: a stored file of a disallowed type is deleted and the upload fails. It does not check file contents against their declared type. An upload that a client never completes stays in the bucket without a record, so give the bucket a lifecycle rule that expires stray objects.
+Clients transfer bytes directly with the bucket. A keyless upload sends the file to a signed POST policy that caps its size, and a download redirects to a signed URL, so file bytes never pass through the application. Storage cannot inspect bytes it never receives, so it enforces the key rules, the size cap in the signed policy, and the allowed types: a signed upload must declare an allowed type, which the signed policy pins, and a stored file of a disallowed type is deleted when its upload completes. It does not check file contents against their declared type. An upload that a client never completes stays in the bucket without a record, so give the bucket a lifecycle rule that expires stray objects.
 
 An application workspace that serves files creates one storage instance in its composition root:
 
@@ -108,19 +108,23 @@ export const storage = createAssetsStorage({
 
 `createAssetsStorageRouter({ allowedOrigins, getKeyPrefix, secret, storage })` returns a router whose `handle(request)` serves the gateway. `apps/api` mounts it at `/files` and scopes every key to `users/<id>/`. The gateway authenticates with an access token instead of the session cookie: clients on other origins cannot send the HttpOnly cookie without credentialed requests, and a credentialed download would fail at the bucket's CORS check after the redirect. `createAccessTokenPlugin()` from `@v1/auth/server` issues short-lived JWTs at `/auth/token` and stores their signing keys in the `jwks` table, and the gateway checks each token with `auth.api.verifyJWT`. Locally, `S3_ENDPOINT` points at MinIO from Docker Compose. Tests pass `createMemoryAdapter()` instead of the S3 adapter.
 
-A client application calls `createAssetsStorageClient` from `@v1/storage/react` once in a `shared` module, passing the gateway URL from its own `ENV` and a function that fetches an access token from its auth client, and exports the hooks it returns: `useFiles` for uploads, downloads, and deletes, and `useFile`, `useList`, and `useSearch` for reads. The client reuses a token until shortly before it expires and sends it only to the gateway.
+A client application calls `createAssetsStorageClient` from `@v1/storage/react` once in a `shared` module, passing the gateway URL from its own `ENV` and a function that fetches an access token from its auth client, and exports the hooks it returns: `useFiles` for uploads, downloads, and deletes, and `useFile`, `useList`, and `useSearch` for reads. The client reuses a token until shortly before it expires and sends it only to the gateway. Call `resetAccessToken` whenever the session changes, so requests never carry a token for a previous account.
 
 ```ts
 import { createAssetsStorageClient } from "@v1/storage/react"
 
-export const { useFile, useFiles, useList, useSearch } = createAssetsStorageClient({
-  endpoint: buildApiUrl("/files"),
-  getToken: async () => {
-    const { data, error } = await authClient.token()
-    if (error) throw new Error(error.message)
-    return data.token
-  },
-})
+export const { resetAccessToken, useFile, useFiles, useList, useSearch } =
+  createAssetsStorageClient({
+    endpoint: buildApiUrl("/files"),
+    getToken: async () => {
+      const { data, error } = await authClient.token()
+      if (error) throw new Error(error.message)
+      return data.token
+    },
+  })
+
+// Sign-in and sign-out change the account, so forget the previous account's token.
+authClient.$store.listen("$sessionSignal", resetAccessToken)
 ```
 
 ## Key-Value Storage

@@ -12,24 +12,37 @@ function getExpiresAt(token: string) {
 
 /**
  * Reuses an access token until shortly before it expires, and shares one request between callers
- * that ask for a token at the same time.
+ * that ask for a token at the same time. `reset` forgets the token, including one still being
+ * fetched, so a token for a previous session is never reused.
  */
 export function createCachedAccessToken(getToken: () => Promise<string>, now = Date.now) {
   let cached: { expiresAt: number; token: string } | undefined
   let pending: Promise<string> | undefined
+  let generation = 0
 
-  return function getCachedAccessToken() {
+  function get() {
     if (cached && cached.expiresAt - EXPIRY_MARGIN_MS > now()) return Promise.resolve(cached.token)
+    if (pending) return pending
 
-    pending ??= getToken()
+    const requestGeneration = generation
+    const request = getToken()
       .then((token) => {
-        cached = { expiresAt: getExpiresAt(token), token }
+        if (requestGeneration === generation) cached = { expiresAt: getExpiresAt(token), token }
         return token
       })
       .finally(() => {
-        pending = undefined
+        if (pending === request) pending = undefined
       })
+    pending = request
 
-    return pending
+    return request
   }
+
+  function reset() {
+    generation += 1
+    cached = undefined
+    pending = undefined
+  }
+
+  return { get, reset }
 }

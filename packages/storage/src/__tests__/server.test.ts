@@ -2,13 +2,45 @@ import { describe, expect, mock, test } from "bun:test"
 import { StorageSyncError } from "@v1/core/errors"
 import { ValidationError } from "files-sdk/validation"
 import type { AssetRecord } from "#server.ts"
-import { createAssetsStorage, createMemoryAdapter } from "#server.ts"
+import {
+  createAssetsStorage,
+  createAssetsStorageRouter,
+  createMemoryAdapter,
+  createS3Adapter,
+} from "#server.ts"
 
 const PDF = new TextEncoder().encode("%PDF-1.4\n%v1\n")
 const PDF_OPTIONS = { contentType: "application/pdf" }
 
 function createLogger() {
   return { debug: mock(), error: mock(), info: mock(), warn: mock() }
+}
+
+async function presignUpload(type: string) {
+  const router = createAssetsStorageRouter({
+    allowedOrigins: [],
+    getKeyPrefix: () => "users/u1/",
+    secret: "x".repeat(32),
+    // Signing a POST policy is local, so these credentials never reach a bucket.
+    storage: createAssetsStorage({
+      adapter: createS3Adapter({
+        accessKeyId: "test",
+        bucket: "assets",
+        endpoint: "http://localhost:9000",
+        region: "us-east-1",
+        secretAccessKey: "test",
+      }),
+    }),
+  })
+  const response = await router.handle(
+    new Request("http://localhost/files", {
+      body: JSON.stringify({ files: [{ name: "file", size: 16, type }], op: "presign" }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    })
+  )
+  const body = (await response.json()) as { uploads: Array<{ target: { url: string } }> }
+  return body.uploads[0]?.target.url ?? ""
 }
 
 describe("createAssetsStorage", () => {
@@ -126,12 +158,29 @@ describe("createAssetsStorage", () => {
     expect(onAssetStored).not.toHaveBeenCalled()
   })
 
-  test("signs direct uploads instead of refusing them", async () => {
+  test("signs a direct upload of an allowed type", async () => {
     const storage = createAssetsStorage({ adapter: createMemoryAdapter() })
 
-    const target = await storage.signedUploadUrl("users/u1/report.pdf", { expiresIn: 60 })
+    const target = await storage.signedUploadUrl("users/u1/report.pdf", {
+      contentType: "application/pdf",
+      expiresIn: 60,
+    })
 
     expect(target.url).toContain("users/u1/report.pdf")
+  })
+
+  test("refuses to sign a direct upload without an allowed type", async () => {
+    const storage = createAssetsStorage({ adapter: createMemoryAdapter() })
+
+    const [missing, disallowed] = await Promise.all([
+      storage.signedUploadUrl("users/u1/a", { expiresIn: 60 }).catch((error: unknown) => error),
+      storage
+        .signedUploadUrl("users/u1/b.html", { contentType: "text/html", expiresIn: 60 })
+        .catch((error: unknown) => error),
+    ])
+
+    expect(missing).toBeInstanceOf(ValidationError)
+    expect(disallowed).toBeInstanceOf(ValidationError)
   })
 
   test("rejects an upload whose declared type is not allowed", async () => {
@@ -149,15 +198,27 @@ describe("createAssetsStorage", () => {
 
   test("deletes a directly uploaded file of a disallowed type when it is completed", async () => {
     const onAssetStored = mock((_file: AssetRecord) => Promise.resolve())
+    const onAssetDeleted = mock((_key: string) => Promise.resolve())
     const adapter = createMemoryAdapter({
       initial: { "users/u1/page.html": { body: "<p>hi</p>", contentType: "text/html" } },
     })
-    const storage = createAssetsStorage({ adapter, onAssetStored })
+    const storage = createAssetsStorage({ adapter, onAssetDeleted, onAssetStored })
 
     const error = await storage.head("users/u1/page.html").catch((error: unknown) => error)
 
     expect(error).toBeInstanceOf(ValidationError)
     expect(adapter.raw.has("users/u1/page.html")).toBe(false)
     expect(onAssetStored).not.toHaveBeenCalled()
+    expect(onAssetDeleted.mock.calls).toEqual([["users/u1/page.html"]])
+  })
+})
+
+describe("createAssetsStorageRouter", () => {
+  test("signs a direct upload target for an allowed type", async () => {
+    expect(await presignUpload("application/pdf")).not.toContain("op=proxy")
+  })
+
+  test("never signs a direct upload target for a disallowed type", async () => {
+    expect(await presignUpload("text/html")).toContain("op=proxy")
   })
 })

@@ -15,7 +15,7 @@ type AssetsStorageClientOptions = {
   /**
    * Returns an access token from the auth server, such as `authClient.token()` from
    * `@v1/auth/client`. The client sends it as a bearer token and reuses it until shortly before it
-   * expires.
+   * expires, so call the returned `resetAccessToken` whenever the session changes.
    */
   getToken: () => Promise<string>
 }
@@ -26,10 +26,10 @@ type AssetsStorageClientOptions = {
  * signed URLs, and only the gateway calls carry the access token.
  */
 export function createAssetsStorageClient({ endpoint, getToken }: AssetsStorageClientOptions) {
-  const getAccessToken = createCachedAccessToken(getToken)
+  const accessToken = createCachedAccessToken(getToken)
   const config = {
     endpoint,
-    headers: async () => ({ authorization: `Bearer ${await getAccessToken()}` }),
+    headers: async () => ({ authorization: `Bearer ${await accessToken.get()}` }),
   }
 
   function useFiles(options?: UseFilesOptions) {
@@ -52,5 +52,5 @@ export function createAssetsStorageClient({ endpoint, getToken }: AssetsStorageC
     return FilesReact.useSearch(pattern, searchOptions, { ...options, ...config })
   }
 
-  return { useFile, useFiles, useList, useSearch }
+  return { resetAccessToken: accessToken.reset, useFile, useFiles, useList, useSearch }
 }
