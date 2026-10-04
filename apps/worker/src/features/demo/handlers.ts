@@ -1,5 +1,5 @@
 import type { JobPayload } from "@v1/jobs/worker"
-import { welcomeRequested } from "@v1/workflows/events"
+import { events } from "@v1/workflows/events"
 import { log } from "#shared/logger.ts"
 import { workflows } from "#shared/services.ts"
 
@@ -10,7 +10,7 @@ export function greetUser({ userId }: JobPayload<"default", "greet-user">) {
 }
 
 export const welcomeUser = workflows.createFunction(
-  { concurrency: { limit: 10 }, id: "welcome-user", triggers: [welcomeRequested] },
+  { concurrency: { limit: 10 }, id: "welcome-user", triggers: [events.demo.welcome.requested] },
   async ({ event, logger, step }) => {
     const { userId } = event.data
     const message = await step.run("compose-welcome", () => `Welcome, ${userId}`)

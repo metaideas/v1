@@ -182,12 +182,22 @@ Jobs need Redis with `maxmemory-policy noeviction`, so Redis never drops a queue
 
 Locally, Docker Compose runs the Inngest Dev Server. Its dashboard at `http://localhost:8006` shows events, runs, and steps. It needs no account or real keys, and it keeps runs in memory, so they disappear when the container restarts. In production, use Inngest Cloud with the event and signing keys from its dashboard, or self-host the server with `inngest start` and point `INNGEST_BASE_URL` at it. A self-hosted server needs a hex signing key.
 
-`src/events.ts` declares every event, its name, and its payload schema. Senders and functions import the same declaration, so a payload is type-checked where it is sent and where it is handled:
+Each domain declares its events in its own file under `src/events/`, with each event's name and payload schema. Senders and functions import the same declaration, so a payload is type-checked where it is sent and where it is handled. An event's name is `<domain>/<noun>.<verb>`, with the verb in the past tense, and its path in the object matches the name, so the Inngest dashboard shows what the code says. A segment of several words uses camelCase in both places:
 
 ```ts
-export const welcomeRequested = eventType("demo/welcome.requested", {
-  schema: z.object({ userId: z.string() }),
-})
+// src/events/billing.ts
+export const billing = {
+  invoice: {
+    paid: eventType("billing/invoice.paid", { schema: InvoiceSchema }),
+    paymentFailed: eventType("billing/invoice.paymentFailed", { schema: InvoiceSchema }),
+  },
+}
+```
+
+`src/events/index.ts` collects the domains into one `events` object. Import that object rather than each domain, because domain names such as `auth` and `files` collide with service names in application workspaces:
+
+```ts
+export const events = { billing, demo }
 ```
 
 Each application workspace that sends events or runs functions creates one client in its composition root. Its `id` names the application in Inngest:
@@ -205,7 +215,9 @@ export const workflows = createWorkflows({
   signingKeyFallback: ENV.INNGEST_SIGNING_KEY_FALLBACK,
 })
 
-await c.var.workflows.send(welcomeRequested.create({ userId }, { id: `welcome-${userId}` }))
+await c.var.workflows.send(
+  events.demo.welcome.requested.create({ userId }, { id: `welcome-${userId}` })
+)
 ```
 
 `send` validates the payload and returns the event IDs. Events with the same `id` trigger functions once within 24 hours. Unlike a job dispatch, a failed send throws.
@@ -214,7 +226,7 @@ Functions live in the `handlers.ts` of a worker feature. Wrap each side effect i
 
 ```ts
 export const welcomeUser = workflows.createFunction(
-  { concurrency: { limit: 10 }, id: "welcome-user", triggers: [welcomeRequested] },
+  { concurrency: { limit: 10 }, id: "welcome-user", triggers: [events.demo.welcome.requested] },
   async ({ event, logger, step }) => {
     const message = await step.run("compose-welcome", () => `Welcome, ${event.data.userId}`)
 

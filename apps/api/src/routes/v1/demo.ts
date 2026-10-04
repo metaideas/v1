@@ -1,4 +1,4 @@
-import { welcomeRequested } from "@v1/workflows/events"
+import { events } from "@v1/workflows/events"
 import { HTTPException } from "hono/http-exception"
 import { requireSession } from "#shared/middleware.ts"
 import { factory } from "#shared/utils.ts"
@@ -7,7 +7,7 @@ export default factory
   .createApp()
   .post("/", requireSession, async (c) => {
     const { ids } = await c.var.workflows.send(
-      welcomeRequested.create({ userId: c.var.session.user.id })
+      events.demo.welcome.requested.create({ userId: c.var.session.user.id })
     )
 
     return c.json({ id: ids[0] }, 202)

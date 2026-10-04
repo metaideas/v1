@@ -9,7 +9,7 @@
   },
   "exports": {
     "./client": "./src/client.ts",
-    "./events": "./src/events.ts"
+    "./events": "./src/events/index.ts"
   },
   "scripts": {
     "bump:deps": "bun update --interactive",
