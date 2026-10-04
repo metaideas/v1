@@ -5,11 +5,10 @@ import type { MemoryAdapterOptions } from "files-sdk/memory"
 import { StorageFault, StorageSyncError } from "@v1/core/errors"
 import { createFiles, handlers } from "files-sdk"
 import { createFilesRouter } from "files-sdk/api"
-import { bunS3 } from "files-sdk/bun-s3"
-import { contentType } from "files-sdk/content-type"
 import { memory } from "files-sdk/memory"
+import { s3 } from "files-sdk/s3"
 import { signedUrlPolicy } from "files-sdk/signed-url-policy"
-import { validation } from "files-sdk/validation"
+import { ValidationError, validation } from "files-sdk/validation"
 import * as try$ from "tryharder"
 import {
   STORAGE_ALLOWED_TYPES,
@@ -23,8 +22,8 @@ type S3AdapterOptions = {
   accessKeyId: string
   bucket: string
   /**
-   * S3-compatible endpoint, such as MinIO from Docker Compose. Without it, the adapter addresses
-   * AWS S3 with virtual-hosted-style URLs.
+   * S3-compatible endpoint, such as MinIO from Docker Compose. With it, the adapter uses path-style
+   * URLs. Without it, the adapter addresses AWS S3 with virtual-hosted-style URLs.
    */
   endpoint?: string
   region?: string
@@ -111,6 +110,43 @@ function getStoredFileRecord(key: string, file: StoredFile): StoredFileRecord {
   }
 }
 
+function checkIsAllowedType(type: string) {
+  const essence = (type.split(";")[0] ?? "").trim().toLowerCase()
+  return STORAGE_ALLOWED_TYPES.some((allowed) =>
+    allowed.endsWith("/*") ? essence.startsWith(allowed.slice(0, -1)) : essence === allowed
+  )
+}
+
+function createTypePolicyPlugin(adapter: Adapter): FilesPlugin {
+  async function rejectStoredFile(key: string, type: string): Promise<never> {
+    await adapter.delete(key)
+    throw new ValidationError("type", `Files of type ${type || "unknown"} are not allowed`)
+  }
+
+  return {
+    name: "type-policy",
+    wrap: handlers({
+      head: async (operation, next) => {
+        const file = await next(operation)
+        if (!checkIsAllowedType(file.type)) await rejectStoredFile(operation.key, file.type)
+        return file
+      },
+      upload: async (operation, next) => {
+        const declaredType = operation.options?.contentType
+        if (declaredType !== undefined && !checkIsAllowedType(declaredType)) {
+          throw new ValidationError("type", `Files of type ${declaredType} are not allowed`)
+        }
+
+        const result = await next(operation)
+        if (!checkIsAllowedType(result.contentType)) {
+          await rejectStoredFile(operation.key, result.contentType)
+        }
+        return result
+      },
+    }),
+  }
+}
+
 function createSyncPlugin({
   logger,
   onFileDeleted,
@@ -167,14 +203,31 @@ function createSyncPlugin({
   }
 }
 
-export function createS3Adapter({ endpoint, ...options }: S3AdapterOptions) {
-  return bunS3({ ...options, endpoint, virtualHostedStyle: !endpoint })
+export function createS3Adapter({
+  accessKeyId,
+  bucket,
+  endpoint,
+  region,
+  secretAccessKey,
+}: S3AdapterOptions) {
+  return s3({
+    bucket,
+    credentials: { accessKeyId, secretAccessKey },
+    endpoint,
+    forcePathStyle: endpoint !== undefined,
+    region,
+  })
 }
 
 export function createMemoryAdapter(options?: MemoryAdapterOptions) {
   return memory(options)
 }
 
+/**
+ * Clients upload and download directly against the bucket through signed URLs, so storage checks
+ * what it can without seeing the bytes: the key, the size cap in the signed upload policy, and an
+ * allowed type when an upload completes. A stored file of a disallowed type is deleted.
+ */
 export function createFileStorage({
   adapter,
   logger,
@@ -185,17 +238,12 @@ export function createFileStorage({
     adapter,
     plugins: [
       createSyncPlugin({ logger, onFileDeleted, onFileStored }),
+      createTypePolicyPlugin(adapter),
       signedUrlPolicy({
         maxExpiresIn: STORAGE_MAX_URL_AGE,
         maxUploadSize: STORAGE_MAX_UPLOAD_SIZE,
       }),
-      validation({
-        allowedTypes: [...STORAGE_ALLOWED_TYPES],
-        key: (key) => FileKeySchema.safeParse(key).success,
-        maxSize: STORAGE_MAX_UPLOAD_SIZE,
-        minSize: 1,
-      }),
-      contentType({ onMismatch: "reject" }),
+      validation({ key: (key) => FileKeySchema.safeParse(key).success }),
     ],
   })
 }

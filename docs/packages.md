@@ -83,6 +83,8 @@ export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 
 `packages/storage` owns file storage on top of [Files SDK](https://github.com/haydenbleasel/files-sdk): the access policy, the authenticated gateway, and the React client. The policy covers accepted content types, upload size, URL lifetime, list limits, and key rules, and lives in `src/constants.ts` and `src/server.ts`. Treat a change to it as a security change and review it as one.
 
+Clients transfer bytes directly with the bucket. A keyless upload sends the file to a signed POST policy that caps its size, and a download redirects to a signed URL, so file bytes never pass through the application. Storage cannot inspect bytes it never receives, so it enforces the key rules, the size cap in the signed policy, and the allowed types when an upload completes: a stored file of a disallowed type is deleted and the upload fails. It does not check file contents against their declared type. An upload that a client never completes stays in the bucket without a record, so give the bucket a lifecycle rule that expires stray objects.
+
 An application workspace that serves files creates one storage instance in its composition root:
 
 ```ts
@@ -104,9 +106,22 @@ export const storage = createFileStorage({
 
 `onFileStored` and `onFileDeleted` keep application records in sync with storage. `createFileStorage` calls `onFileStored` after an upload or `head` succeeds and `onFileDeleted` once for each deleted key, including each key of a bulk delete. The operation waits for the callback. Storage and the record are not atomic, so a failed callback is logged through `logger` as a `StorageSyncError` and the storage result stands. `apps/api` uses these callbacks to keep the `assets` table current.
 
-`createFileStorageRouter({ allowedOrigins, getKeyPrefix, secret, storage })` returns a router whose `handle(request)` serves the gateway. `apps/api` mounts it at `/files` behind its session middleware and scopes every key to `users/<id>/`. Locally, `S3_ENDPOINT` points at MinIO from Docker Compose. Tests pass `createMemoryAdapter()` instead of the S3 adapter.
+`createFileStorageRouter({ allowedOrigins, getKeyPrefix, secret, storage })` returns a router whose `handle(request)` serves the gateway. `apps/api` mounts it at `/files` and scopes every key to `users/<id>/`. The gateway authenticates with an access token instead of the session cookie: clients on other origins cannot send the HttpOnly cookie without credentialed requests, and a credentialed download would fail at the bucket's CORS check after the redirect. `createAccessTokenPlugin()` from `@v1/auth/server` issues short-lived JWTs at `/auth/token` and stores their signing keys in the `jwks` table, and the gateway checks each token with `auth.api.verifyJWT`. Locally, `S3_ENDPOINT` points at MinIO from Docker Compose. Tests pass `createMemoryAdapter()` instead of the S3 adapter.
 
-A client application calls `createFileStorageClient({ endpoint })` from `@v1/storage/react` once in a `shared` module, passing the gateway URL from its own `ENV`, and exports the hooks it returns: `useFiles` for uploads, downloads, and deletes, and `useFile`, `useList`, and `useSearch` for reads. Requests to the gateway carry the session cookie. React Native file references need a native transport, which the package does not include.
+A client application calls `createFileStorageClient` from `@v1/storage/react` once in a `shared` module, passing the gateway URL from its own `ENV` and a function that fetches an access token from its auth client, and exports the hooks it returns: `useFiles` for uploads, downloads, and deletes, and `useFile`, `useList`, and `useSearch` for reads. The client reuses a token until shortly before it expires and sends it only to the gateway.
+
+```ts
+import { createFileStorageClient } from "@v1/storage/react"
+
+export const { useFile, useFiles, useList, useSearch } = createFileStorageClient({
+  endpoint: buildApiUrl("/files"),
+  getToken: async () => {
+    const { data, error } = await authClient.token()
+    if (error) throw new Error(error.message)
+    return data.token
+  },
+})
+```
 
 ## Key-Value Storage
 

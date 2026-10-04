@@ -24,3 +24,5 @@ export type AppContext = DeepMerge<
 >
 
 export type AuthenticatedAppContext = DeepMerge<AppContext, { Variables: { session: Session } }>
+
+export type AccessTokenAppContext = DeepMerge<AppContext, { Variables: { userId: string } }>

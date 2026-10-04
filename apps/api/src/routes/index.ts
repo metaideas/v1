@@ -26,7 +26,7 @@ app.use(
 )
 app.use(
   cors({
-    allowHeaders: ["Content-Type", "Authorization", "trpc-accept"],
+    allowHeaders: ["Content-Type", "Authorization", "Range", "trpc-accept"],
     allowMethods: ["POST", "GET", "PUT", "OPTIONS"],
     credentials: true,
     exposeHeaders: ["Content-Length"],

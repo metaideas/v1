@@ -1,5 +1,5 @@
 import { AUTH_API_COOKIE_PREFIX, AUTH_APP_NAME } from "@v1/auth/constants"
-import { createServerAuth } from "@v1/auth/server"
+import { createAccessTokenPlugin, createServerAuth } from "@v1/auth/server"
 import { createDatabase } from "@v1/database/client"
 import { createMailer } from "@v1/email/mailer"
 import { selectTransport } from "@v1/email/transports"
@@ -32,7 +32,7 @@ export const auth = createServerAuth({
   cookiePrefix: AUTH_API_COOKIE_PREFIX,
   database,
   logger: log,
-  plugins: [],
+  plugins: [createAccessTokenPlugin()],
   secret: ENV.AUTH_SECRET,
   // The mailer logs a failed send. The reset response stays the same either way, so it does not
   // reveal whether the email went out.

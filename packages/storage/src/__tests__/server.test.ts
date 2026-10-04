@@ -1,5 +1,6 @@
 import { describe, expect, mock, test } from "bun:test"
 import { StorageSyncError } from "@v1/core/errors"
+import { ValidationError } from "files-sdk/validation"
 import type { StoredFileRecord } from "#server.ts"
 import { createFileStorage, createMemoryAdapter } from "#server.ts"
 
@@ -122,6 +123,41 @@ describe("createFileStorage", () => {
       .catch((error: unknown) => error)
 
     expect(error).toBeInstanceOf(Error)
+    expect(onFileStored).not.toHaveBeenCalled()
+  })
+
+  test("signs direct uploads instead of refusing them", async () => {
+    const storage = createFileStorage({ adapter: createMemoryAdapter() })
+
+    const target = await storage.signedUploadUrl("users/u1/report.pdf", { expiresIn: 60 })
+
+    expect(target.url).toContain("users/u1/report.pdf")
+  })
+
+  test("rejects an upload whose declared type is not allowed", async () => {
+    const onFileStored = mock((_file: StoredFileRecord) => Promise.resolve())
+    const storage = createFileStorage({ adapter: createMemoryAdapter(), onFileStored })
+
+    const error = await storage
+      .upload("users/u1/page.html", "<p>hi</p>", { contentType: "text/html" })
+      .catch((error: unknown) => error)
+
+    expect(error).toBeInstanceOf(ValidationError)
+    expect(await storage.exists("users/u1/page.html")).toBe(false)
+    expect(onFileStored).not.toHaveBeenCalled()
+  })
+
+  test("deletes a directly uploaded file of a disallowed type when it is completed", async () => {
+    const onFileStored = mock((_file: StoredFileRecord) => Promise.resolve())
+    const adapter = createMemoryAdapter({
+      initial: { "users/u1/page.html": { body: "<p>hi</p>", contentType: "text/html" } },
+    })
+    const storage = createFileStorage({ adapter, onFileStored })
+
+    const error = await storage.head("users/u1/page.html").catch((error: unknown) => error)
+
+    expect(error).toBeInstanceOf(ValidationError)
+    expect(adapter.raw.has("users/u1/page.html")).toBe(false)
     expect(onFileStored).not.toHaveBeenCalled()
   })
 })

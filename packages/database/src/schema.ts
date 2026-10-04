@@ -153,6 +153,18 @@ export const sessions = authSchema.table(
 export type Session = typeof sessions.$inferSelect
 export type NewSession = typeof sessions.$inferInsert
 
+export const jwks = authSchema.table("jwks", {
+  ...id(z.branded("JwkId"), "jwks"),
+
+  createdAt: pg.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  expiresAt: pg.timestamp({ withTimezone: true }),
+
+  privateKey: pg.text().notNull(),
+  publicKey: pg.text().notNull(),
+})
+export type Jwk = typeof jwks.$inferSelect
+export type NewJwk = typeof jwks.$inferInsert
+
 // ==========================STORAGE==========================
 export const storageSchema = pg.pgSchema("storage")
 

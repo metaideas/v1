@@ -2,12 +2,12 @@ import type { StoredFileRecord } from "@v1/storage/server"
 import { operators } from "@v1/database/helpers/sql"
 import { assets } from "@v1/database/schema"
 import { UserIdSchema } from "@v1/database/schemas"
-import type { AuthenticatedAppContext } from "#shared/types.ts"
+import type { AccessTokenAppContext } from "#shared/types.ts"
 import { context } from "#shared/utils.ts"
 
 export async function upsertAsset(file: StoredFileRecord) {
-  const ctx = context<AuthenticatedAppContext>()
-  const userId = UserIdSchema.parse(ctx.var.session.user.id)
+  const ctx = context<AccessTokenAppContext>()
+  const userId = UserIdSchema.parse(ctx.var.userId)
   const record = {
     etag: file.etag,
     lastModified: file.lastModified,
@@ -24,8 +24,8 @@ export async function upsertAsset(file: StoredFileRecord) {
 }
 
 export async function deleteAsset(key: string) {
-  const ctx = context<AuthenticatedAppContext>()
-  const userId = UserIdSchema.parse(ctx.var.session.user.id)
+  const ctx = context<AccessTokenAppContext>()
+  const userId = UserIdSchema.parse(ctx.var.userId)
 
   await ctx.var.db
     .delete(assets)
