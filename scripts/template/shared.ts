@@ -251,6 +251,19 @@ export async function removePath(rootDir: string, relativePath: string) {
   await Bun.$`rm -rf ${resolvePathWithinRoot(rootDir, relativePath)}`.quiet()
 }
 
+export function checkIsRemovedByCleanup(
+  rootDir: string,
+  relativePath: string,
+  cleanupPaths: readonly string[]
+) {
+  const path = resolve(rootDir, relativePath)
+
+  return cleanupPaths.some((cleanupPath) => {
+    const cleanupTarget = resolve(rootDir, cleanupPath)
+    return path === cleanupTarget || checkIsPathWithinRoot(cleanupTarget, path)
+  })
+}
+
 export const TEMPLATE_SECTION_START = "<!-- TEMPLATE:START -->"
 const TEMPLATE_SECTION_END = "<!-- TEMPLATE:END -->"
 

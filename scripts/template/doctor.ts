@@ -4,6 +4,7 @@ import consola from "consola"
 import * as z from "zod"
 
 import {
+  checkIsRemovedByCleanup,
   findTextReferences,
   getProjectScope,
   getScopePrefix,
@@ -11,6 +12,7 @@ import {
   getWorkspacePath,
   readPackageJson,
   readTemplateStamp,
+  removeTemplateSections,
   TEMPLATE_SCOPE,
   TEMPLATE_SECTION_START,
   TEMPLATE_STAMP_FILE,
@@ -277,6 +279,31 @@ const checks: Check[] = [
         ...("bun-create" in packageJson ? ["package.json still has the bun-create field"] : []),
         ...markedFiles.map((path) => `${relative(rootDir, path)} still has TEMPLATE:START markers`),
       ]
+    },
+  },
+  {
+    name: "AGENTS.md references docs that setup keeps",
+    run: async ({ rootDir }) => {
+      const agentsFile = Bun.file(join(rootDir, "AGENTS.md"))
+      if (!(await agentsFile.exists())) return []
+
+      const packageJson = await readPackageJson(join(rootDir, "package.json"))
+      const cleanup = TemplateCleanupSchema.safeParse(packageJson.v1)
+      const cleanupPaths = cleanup.success ? cleanup.data.cleanupPaths : []
+      const references = new Set(
+        removeTemplateSections(await agentsFile.text()).match(/docs\/[\w-]+\.md/g)
+      )
+      const failures = await Promise.all(
+        [...references].map(async (path) => {
+          if (!(await Bun.file(join(rootDir, path)).exists()))
+            return `AGENTS.md references ${path}, which does not exist`
+          if (checkIsRemovedByCleanup(rootDir, path, cleanupPaths))
+            return `AGENTS.md references ${path}, which v1.cleanupPaths removes during setup`
+          return null
+        })
+      )
+
+      return failures.filter((failure): failure is string => failure !== null)
     },
   },
   {
