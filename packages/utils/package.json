@@ -19,6 +19,7 @@
   "dependencies": {
     "@v1/core": "workspace:*",
     "nanoid": "5.1.16",
+    "tryharder": "0.4.0",
     "ufo": "1.5.4",
     "zod": "4.6.5"
   },
