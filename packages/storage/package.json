@@ -16,6 +16,10 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1146.0",
+    "@aws-sdk/lib-storage": "3.1146.0",
+    "@aws-sdk/s3-presigned-post": "3.1146.0",
+    "@aws-sdk/s3-request-presigner": "3.1146.0",
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
     "files-sdk": "2.2.2",

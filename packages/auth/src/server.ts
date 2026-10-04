@@ -2,7 +2,9 @@ import type { Logger } from "@v1/core/services/logging"
 import type { BetterAuthPlugin, SocialProviders } from "better-auth"
 import { type DB, drizzleAdapter } from "@better-auth/drizzle-adapter"
 import { betterAuth } from "better-auth/minimal"
+import { jwt } from "better-auth/plugins/jwt"
 import {
+  AUTH_ACCESS_TOKEN_OPTIONS,
   AUTH_ADVANCED_OPTIONS,
   AUTH_APP_NAME,
   AUTH_EMAIL_AND_PASSWORD_OPTIONS,
@@ -47,6 +49,15 @@ type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = {
   sendPasswordReset?: (input: { email: string; url: string }) => Promise<unknown>
   socialProviders?: SocialProviders
   trustedOrigins: string[]
+}
+
+/**
+ * Issues short-lived access tokens at `/token` and publishes their keys at `/jwks`. A client sends
+ * one as a bearer token to a service on another origin, and the service checks it with
+ * `auth.api.verifyJWT`. It stores signing keys in the `jwks` table.
+ */
+export function createAccessTokenPlugin() {
+  return jwt({ jwt: AUTH_ACCESS_TOKEN_OPTIONS, schema: { jwks: { modelName: "jwk" } } })
 }
 
 /**

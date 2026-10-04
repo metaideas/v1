@@ -1,15 +1,14 @@
 import type { Logger } from "@v1/core/services/logging"
-import type { Adapter, FilesPlugin, StoredFile, UploadResult } from "files-sdk"
+import type { Adapter, Files, FilesPlugin, StoredFile, UploadResult } from "files-sdk"
 import type { AllowedOrigins } from "files-sdk/api"
 import type { MemoryAdapterOptions } from "files-sdk/memory"
 import { StorageFault, StorageSyncError } from "@v1/core/errors"
 import { createFiles, handlers } from "files-sdk"
 import { createFilesRouter } from "files-sdk/api"
-import { bunS3 } from "files-sdk/bun-s3"
-import { contentType } from "files-sdk/content-type"
 import { memory } from "files-sdk/memory"
+import { s3 } from "files-sdk/s3"
 import { signedUrlPolicy } from "files-sdk/signed-url-policy"
-import { validation } from "files-sdk/validation"
+import { ValidationError, validation } from "files-sdk/validation"
 import * as try$ from "tryharder"
 import {
   STORAGE_ALLOWED_TYPES,
@@ -23,11 +22,11 @@ type S3AdapterOptions = {
   accessKeyId: string
   bucket: string
   /**
-   * S3-compatible endpoint, such as MinIO from Docker Compose. Without it, the adapter addresses
-   * AWS S3 with virtual-hosted-style URLs.
+   * S3-compatible endpoint, such as MinIO from Docker Compose. With it, the adapter uses path-style
+   * URLs. Without it, the adapter addresses AWS S3 with virtual-hosted-style URLs.
    */
   endpoint?: string
-  region?: string
+  region: string
   secretAccessKey: string
 }
 
@@ -35,7 +34,7 @@ type S3AdapterOptions = {
  * A file that storage holds after a successful upload or `head`, in the shape an application
  * records it.
  */
-export type StoredFileRecord = {
+export type UploadRecord = {
   etag?: string
   key: string
   lastModified?: number
@@ -50,19 +49,19 @@ type SyncCallbacks = {
    * Records a file after an upload or `head` succeeds. The operation waits for it, and a failure is
    * logged without failing the operation.
    */
-  onFileStored?: (file: StoredFileRecord) => Promise<unknown>
+  onUploadStored?: (file: UploadRecord) => Promise<unknown>
   /**
    * Removes the record of a deleted key. A bulk delete calls it once for each key.
    */
-  onFileDeleted?: (key: string) => Promise<unknown>
+  onUploadDeleted?: (key: string) => Promise<unknown>
 }
 
-type FileStorageOptions = SyncCallbacks & {
+type UploadStorageOptions = SyncCallbacks & {
   adapter: Adapter
   logger?: Logger
 }
 
-type FileStorageRouterOptions = {
+type UploadStorageRouterOptions = {
   allowedOrigins: AllowedOrigins
   /**
    * Returns the key prefix that scopes the current request, such as `users/<id>/`. Every gateway
@@ -70,10 +69,10 @@ type FileStorageRouterOptions = {
    */
   getKeyPrefix: () => string
   secret: string
-  storage: FileStorage
+  storage: UploadStorage
 }
 
-export type FileStorage = ReturnType<typeof createFileStorage>
+export type UploadStorage = ReturnType<typeof createUploadStorage>
 
 const GATEWAY_OPERATIONS = [
   "capabilities",
@@ -88,7 +87,7 @@ const GATEWAY_OPERATIONS = [
   "url",
 ] as const
 
-function getUploadedFileRecord(key: string, file: UploadResult): StoredFileRecord {
+function getUploadResultRecord(key: string, file: UploadResult): UploadRecord {
   return {
     etag: file.etag,
     key,
@@ -99,7 +98,7 @@ function getUploadedFileRecord(key: string, file: UploadResult): StoredFileRecor
   }
 }
 
-function getStoredFileRecord(key: string, file: StoredFile): StoredFileRecord {
+function getStoredUploadRecord(key: string, file: StoredFile): UploadRecord {
   return {
     etag: file.etag,
     key,
@@ -111,10 +110,63 @@ function getStoredFileRecord(key: string, file: StoredFile): StoredFileRecord {
   }
 }
 
+function checkIsAllowedType(type: string) {
+  const essence = (type.split(";")[0] ?? "").trim().toLowerCase()
+  return STORAGE_ALLOWED_TYPES.some((allowed) =>
+    allowed.endsWith("/*") ? essence.startsWith(allowed.slice(0, -1)) : essence === allowed
+  )
+}
+
+function assertAllowedType(type: string | undefined) {
+  if (type === undefined || !checkIsAllowedType(type)) {
+    throw new ValidationError("type", `Files of type ${type ?? "unknown"} are not allowed`)
+  }
+}
+
+function createTypePolicyPlugin(): FilesPlugin {
+  let storage: Files | undefined
+
+  // Deletes through the whole storage instance, so the sync plugin also removes the upload record.
+  async function rejectStoredFile(key: string, type: string): Promise<never> {
+    await storage?.delete(key)
+    throw new ValidationError("type", `Files of type ${type || "unknown"} are not allowed`)
+  }
+
+  return {
+    extend: (files) => {
+      storage = files
+      return {}
+    },
+    name: "type-policy",
+    wrap: handlers({
+      head: async (operation, next) => {
+        const file = await next(operation)
+        if (!checkIsAllowedType(file.type)) await rejectStoredFile(operation.key, file.type)
+        return file
+      },
+      // A direct upload never passes through storage, so the signed policy pins an allowed type.
+      signedUploadUrl: (operation, next) => {
+        assertAllowedType(operation.options?.contentType)
+        return next(operation)
+      },
+      upload: async (operation, next) => {
+        const declaredType = operation.options?.contentType
+        if (declaredType !== undefined) assertAllowedType(declaredType)
+
+        const result = await next(operation)
+        if (!checkIsAllowedType(result.contentType)) {
+          await rejectStoredFile(operation.key, result.contentType)
+        }
+        return result
+      },
+    }),
+  }
+}
+
 function createSyncPlugin({
   logger,
-  onFileDeleted,
-  onFileStored,
+  onUploadDeleted,
+  onUploadStored,
 }: SyncCallbacks & { logger?: Logger }): FilesPlugin {
   async function sync(
     operation: StorageSyncError["operation"],
@@ -141,24 +193,24 @@ function createSyncPlugin({
     wrap: handlers({
       delete: async (operation, next) => {
         await next(operation)
-        if (onFileDeleted) {
-          await sync("delete", operation.key, () => onFileDeleted(operation.key))
+        if (onUploadDeleted) {
+          await sync("delete", operation.key, () => onUploadDeleted(operation.key))
         }
       },
       head: async (operation, next) => {
         const file = await next(operation)
-        if (onFileStored) {
+        if (onUploadStored) {
           await sync("store", operation.key, () =>
-            onFileStored(getStoredFileRecord(operation.key, file))
+            onUploadStored(getStoredUploadRecord(operation.key, file))
           )
         }
         return file
       },
       upload: async (operation, next) => {
         const result = await next(operation)
-        if (onFileStored) {
+        if (onUploadStored) {
           await sync("store", operation.key, () =>
-            onFileStored(getUploadedFileRecord(operation.key, result))
+            onUploadStored(getUploadResultRecord(operation.key, result))
           )
         }
         return result
@@ -167,45 +219,57 @@ function createSyncPlugin({
   }
 }
 
-export function createS3Adapter({ endpoint, ...options }: S3AdapterOptions) {
-  return bunS3({ ...options, endpoint, virtualHostedStyle: !endpoint })
+export function createS3Adapter({
+  accessKeyId,
+  bucket,
+  endpoint,
+  region,
+  secretAccessKey,
+}: S3AdapterOptions) {
+  return s3({
+    bucket,
+    credentials: { accessKeyId, secretAccessKey },
+    endpoint,
+    forcePathStyle: endpoint !== undefined,
+    region,
+  })
 }
 
 export function createMemoryAdapter(options?: MemoryAdapterOptions) {
   return memory(options)
 }
 
-export function createFileStorage({
+/**
+ * Clients upload and download directly against the bucket through signed URLs, so storage checks
+ * what it can without seeing the bytes: the key, the size cap in the signed upload policy, and an
+ * allowed type when an upload completes. A stored file of a disallowed type is deleted.
+ */
+export function createUploadStorage({
   adapter,
   logger,
-  onFileDeleted,
-  onFileStored,
-}: FileStorageOptions) {
+  onUploadDeleted,
+  onUploadStored,
+}: UploadStorageOptions) {
   return createFiles({
     adapter,
     plugins: [
-      createSyncPlugin({ logger, onFileDeleted, onFileStored }),
+      createSyncPlugin({ logger, onUploadDeleted, onUploadStored }),
+      createTypePolicyPlugin(),
       signedUrlPolicy({
         maxExpiresIn: STORAGE_MAX_URL_AGE,
         maxUploadSize: STORAGE_MAX_UPLOAD_SIZE,
       }),
-      validation({
-        allowedTypes: [...STORAGE_ALLOWED_TYPES],
-        key: (key) => FileKeySchema.safeParse(key).success,
-        maxSize: STORAGE_MAX_UPLOAD_SIZE,
-        minSize: 1,
-      }),
-      contentType({ onMismatch: "reject" }),
+      validation({ key: (key) => FileKeySchema.safeParse(key).success }),
     ],
   })
 }
 
-export function createFileStorageRouter({
+export function createUploadStorageRouter({
   allowedOrigins,
   getKeyPrefix,
   secret,
   storage,
-}: FileStorageRouterOptions) {
+}: UploadStorageRouterOptions) {
   return createFilesRouter({
     allowedOrigins,
     authorize: () => ({

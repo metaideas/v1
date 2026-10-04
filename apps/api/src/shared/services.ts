@@ -1,16 +1,16 @@
 import { AUTH_API_COOKIE_PREFIX, AUTH_APP_NAME } from "@v1/auth/constants"
-import { createServerAuth } from "@v1/auth/server"
+import { createAccessTokenPlugin, createServerAuth } from "@v1/auth/server"
 import { createDatabase } from "@v1/database/client"
 import { createMailer } from "@v1/email/mailer"
 import { selectTransport } from "@v1/email/transports"
 import { createDispatcher } from "@v1/jobs/dispatcher"
-import { createFileStorage, createS3Adapter } from "@v1/storage/server"
+import { createUploadStorage, createS3Adapter } from "@v1/storage/server"
 import { createWorkflows } from "@v1/workflows/client"
 import { createStorage } from "unstorage"
 import redisDriver from "unstorage/drivers/redis"
-import { deleteAsset, upsertAsset } from "#shared/assets.ts"
 import { ENV } from "#shared/env.generated.ts"
 import { log } from "#shared/logger.ts"
+import { deleteUpload, upsertUpload } from "#shared/uploads.ts"
 import { allowedOrigins } from "#shared/utils.ts"
 
 export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
@@ -32,7 +32,7 @@ export const auth = createServerAuth({
   cookiePrefix: AUTH_API_COOKIE_PREFIX,
   database,
   logger: log,
-  plugins: [],
+  plugins: [createAccessTokenPlugin()],
   secret: ENV.AUTH_SECRET,
   // The mailer logs a failed send. The reset response stays the same either way, so it does not
   // reveal whether the email went out.
@@ -45,7 +45,7 @@ export const auth = createServerAuth({
   trustedOrigins: allowedOrigins,
 })
 
-export const storage = createFileStorage({
+export const storage = createUploadStorage({
   adapter: createS3Adapter({
     accessKeyId: ENV.S3_ACCESS_KEY_ID,
     bucket: ENV.S3_BUCKET,
@@ -54,8 +54,8 @@ export const storage = createFileStorage({
     secretAccessKey: ENV.S3_SECRET_ACCESS_KEY,
   }),
   logger: log,
-  onFileDeleted: deleteAsset,
-  onFileStored: upsertAsset,
+  onUploadDeleted: deleteUpload,
+  onUploadStored: upsertUpload,
 })
 
 export const workflows = createWorkflows({

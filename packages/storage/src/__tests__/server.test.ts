@@ -1,7 +1,13 @@
 import { describe, expect, mock, test } from "bun:test"
 import { StorageSyncError } from "@v1/core/errors"
-import type { StoredFileRecord } from "#server.ts"
-import { createFileStorage, createMemoryAdapter } from "#server.ts"
+import { ValidationError } from "files-sdk/validation"
+import type { UploadRecord } from "#server.ts"
+import {
+  createUploadStorage,
+  createUploadStorageRouter,
+  createMemoryAdapter,
+  createS3Adapter,
+} from "#server.ts"
 
 const PDF = new TextEncoder().encode("%PDF-1.4\n%v1\n")
 const PDF_OPTIONS = { contentType: "application/pdf" }
@@ -10,15 +16,42 @@ function createLogger() {
   return { debug: mock(), error: mock(), info: mock(), warn: mock() }
 }
 
-describe("createFileStorage", () => {
+async function presignUpload(type: string) {
+  const router = createUploadStorageRouter({
+    allowedOrigins: [],
+    getKeyPrefix: () => "users/u1/",
+    secret: "x".repeat(32),
+    // Signing a POST policy is local, so these credentials never reach a bucket.
+    storage: createUploadStorage({
+      adapter: createS3Adapter({
+        accessKeyId: "test",
+        bucket: "uploads",
+        endpoint: "http://localhost:9000",
+        region: "us-east-1",
+        secretAccessKey: "test",
+      }),
+    }),
+  })
+  const response = await router.handle(
+    new Request("http://localhost/files", {
+      body: JSON.stringify({ files: [{ name: "file", size: 16, type }], op: "presign" }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    })
+  )
+  const body = (await response.json()) as { uploads: Array<{ target: { url: string } }> }
+  return body.uploads[0]?.target.url ?? ""
+}
+
+describe("createUploadStorage", () => {
   test("records an uploaded file after storage accepts it", async () => {
-    const onFileStored = mock((_file: StoredFileRecord) => Promise.resolve())
-    const storage = createFileStorage({ adapter: createMemoryAdapter(), onFileStored })
+    const onUploadStored = mock((_file: UploadRecord) => Promise.resolve())
+    const storage = createUploadStorage({ adapter: createMemoryAdapter(), onUploadStored })
 
     await storage.upload("users/u1/report.pdf", PDF, PDF_OPTIONS)
 
-    expect(onFileStored).toHaveBeenCalledTimes(1)
-    expect(onFileStored.mock.calls[0]?.[0]).toMatchObject({
+    expect(onUploadStored).toHaveBeenCalledTimes(1)
+    expect(onUploadStored.mock.calls[0]?.[0]).toMatchObject({
       key: "users/u1/report.pdf",
       name: "report.pdf",
       size: PDF.byteLength,
@@ -27,8 +60,8 @@ describe("createFileStorage", () => {
   })
 
   test("records a file read with head, including its metadata", async () => {
-    const onFileStored = mock((_file: StoredFileRecord) => Promise.resolve())
-    const storage = createFileStorage({
+    const onUploadStored = mock((_file: UploadRecord) => Promise.resolve())
+    const storage = createUploadStorage({
       adapter: createMemoryAdapter({
         initial: {
           "users/u1/report.pdf": {
@@ -38,13 +71,13 @@ describe("createFileStorage", () => {
           },
         },
       }),
-      onFileStored,
+      onUploadStored,
     })
 
     await storage.head("users/u1/report.pdf")
 
-    expect(onFileStored).toHaveBeenCalledTimes(1)
-    expect(onFileStored.mock.calls[0]?.[0]).toMatchObject({
+    expect(onUploadStored).toHaveBeenCalledTimes(1)
+    expect(onUploadStored.mock.calls[0]?.[0]).toMatchObject({
       key: "users/u1/report.pdf",
       metadata: { source: "import" },
       type: "application/pdf",
@@ -52,29 +85,29 @@ describe("createFileStorage", () => {
   })
 
   test("removes the record of a deleted file", async () => {
-    const onFileDeleted = mock((_key: string) => Promise.resolve())
-    const storage = createFileStorage({
+    const onUploadDeleted = mock((_key: string) => Promise.resolve())
+    const storage = createUploadStorage({
       adapter: createMemoryAdapter({ initial: { "users/u1/report.pdf": PDF } }),
-      onFileDeleted,
+      onUploadDeleted,
     })
 
     await storage.delete("users/u1/report.pdf")
 
-    expect(onFileDeleted.mock.calls).toEqual([["users/u1/report.pdf"]])
+    expect(onUploadDeleted.mock.calls).toEqual([["users/u1/report.pdf"]])
   })
 
   test("removes one record for each key of a bulk delete", async () => {
-    const onFileDeleted = mock((_key: string) => Promise.resolve())
-    const storage = createFileStorage({
+    const onUploadDeleted = mock((_key: string) => Promise.resolve())
+    const storage = createUploadStorage({
       adapter: createMemoryAdapter({
         initial: { "users/u1/a.pdf": PDF, "users/u1/b.pdf": PDF },
       }),
-      onFileDeleted,
+      onUploadDeleted,
     })
 
     await storage.delete(["users/u1/a.pdf", "users/u1/b.pdf"])
 
-    expect(onFileDeleted.mock.calls.map(([key]) => key).toSorted()).toEqual([
+    expect(onUploadDeleted.mock.calls.map(([key]) => key).toSorted()).toEqual([
       "users/u1/a.pdf",
       "users/u1/b.pdf",
     ])
@@ -82,9 +115,9 @@ describe("createFileStorage", () => {
 
   test("waits for the record write before the operation resolves", async () => {
     const write = Promise.withResolvers<boolean>()
-    const storage = createFileStorage({
+    const storage = createUploadStorage({
       adapter: createMemoryAdapter(),
-      onFileStored: () => write.promise,
+      onUploadStored: () => write.promise,
     })
     const pending = Symbol("pending")
 
@@ -98,10 +131,10 @@ describe("createFileStorage", () => {
 
   test("logs a failed record write and keeps the successful storage result", async () => {
     const logger = createLogger()
-    const storage = createFileStorage({
+    const storage = createUploadStorage({
       adapter: createMemoryAdapter(),
       logger,
-      onFileStored: () => Promise.reject(new Error("database unavailable")),
+      onUploadStored: () => Promise.reject(new Error("database unavailable")),
     })
 
     const result = await storage.upload("users/u1/report.pdf", PDF, PDF_OPTIONS)
@@ -114,14 +147,78 @@ describe("createFileStorage", () => {
   })
 
   test("skips the record when storage rejects the operation", async () => {
-    const onFileStored = mock((_file: StoredFileRecord) => Promise.resolve())
-    const storage = createFileStorage({ adapter: createMemoryAdapter(), onFileStored })
+    const onUploadStored = mock((_file: UploadRecord) => Promise.resolve())
+    const storage = createUploadStorage({ adapter: createMemoryAdapter(), onUploadStored })
 
     const error = await storage
       .upload("users/u1/notes.txt", "hello", { contentType: "text/plain" })
       .catch((error: unknown) => error)
 
     expect(error).toBeInstanceOf(Error)
-    expect(onFileStored).not.toHaveBeenCalled()
+    expect(onUploadStored).not.toHaveBeenCalled()
+  })
+
+  test("signs a direct upload of an allowed type", async () => {
+    const storage = createUploadStorage({ adapter: createMemoryAdapter() })
+
+    const target = await storage.signedUploadUrl("users/u1/report.pdf", {
+      contentType: "application/pdf",
+      expiresIn: 60,
+    })
+
+    expect(target.url).toContain("users/u1/report.pdf")
+  })
+
+  test("refuses to sign a direct upload without an allowed type", async () => {
+    const storage = createUploadStorage({ adapter: createMemoryAdapter() })
+
+    const [missing, disallowed] = await Promise.all([
+      storage.signedUploadUrl("users/u1/a", { expiresIn: 60 }).catch((error: unknown) => error),
+      storage
+        .signedUploadUrl("users/u1/b.html", { contentType: "text/html", expiresIn: 60 })
+        .catch((error: unknown) => error),
+    ])
+
+    expect(missing).toBeInstanceOf(ValidationError)
+    expect(disallowed).toBeInstanceOf(ValidationError)
+  })
+
+  test("rejects an upload whose declared type is not allowed", async () => {
+    const onUploadStored = mock((_file: UploadRecord) => Promise.resolve())
+    const storage = createUploadStorage({ adapter: createMemoryAdapter(), onUploadStored })
+
+    const error = await storage
+      .upload("users/u1/page.html", "<p>hi</p>", { contentType: "text/html" })
+      .catch((error: unknown) => error)
+
+    expect(error).toBeInstanceOf(ValidationError)
+    expect(await storage.exists("users/u1/page.html")).toBe(false)
+    expect(onUploadStored).not.toHaveBeenCalled()
+  })
+
+  test("deletes a directly uploaded file of a disallowed type when it is completed", async () => {
+    const onUploadStored = mock((_file: UploadRecord) => Promise.resolve())
+    const onUploadDeleted = mock((_key: string) => Promise.resolve())
+    const adapter = createMemoryAdapter({
+      initial: { "users/u1/page.html": { body: "<p>hi</p>", contentType: "text/html" } },
+    })
+    const storage = createUploadStorage({ adapter, onUploadDeleted, onUploadStored })
+
+    const error = await storage.head("users/u1/page.html").catch((error: unknown) => error)
+
+    expect(error).toBeInstanceOf(ValidationError)
+    expect(adapter.raw.has("users/u1/page.html")).toBe(false)
+    expect(onUploadStored).not.toHaveBeenCalled()
+    expect(onUploadDeleted.mock.calls).toEqual([["users/u1/page.html"]])
+  })
+})
+
+describe("createUploadStorageRouter", () => {
+  test("signs a direct upload target for an allowed type", async () => {
+    expect(await presignUpload("application/pdf")).not.toContain("op=proxy")
+  })
+
+  test("never signs a direct upload target for a disallowed type", async () => {
+    expect(await presignUpload("text/html")).toContain("op=proxy")
   })
 })
