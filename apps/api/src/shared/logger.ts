@@ -1,5 +1,5 @@
-import { isDevelopment } from "@v1/utils/env"
 import { auditRedactPreset, initLogger } from "evlog"
+import { isDevelopment } from "std-env"
 
 // The preset masks exact field names such as `secret` and `apiKey`. A bare word also masks the
 // whole field name in any casing, such as `passPhrase`. The globs mask credentials inside longer

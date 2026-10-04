@@ -8,7 +8,6 @@
     "#*": "./src/*"
   },
   "exports": {
-    "./browser": "./src/browser.ts",
     "./client": "./src/client.ts"
   },
   "scripts": {
@@ -16,8 +15,6 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "dependencies": {
-    "@stripe/react-stripe-js": "5.4.1",
-    "@stripe/stripe-js": "8.6.1",
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
     "stripe": "20.1.2",
