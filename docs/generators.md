@@ -62,3 +62,13 @@ bun run generate posthog
 The template command installs the SDK for the runtime of the workspace and declares the PostHog variables in the workspace's `.env.schema`. The project key is optional, and PostHog stays off without it. In `apps/api` it adds a server client and shuts it down with the process. In `apps/app` and `apps/mobile` it adds an analytics provider and wraps the existing providers with it. The mobile provider captures screens from the Expo Router pathname. In `apps/mobile`, the template command also installs the Expo modules PostHog reads device details from, so run `bun run --filter mobile prebuild` afterward to update the native projects. Identify users with `usePostHog().identify()` once a session loads. On mobile, the hook returns `undefined` when no project key is set, so call `usePostHog()?.identify()`.
 
 Where an edit does not apply, the template command prints the step to finish by hand. A repeat run reports skips without replacing generated application code.
+
+## Add a jobs dashboard
+
+`bull-board` adds a [bull-board](https://github.com/felixmosh/bull-board) dashboard for the `@v1/jobs` queues to `apps/api`:
+
+```bash
+bun run generate bull-board
+```
+
+The template command installs bull-board and the BullMQ version that `packages/jobs` uses, adds `src/shared/jobs-dashboard.ts`, and mounts the dashboard at `/jobs` outside the typed router, so it does not change the API client or the OpenAPI document. The dashboard opens one queue for each name in `@v1/jobs/queue-names` and closes them with the process. It rejects cross-site form posts, and it is protected by basic auth: set `JOBS_DASHBOARD_USERNAME` and a `JOBS_DASHBOARD_PASSWORD` of at least 16 characters in `apps/api`. Without them, `/jobs` is not mounted. From the dashboard you can retry, promote, and remove jobs, so share the credentials only with people who operate the queues.

@@ -1,0 +1,47 @@
+import { createBullBoard } from "@bull-board/api"
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter"
+import { HonoAdapter } from "@bull-board/hono"
+import { queueNames } from "@v1/jobs/queue-names"
+import { Queue } from "bullmq"
+import { basicAuth } from "hono/basic-auth"
+import { serveStatic } from "hono/bun"
+import { csrf } from "hono/csrf"
+import { ENV } from "#shared/env.generated.ts"
+import { factory } from "#shared/utils.ts"
+
+const JOBS_DASHBOARD_PATH = "/jobs"
+
+function createJobsDashboard(credentials: { password: string; username: string }) {
+  const queues = queueNames.map(
+    (name) => new Queue(name, { connection: { url: ENV.JOBS_REDIS_URL } })
+  )
+  const serverAdapter = new HonoAdapter(serveStatic).setBasePath(JOBS_DASHBOARD_PATH)
+
+  createBullBoard({ queues: queues.map((queue) => new BullMQAdapter(queue)), serverAdapter })
+
+  return {
+    async close() {
+      await Promise.all(queues.map((queue) => queue.close()))
+    },
+    path: JOBS_DASHBOARD_PATH,
+    // Browsers resend cached Basic Auth credentials on cross-site form posts, so reject mutations
+    // that do not come from the dashboard's own origin.
+    routes: factory
+      .createApp()
+      .use(csrf())
+      .use(basicAuth(credentials))
+      .route("/", serverAdapter.registerPlugin()),
+  }
+}
+
+/**
+ * The bull-board dashboard for every job queue. It is undefined when no dashboard credentials are
+ * configured.
+ */
+export const jobsDashboard =
+  ENV.JOBS_DASHBOARD_USERNAME && ENV.JOBS_DASHBOARD_PASSWORD
+    ? createJobsDashboard({
+        password: ENV.JOBS_DASHBOARD_PASSWORD,
+        username: ENV.JOBS_DASHBOARD_USERNAME,
+      })
+    : undefined
