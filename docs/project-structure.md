@@ -21,7 +21,8 @@ root
   │   ├── docs              # Astro Starlight documentation site
   │   ├── extension         # WXT browser extension
   │   ├── mobile            # Expo mobile application
-  │   └── web               # Astro marketing site and blog
+  │   ├── web               # Astro marketing site and blog
+  │   └── worker            # BullMQ worker that runs background jobs
   │
   ├── infra               # Infrastructure as code for cloud providers
   │   └── local             # Docker Compose configuration for local development
@@ -32,6 +33,7 @@ root
   │   ├── core                  # Shared business logic and errors, organized by domain
   │   ├── database              # Database client and ORM using Drizzle
   │   ├── email                 # Email templates and delivery through Resend or SMTP
+  │   ├── jobs                  # Fire-and-forget background jobs on Redis using BullMQ
   │   ├── payments              # Payment processing utilities using Stripe
   │   ├── ui                    # Reusable UI components and design system using Shadcn/UI
   │   ├── utils                 # Shared helpers and constants for packages and apps
@@ -79,17 +81,17 @@ features/<feature>/
   ├── constants.ts    # Static values and content, such as paths and lists
   ├── data.ts         # Client data layer: query and mutation options, Convex hooks
   ├── errors.ts       # Errors that stay inside the app
-  ├── handlers.ts     # Server entry points: tRPC procedures, server functions, form actions, durable workflows
+  ├── handlers.ts     # Server entry points: tRPC procedures, server functions, form actions, durable workflows, job handlers
   ├── hooks.ts        # React hooks for local and derived state
   └── schemas.ts      # Schemas for forms, search params, and local models
 ```
 
-| Role                                      | API | App | Desktop | Extension | Mobile | Web |
-| ----------------------------------------- | --- | --- | ------- | --------- | ------ | --- |
-| `assets/`, `components/`                  |     | ✓   | ✓       | ✓         | ✓      | ✓   |
-| `constants.ts`, `errors.ts`, `schemas.ts` | ✓   | ✓   | ✓       | ✓         | ✓      | ✓   |
-| `data.ts`, `hooks.ts`                     |     | ✓   | ✓       | ✓         | ✓      |     |
-| `handlers.ts`                             | ✓   | ✓   |         |           |        |     |
+| Role                                      | API | App | Desktop | Extension | Mobile | Web | Worker |
+| ----------------------------------------- | --- | --- | ------- | --------- | ------ | --- | ------ |
+| `assets/`, `components/`                  |     | ✓   | ✓       | ✓         | ✓      | ✓   |        |
+| `constants.ts`, `errors.ts`, `schemas.ts` | ✓   | ✓   | ✓       | ✓         | ✓      | ✓   | ✓      |
+| `data.ts`, `hooks.ts`                     |     | ✓   | ✓       | ✓         | ✓      |     |        |
+| `handlers.ts`                             | ✓   | ✓   |         |           |        |     | ✓      |
 
 - A role file that grows becomes a folder of the same name with one file per item, such as `handlers/sign-in.ts`. No other folder names exist inside a feature.
 - `handlers.ts` implements what the app exposes. It defines no contracts of its own. Payloads and errors that cross applications belong in `@v1/core` or the package workspace that owns them.
@@ -113,6 +115,17 @@ apps/api/src
   ├── features/     # Feature folders
   ├── client.ts     # Typed client for other apps
   └── index.ts      # Server entry point
+```
+
+### Worker
+
+A Bun process that consumes `@v1/jobs` queues. It serves no HTTP. Run more than one to share the load of a queue; each job goes to one of them.
+
+```sh
+apps/worker/src
+  ├── shared/       # Logger and app-wide utilities
+  ├── features/     # Feature folders whose handlers.ts handles jobs
+  └── index.ts      # Worker entry point that subscribes to queues
 ```
 
 ### App

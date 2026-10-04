@@ -21,6 +21,7 @@ A modern monorepo template for the next product you build.
 - An API that uses [Hono](https://hono.dev/) and [TRPC](https://trpc.io/)
 - A desktop application that uses [Electron Forge](https://www.electronforge.io/)
 - A browser extension that uses [WXT](https://wxt.dev/)
+- A background job worker that uses [BullMQ](https://docs.bullmq.io/)
 
 ## Documentation
 

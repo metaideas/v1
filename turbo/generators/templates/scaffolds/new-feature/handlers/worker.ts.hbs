@@ -1,0 +1,7 @@
+import { log } from "#shared/logger.ts"
+
+export function handle{{pascalCase name}}(_payload: unknown) {
+  log.info({ feature: "{{kebabCase name}}", message: "Job handled", scope: "jobs" })
+
+  return Promise.resolve()
+}
