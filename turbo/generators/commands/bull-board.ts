@@ -139,7 +139,7 @@ function readTokens(css: string, selector: string) {
  * Reads the bull-board theme from the shadcn tokens in the `:root` and `.dark` blocks of a
  * stylesheet.
  */
-export function readTheme(css: string): Theme {
+function readTheme(css: string): Theme {
   return {
     // bull-board redeclares the states for dark mode, so they are set for both themes.
     dark: { ...ACCENT_STATES, ...readTokens(css, "\\.dark") },
