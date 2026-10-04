@@ -114,7 +114,7 @@ There is no key-value package workspace. An application workspace that needs one
 
 ## Jobs
 
-`packages/jobs` runs fire-and-forget background jobs on Redis through [BullMQ](https://docs.bullmq.io/). A dispatcher adds a job to a queue, and a worker in another process picks it up. Use a job for one unit of work that can run later and retry on its own, such as sending an email, resizing an upload, or calling a slow third-party API. Use a [workflow](#workflows) when the work has several steps whose progress must survive a crash, or when the caller waits for its result.
+`packages/jobs` runs fire-and-forget background jobs on Redis through [BullMQ](https://docs.bullmq.io/). A dispatcher adds a job to a queue, and a worker in another process picks it up. Use a job for one unit of work that can run later and retry on its own, such as sending an email, resizing an upload, or calling a slow third-party API. Use a [workflow](#workflows) when the work has several steps whose progress must survive a crash, or waits between them.
 
 Each queue lives in its own file under `src/queues/` and owns its jobs. `defineQueue` sets the concurrency of each worker process that consumes the queue and an optional rate limit across every worker. `defineJob` declares a job's payload schema and, optionally, its attempts. A job's name is its key in `jobs`, so a queue cannot list the same name twice:
 
@@ -178,43 +178,57 @@ Jobs need Redis with `maxmemory-policy noeviction`, so Redis never drops a queue
 
 ## Workflows
 
-`packages/workflows` runs durable background workflows through [DBOS](https://docs.dbos.dev/). DBOS stores workflow inputs, step outputs, and queues in a `dbos` schema in Postgres, so workflows need a Postgres database. It runs inside the application process: there is no separate workflow server, signing key, or hosted account.
+`packages/workflows` runs durable background workflows through [Inngest](https://www.inngest.com/docs). An application sends an event, and Inngest runs every function that the event triggers. `apps/worker` runs the functions. Inngest saves the result of each step, so a run that fails or restarts resumes after the last step that finished.
 
-An application workspace creates one `Workflows` instance per process. Pass a `url`, and workflows open their own small connection pool. Pass the application's logger as `logger` to receive workflow events; without it, DBOS logs to the console:
+Locally, Docker Compose runs the Inngest Dev Server. Its dashboard at `http://localhost:8006` shows events, runs, and steps. It needs no account or real keys, and it keeps runs in memory, so they disappear when the container restarts. In production, use Inngest Cloud with the event and signing keys from its dashboard, or self-host the server with `inngest start` and point `INNGEST_BASE_URL` at it. A self-hosted server needs a hex signing key.
+
+`src/events.ts` declares every event, its name, and its payload schema. Senders and functions import the same declaration, so a payload is type-checked where it is sent and where it is handled:
 
 ```ts
-import { Workflows } from "@v1/workflows/client"
+export const welcomeRequested = eventType("demo/welcome.requested", {
+  schema: z.object({ userId: z.string() }),
+})
+```
 
-export const workflows = new Workflows({
+Each application workspace that sends events or runs functions creates one client in its composition root. Its `id` names the application in Inngest:
+
+```ts
+import { createWorkflows } from "@v1/workflows/client"
+
+export const workflows = createWorkflows({
+  baseUrl: ENV.INNGEST_BASE_URL,
+  eventKey: ENV.INNGEST_EVENT_KEY,
+  id: "api",
+  isDev: ENV.INNGEST_DEV,
   logger: log,
-  poolSize: 5,
-  queues: { default: { concurrency: 10 } },
-  url: ENV.DATABASE_URL,
+  signingKey: ENV.INNGEST_SIGNING_KEY,
+  signingKeyFallback: ENV.INNGEST_SIGNING_KEY_FALLBACK,
 })
+
+await c.var.workflows.send(welcomeRequested.create({ userId }, { id: `welcome-${userId}` }))
 ```
 
-The separate pool keeps workflow traffic and request traffic from waiting on each other's connections. It adds `poolSize` connections to each process, and DBOS holds one of them open to listen for notifications. When a Postgres connection limit is tight, pass a `pg` `Pool` as `pool` instead, and workflows share it.
+`send` validates the payload and returns the event IDs. Events with the same `id` trigger functions once within 24 hours. Unlike a job dispatch, a failed send throws.
 
-Define every workflow before `workflows.launch()`. Each `step` result is saved, so after a crash the workflow resumes from the first step that did not finish. A step can run more than once, so keep its side effects idempotent. `sleep` is durable across restarts.
+Functions live in the `handlers.ts` of a worker feature. Wrap each side effect in `step.run`. Inngest calls the function again for each step and returns saved results for the steps that already finished, so code outside a step runs more than once. A step can also run more than once, so keep its side effects idempotent. `step.sleep` waits without holding the worker. The options of `createFunction` set retries and flow control, such as `concurrency`, `throttle`, `rateLimit`, and `debounce`:
 
 ```ts
-export const greetUser = workflows.define("greetUser", async ({ userId }: { userId: string }) => {
-  const greeting = await workflows.step("composeGreeting", () => `Hello, ${userId}`, {
-    attempts: 3,
-  })
+export const welcomeUser = workflows.createFunction(
+  { concurrency: { limit: 10 }, id: "welcome-user", triggers: [welcomeRequested] },
+  async ({ event, logger, step }) => {
+    const message = await step.run("compose-welcome", () => `Welcome, ${event.data.userId}`)
 
-  await workflows.sleep(1000)
+    await step.sleep("pause", "1s")
 
-  return { greeting }
-})
+    await step.run("deliver-welcome", () => {
+      logger.info({ userId: event.data.userId }, message)
+    })
 
-await workflows.run(greetUser, { userId }, { id: `greet-${userId}`, queue: "default" })
+    return { message }
+  }
+)
 ```
 
-Runs with the same `id` execute once. `queue` limits how many runs of that queue execute at once. Call `workflows.shutdown()` before the process exits.
+The worker opens a WebSocket to Inngest with [Connect](https://www.inngest.com/docs/setup/connect), so Inngest reaches the functions without a public endpoint. List every function in `connect`. The worker does not wait for the connection: `connect` retries until Inngest is reachable, and jobs run in the meantime. Close the connection on shutdown, which lets the steps in progress finish. Run more than one worker process to share the load; Inngest sends each step to one of them. Inngest Cloud plans limit how many workers connect at once.
 
-Run workflows in a single process per application version. Every process uses the same DBOS executor ID, and on startup a process resumes every unfinished run of its version, including runs that another process is still executing. A second API instance, or a restart or deploy that starts the new process before the old one stops, can therefore execute the same steps twice. Stop the old process before the new one starts. Running several instances needs a distinct executor ID per process and a plan to recover the runs of a process that stops for good, such as [DBOS Conductor](https://docs.dbos.dev/production/conductor).
-
-DBOS tags each run with an application version, which defaults to a hash of the workflow code, and recovers only runs that match the current version. After a deploy that changes workflow code, runs that the previous version left unfinished do not resume on their own. Keep a process on the previous version until they drain, or move them to the new version. See [Upgrading Workflow Code](https://docs.dbos.dev/typescript/tutorials/upgrading-workflows).
-
-`bun run --filter @v1/workflows reset` drops the local `dbos` schema, which removes workflow runs, queues, and history. Resetting the database clears only the application tables, so reset workflows with it. Otherwise unfinished runs resume against the new data. Stop the API first. It recreates the schema the next time it launches.
+Inngest Cloud bills every run and every step. Jobs run on Redis that the project already operates, so use a job for high-volume work that needs no steps.

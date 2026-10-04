@@ -1,3 +1,3 @@
 # `worker`
 
-Background job worker that consumes `@v1/jobs` queues, built with [BullMQ](https://docs.bullmq.io/).
+Background worker that runs `@v1/jobs` queues on [BullMQ](https://docs.bullmq.io/) and `@v1/workflows` functions on [Inngest](https://www.inngest.com/docs).

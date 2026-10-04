@@ -1,7 +1,6 @@
 {
-  "extends": "@tooling/tsconfig/dom-package.json",
+  "extends": "@tooling/tsconfig/internal-package.json",
   "compilerOptions": {
     "types": ["bun"]
-  },
-  "include": ["src", "scripts", "reset.d.ts"]
+  }
 }

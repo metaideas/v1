@@ -1,26 +1,24 @@
 {
   "name": "@v1/workflows",
   "private": true,
-  "description": "Durable background workflows using DBOS",
+  "description": "Durable background workflows and their events using Inngest",
   "license": "MIT",
   "type": "module",
   "imports": {
     "#*": "./src/*"
   },
   "exports": {
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./events": "./src/events.ts"
   },
   "scripts": {
     "bump:deps": "bun update --interactive",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "codegen": "varlock codegen",
-    "env:check": "varlock load",
-    "reset": "varlock run -- bun --bun run ./scripts/reset.ts"
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "dependencies": {
-    "@dbos-inc/dbos-sdk": "5.2.11",
     "@v1/core": "workspace:*",
-    "varlock": "1.16.0"
+    "@v1/utils": "workspace:*",
+    "inngest": "4.21.1"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",

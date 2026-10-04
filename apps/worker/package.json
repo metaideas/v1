@@ -1,7 +1,7 @@
 {
   "name": "worker",
   "private": true,
-  "description": "Background job worker running on Bun",
+  "description": "Background worker for jobs and workflows running on Bun",
   "type": "module",
   "imports": {
     "#*": "./src/*"
@@ -16,7 +16,9 @@
   },
   "dependencies": {
     "@v1/jobs": "workspace:*",
+    "@v1/workflows": "workspace:*",
     "evlog": "2.29.0",
+    "inngest": "4.21.1",
     "std-env": "4.2.0",
     "varlock": "1.16.0"
   },

@@ -22,7 +22,7 @@ root
   │   ├── extension         # WXT browser extension
   │   ├── mobile            # Expo mobile application
   │   ├── web               # Astro marketing site and blog
-  │   └── worker            # BullMQ worker that runs background jobs
+  │   └── worker            # Worker that runs BullMQ jobs and Inngest workflows
   │
   ├── infra               # Infrastructure as code for cloud providers
   │   └── local             # Docker Compose configuration for local development
@@ -38,7 +38,7 @@ root
   │   ├── storage               # File storage gateway and React client using Files SDK
   │   ├── ui                    # Reusable UI components and design system using Shadcn/UI
   │   ├── utils                 # Shared helpers and constants for packages and apps
-  │   └── workflows             # Durable background workflows using DBOS
+  │   └── workflows             # Durable background workflows and their events using Inngest
   │
   ├── scripts             # Template commands (bun template setup, doctor, add, remove, diff)
   │
@@ -107,7 +107,7 @@ Each application workspace below follows the layout above. The trees show the fo
 
 ### API
 
-A Hono server on Bun. It serves tRPC, versioned REST routes, and the file storage gateway from `@v1/storage`, and runs durable workflows in process. `src/client.ts` is the only module that other application workspaces can import.
+A Hono server on Bun. It serves tRPC, versioned REST routes, and the file storage gateway from `@v1/storage`. `src/client.ts` is the only module that other application workspaces can import.
 
 ```sh
 apps/api/src
@@ -120,13 +120,13 @@ apps/api/src
 
 ### Worker
 
-A Bun process that consumes `@v1/jobs` queues. It serves no HTTP. Run more than one to share the load of a queue; each job goes to one of them.
+A Bun process that consumes `@v1/jobs` queues and runs `@v1/workflows` functions over a WebSocket to Inngest. It serves no HTTP. Run more than one to share the load; each job or workflow step goes to one of them.
 
 ```sh
 apps/worker/src
-  ├── shared/       # Logger and app-wide utilities
-  ├── features/     # Feature folders whose handlers.ts handles jobs
-  └── index.ts      # Worker entry point that subscribes to queues
+  ├── shared/       # Logger, service composition, and app-wide utilities
+  ├── features/     # Feature folders whose handlers.ts handles jobs and defines workflows
+  └── index.ts      # Worker entry point that subscribes to queues and connects to Inngest
 ```
 
 ### App

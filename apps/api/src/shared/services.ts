@@ -5,7 +5,7 @@ import { createMailer } from "@v1/email/mailer"
 import { selectTransport } from "@v1/email/transports"
 import { createDispatcher } from "@v1/jobs/dispatcher"
 import { createFileStorage, createS3Adapter } from "@v1/storage/server"
-import { Workflows } from "@v1/workflows/client"
+import { createWorkflows } from "@v1/workflows/client"
 import { createStorage } from "unstorage"
 import redisDriver from "unstorage/drivers/redis"
 import { deleteAsset, upsertAsset } from "#shared/assets.ts"
@@ -58,11 +58,14 @@ export const storage = createFileStorage({
   onFileStored: upsertAsset,
 })
 
-export const workflows = new Workflows({
+export const workflows = createWorkflows({
+  baseUrl: ENV.INNGEST_BASE_URL,
+  eventKey: ENV.INNGEST_EVENT_KEY,
+  id: "api",
+  isDev: ENV.INNGEST_DEV,
   logger: log,
-  poolSize: 5,
-  queues: { default: { concurrency: 10 } },
-  url: ENV.DATABASE_URL,
+  signingKey: ENV.INNGEST_SIGNING_KEY,
+  signingKeyFallback: ENV.INNGEST_SIGNING_KEY_FALLBACK,
 })
 
 export type Auth = typeof auth
