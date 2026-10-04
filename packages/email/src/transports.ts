@@ -99,22 +99,6 @@ export function smtpTransport(url: string): EmailTransport {
 }
 
 /**
- * Keeps sent messages in memory for tests.
- */
-export function memoryTransport(): EmailTransport & { sent: EmailMessage[] } {
-  const sent: EmailMessage[] = []
-
-  return {
-    send(message) {
-      sent.push(message)
-
-      return Promise.resolve({ id: `memory-${sent.length}` })
-    },
-    sent,
-  }
-}
-
-/**
  * Sends through Resend when an API key is configured and through SMTP otherwise.
  */
 export function selectTransport({ resendApiKey, smtpUrl }: TransportConfig) {
