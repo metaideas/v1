@@ -28,6 +28,7 @@
     "evlog": "2.29.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "serialize-error": "13.0.2",
     "varlock": "1.16.0",
     "wouter": "3.10.0"
   },

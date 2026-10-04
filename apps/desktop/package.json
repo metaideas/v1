@@ -33,6 +33,7 @@
     "faultier": "3.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "serialize-error": "13.0.2",
     "varlock": "1.16.0"
   },
   "devDependencies": {

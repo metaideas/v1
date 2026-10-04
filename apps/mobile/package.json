@@ -61,6 +61,7 @@
     "react-native-screens": "4.26.2",
     "react-native-web": "0.21.2",
     "react-native-worklets": "0.10.1",
+    "serialize-error": "13.0.2",
     "superjson": "2.2.6",
     "tailwindcss": "4.3.3",
     "uniwind": "1.10.1",

@@ -19,6 +19,7 @@
     "@v1/workflows": "workspace:*",
     "evlog": "2.29.0",
     "inngest": "4.21.1",
+    "serialize-error": "13.0.2",
     "std-env": "4.2.0",
     "varlock": "1.16.0"
   },
