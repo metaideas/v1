@@ -1,10 +1,11 @@
 import type { PlopTypes } from "@turbo/gen"
+import type { ImportItemInput } from "magicast"
 import Bun from "bun"
 import { stringifyJSON } from "confbox"
-import { generateCode, type ImportItemInput, parseModule } from "magicast"
 
 import type * as z from "zod"
 
+import { addImports } from "../imports"
 import {
   BundledModulesSchema,
   readPackageJson,
@@ -34,22 +35,6 @@ type SentrySetup = {
 
 const SENTRY_APPS = SentryAnswersSchema.shape.app.options
 
-function addImports(source: string, imports: readonly ImportItemInput[]) {
-  const mod = parseModule(source)
-
-  for (const item of imports) {
-    const isImported = mod.imports.$items.some(
-      ({ from, imported }) => from === item.from && imported === item.imported
-    )
-
-    if (!isImported) {
-      mod.imports.$append(item)
-    }
-  }
-
-  return `${generateCode(mod).code.trimEnd()}\n`
-}
-
 async function applyEdit(path: string, edit: Edit) {
   const file = Bun.file(path)
 
@@ -72,7 +57,12 @@ async function applyEdit(path: string, edit: Edit) {
   }
 
   if (edit.imports) {
-    source = addImports(source, edit.imports)
+    const sourceWithImports = addImports(source, edit.imports)
+    if (sourceWithImports === undefined) {
+      return `[MANUAL] ${path} already binds a name this edit imports. ${edit.manual}`
+    }
+
+    source = sourceWithImports
   }
 
   await Bun.write(path, edit.append ? `${source.trimEnd()}\n${edit.append}` : source)

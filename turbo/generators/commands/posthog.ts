@@ -1,9 +1,10 @@
 import type { PlopTypes } from "@turbo/gen"
+import type { ImportItemInput } from "magicast"
 import Bun from "bun"
-import { generateCode, type ImportItemInput, parseModule } from "magicast"
 
 import type * as z from "zod"
 
+import { addImports } from "../imports"
 import { BundledModulesSchema, PostHogAnswersSchema, readPackageJson } from "../schemas"
 
 type PostHogApp = z.infer<typeof PostHogAnswersSchema>["app"]
@@ -35,22 +36,6 @@ const EXPO_PEER_MODULES = [
   "expo-localization",
 ] as const
 
-function addImports(source: string, imports: readonly ImportItemInput[]) {
-  const mod = parseModule(source)
-
-  for (const item of imports) {
-    const isImported = mod.imports.$items.some(
-      ({ from, imported }) => from === item.from && imported === item.imported
-    )
-
-    if (!isImported) {
-      mod.imports.$append(item)
-    }
-  }
-
-  return `${generateCode(mod).code.trimEnd()}\n`
-}
-
 async function applyEdit(path: string, edit: Edit) {
   const file = Bun.file(path)
 
@@ -73,7 +58,12 @@ async function applyEdit(path: string, edit: Edit) {
   }
 
   if (edit.imports) {
-    source = addImports(source, edit.imports)
+    const sourceWithImports = addImports(source, edit.imports)
+    if (sourceWithImports === undefined) {
+      return `[MANUAL] ${path} already binds a name this edit imports. ${edit.manual}`
+    }
+
+    source = sourceWithImports
   }
 
   await Bun.write(path, source)
