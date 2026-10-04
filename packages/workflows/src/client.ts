@@ -31,11 +31,14 @@ function toEvent(args: unknown[]): LogEvent {
     return { error: first, message, scope: "workflows" }
   }
 
-  return {
-    ...(typeof first === "object" ? first : { details: first }),
-    message,
-    scope: "workflows",
+  if (typeof first !== "object" || first === null) {
+    return { details: first, message, scope: "workflows" }
   }
+
+  // Inngest reports failures as `{ err }`, and other packages log them under `error`.
+  const { err, ...fields }: LogEvent = { ...first }
+
+  return { ...fields, ...(err === undefined ? {} : { error: err }), message, scope: "workflows" }
 }
 
 function toInngestLogger(log: Logger): InngestLogger {
