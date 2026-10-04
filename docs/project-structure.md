@@ -27,7 +27,6 @@ root
   │   └── local             # Docker Compose configuration for local development
   │
   ├── packages            # Shared internal packages for use across apps
-  │   ├── ai                    # AI model provider registry using the AI SDK
   │   ├── auth                  # Authentication utilities using Better Auth
   │   ├── backend               # Convex backend, generated API types, and React client
   │   ├── core                  # Shared business logic and errors, organized by domain
