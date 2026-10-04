@@ -72,11 +72,20 @@ export function createJobWorker<Subscribed extends QueueName>({
     },
 
     /**
-     * Stops taking jobs and waits for the jobs in progress to finish.
+     * Stops taking jobs and waits for the jobs in progress to finish. While Redis is unreachable,
+     * it closes at once: a running job cannot record its result without Redis, and BullMQ retries
+     * it as stalled once Redis returns.
      */
     async close() {
-      await Promise.all(workers.map((worker) => worker.close()))
-      await connection.quit()
+      const isConnected = connection.status === "ready"
+
+      await Promise.all(workers.map((worker) => worker.close(!isConnected)))
+
+      if (isConnected) {
+        await connection.quit()
+      } else {
+        connection.disconnect()
+      }
     },
   }
 }

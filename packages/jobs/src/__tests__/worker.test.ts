@@ -1,13 +1,13 @@
 import { describe, expect, mock, test } from "bun:test"
 import { mockQueues, UnrecoverableError } from "#__tests__/fakes.ts"
 
-const { processors } = await mockQueues()
+const { processors, redis, worker } = await mockQueues()
 
 const { createJobWorker } = await import("#worker.ts")
 
 const greetUser = mock((_payload: { userId: string }, _context: unknown) => Promise.resolve("hi"))
 
-createJobWorker({
+const jobWorker = createJobWorker({
   handlers: { default: { "greet-user": greetUser } },
   url: "redis://localhost:6379",
 })
@@ -46,5 +46,23 @@ describe("createJobWorker", () => {
     const error = await processJob(job).catch((error: unknown) => error)
 
     expect(error).toBeInstanceOf(UnrecoverableError)
+  })
+
+  test("waits for running jobs when it closes while connected", async () => {
+    redis.status = "ready"
+
+    await jobWorker.close()
+
+    expect(worker.close).toHaveBeenLastCalledWith(false)
+    expect(redis.quit).toHaveBeenCalled()
+  })
+
+  test("closes at once while Redis is unreachable", async () => {
+    redis.status = "reconnecting"
+
+    await jobWorker.close()
+
+    expect(worker.close).toHaveBeenLastCalledWith(true)
+    expect(redis.disconnect).toHaveBeenCalled()
   })
 })

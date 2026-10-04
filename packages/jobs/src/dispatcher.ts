@@ -38,6 +38,21 @@ export function createDispatcher({ logger, url }: DispatcherOptions) {
     return queue
   }
 
+  // BullMQ keeps a queue's first connection attempt, so a queue first used while Redis is down
+  // would fail every later dispatch. Dropping it lets the next dispatch open a fresh one.
+  function discardQueue(name: QueueName) {
+    const queue = opened.get(name)
+    opened.delete(name)
+    void queue?.close().catch((error: unknown) => {
+      logger?.debug({
+        error,
+        message: "Discarded job queue did not close",
+        queue: name,
+        scope: "jobs",
+      })
+    })
+  }
+
   return {
     /**
      * Validates the payload and adds the job to its queue. Dispatches that share an `id` add one
@@ -61,8 +76,10 @@ export function createDispatcher({ logger, url }: DispatcherOptions) {
 
       const result = await try$.run({
         catch: (error) => JobsFault.wrap(error).as("DispatchJobError", { job: name, queue }),
+        // The worker parses the payload again, so queue the input. Queueing the parsed output would
+        // run the schema's transforms twice.
         try: () =>
-          queueFor(queue).add(name, parsed.data, {
+          queueFor(queue).add(name, input, {
             attempts,
             delay: options.delayMs,
             jobId: options.id,
@@ -70,6 +87,7 @@ export function createDispatcher({ logger, url }: DispatcherOptions) {
       })
 
       if (result instanceof DispatchJobError) {
+        discardQueue(queue)
         logger?.error({
           error: result,
           job: name,
@@ -88,8 +106,13 @@ export function createDispatcher({ logger, url }: DispatcherOptions) {
     },
 
     async close() {
-      await Promise.all([...opened.values()].map((queue) => queue.close()))
-      await connection.quit()
+      await Promise.allSettled([...opened.values()].map((queue) => queue.close()))
+
+      if (connection.status === "ready") {
+        await connection.quit()
+      } else {
+        connection.disconnect()
+      }
     },
   }
 }

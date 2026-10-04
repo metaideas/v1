@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { DispatchJobError, JobPayloadError } from "@v1/core/errors"
 import { mockQueues } from "#__tests__/fakes.ts"
 
-const { add } = await mockQueues()
+const { add, Queue } = await mockQueues()
 
 const { createDispatcher } = await import("#dispatcher.ts")
 
@@ -43,5 +43,27 @@ describe("createDispatcher", () => {
     const result = await dispatcher.dispatch("default", "greet-user", { userId: "user_1" })
 
     expect(result).toBeInstanceOf(DispatchJobError)
+  })
+
+  test("queues the payload as given, so the worker's schema parses it once", async () => {
+    const dispatcher = createDispatcher({ url: "redis://localhost:6379" })
+    const input = { extra: true, userId: "user_1" }
+
+    await dispatcher.dispatch("default", "greet-user", input)
+
+    expect(add.mock.lastCall?.[1]).toBe(input)
+  })
+
+  test("opens a fresh queue after a failed dispatch, so it recovers once Redis returns", async () => {
+    const dispatcher = createDispatcher({ url: "redis://localhost:6379" })
+    Queue.mockClear()
+    add.mockImplementationOnce(() => Promise.reject(new Error("Connection is closed")))
+
+    const failed = await dispatcher.dispatch("default", "greet-user", { userId: "user_1" })
+    const recovered = await dispatcher.dispatch("default", "greet-user", { userId: "user_1" })
+
+    expect(failed).toBeInstanceOf(DispatchJobError)
+    expect(recovered).toEqual({ id: "1" })
+    expect(Queue).toHaveBeenCalledTimes(2)
   })
 })
