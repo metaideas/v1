@@ -1,4 +1,5 @@
 import type { PlopTypes } from "@turbo/gen"
+import { registerBullBoardGenerator } from "./commands/bull-board"
 import { registerFilesClientGenerator } from "./commands/files-client"
 import { registerNewFeatureGenerator } from "./commands/new-feature"
 import { registerNewPackageGenerator } from "./commands/new-package"
@@ -11,4 +12,5 @@ export default function generator(plop: PlopTypes.NodePlopAPI) {
   registerFilesClientGenerator(plop)
   registerSentryGenerator(plop)
   registerPostHogGenerator(plop)
+  registerBullBoardGenerator(plop)
 }

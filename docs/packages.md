@@ -143,6 +143,8 @@ await worker.run()
 
 Run more than one worker process to share a queue; BullMQ hands each job to one of them. To isolate a slow or rate-limited queue, run a process whose handlers list only that queue. A job retries with exponential backoff until it runs out of attempts, so keep handlers idempotent. Each handler receives the payload and a context with the `attempt` number and the job `id`, which stays the same across attempts and works as an idempotency key for a third-party API. A job whose payload no longer matches its schema, or whose name the worker does not handle, fails without a retry. That happens when a dispatcher and a worker run different versions during a deploy, so change a payload schema in a way that accepts both shapes until every process runs the new version. BullMQ removes completed jobs after a day and failed jobs after a week. `worker.close()` waits for the jobs in progress before the process exits.
 
+To inspect, retry, and remove jobs from a browser, add the `bull-board` template recipe. See [Project generators](./generators.md#add-a-jobs-dashboard).
+
 Jobs need Redis with `maxmemory-policy noeviction`, so Redis never drops a queued job to free memory. `JOBS_REDIS_URL` is separate from `REDIS_URL` so a project can point key-value storage at a cache that evicts keys. Locally, both point at Redis from Docker Compose, which runs with `noeviction`.
 
 ## Workflows
