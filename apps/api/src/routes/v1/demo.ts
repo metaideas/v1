@@ -1,18 +1,16 @@
+import { events } from "@v1/workflows/events"
 import { HTTPException } from "hono/http-exception"
-import { greetUser } from "#features/demo/handlers.ts"
 import { requireSession } from "#shared/middleware.ts"
 import { factory } from "#shared/utils.ts"
 
 export default factory
   .createApp()
   .post("/", requireSession, async (c) => {
-    const run = await c.var.workflows.run(
-      greetUser,
-      { userId: c.var.session.user.id },
-      { queue: "default" }
+    const { ids } = await c.var.workflows.send(
+      events.demo.welcome.requested.create({ userId: c.var.session.user.id })
     )
 
-    return c.json({ id: run.id }, 202)
+    return c.json({ id: ids[0] }, 202)
   })
   .post("/jobs", requireSession, async (c) => {
     const result = await c.var.dispatcher.dispatch("default", "greet-user", {

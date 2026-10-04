@@ -35,6 +35,7 @@
         "FILES_API_SECRET",
         "GITHUB_*",
         "GOOGLE_*",
+        "INNGEST_*",
         "JOBS_REDIS_URL",
         "PORT",
         "PUBLIC_*",

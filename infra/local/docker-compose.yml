@@ -59,6 +59,13 @@ services:
       timeout: 3s
       retries: 10
 
+  inngest:
+    image: inngest/inngest:v1.45.1
+    command: inngest dev --no-discovery
+    ports:
+      - "8006:8288"
+      - "8007:8289"
+
   minio-init:
     image: minio/mc:latest
     depends_on:
