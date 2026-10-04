@@ -38,7 +38,6 @@
     "hono-rate-limiter": "0.5.3",
     "humanspan": "0.2.0",
     "ioredis": "5.11.1",
-    "serialize-error": "13.0.2",
     "std-env": "4.2.0",
     "superjson": "2.2.6",
     "unstorage": "1.17.5",

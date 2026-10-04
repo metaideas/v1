@@ -36,7 +36,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "3.10.1",
-    "serialize-error": "13.0.2",
     "std-env": "4.2.0",
     "superjson": "2.2.6",
     "varlock": "1.16.0"
