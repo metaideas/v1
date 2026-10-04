@@ -1,21 +1,17 @@
 import type { PlopTypes } from "@turbo/gen"
 import Bun from "bun"
 
-import * as z from "zod"
+import type * as z from "zod"
 
-import { readPackageJson } from "../schemas"
+import {
+  BundledModulesSchema,
+  ManifestSchema,
+  readPackageJson,
+  SentryAnswersSchema,
+  TrustedDependenciesSchema,
+} from "../schemas"
 
-const SENTRY_APPS = ["api", "app", "mobile"] as const
-
-const AnswersSchema = z.object({
-  app: z.enum(SENTRY_APPS),
-})
-
-const ManifestSchema = z.record(z.string(), z.unknown())
-const TrustedDependenciesSchema = z.array(z.string()).optional()
-const BundledModulesSchema = z.record(z.string(), z.string())
-
-type SentryApp = (typeof SENTRY_APPS)[number]
+type SentryApp = z.infer<typeof SentryAnswersSchema>["app"]
 
 type Edit = {
   path: string
@@ -33,6 +29,90 @@ type SentrySetup = {
   environment: string
   edits: readonly Edit[]
   nextSteps: readonly string[]
+}
+
+const SENTRY_APPS = SentryAnswersSchema.shape.app.options
+
+function addImport(source: string, line: string) {
+  if (source.includes(line)) {
+    return source
+  }
+
+  const lines = source.split("\n")
+  const lastImport = lines.findLastIndex((text) => /^(import .+|\}) from "[^"]+"$/.test(text))
+  lines.splice(lastImport + 1, 0, line)
+
+  return lines.join("\n")
+}
+
+async function applyEdit(path: string, edit: Edit) {
+  const file = Bun.file(path)
+
+  if (!(await file.exists())) {
+    return `[MANUAL] ${path} is missing. ${edit.manual}`
+  }
+
+  let source = await file.text()
+
+  if (source.includes(edit.marker)) {
+    return `[SKIPPED] ${path} already uses Sentry`
+  }
+
+  if (edit.replacements.some(([anchor]) => !source.includes(anchor))) {
+    return `[MANUAL] ${path} changed since generation. ${edit.manual}`
+  }
+
+  for (const [anchor, replacement] of edit.replacements) {
+    source = source.replace(anchor, replacement)
+  }
+
+  for (const line of edit.imports ?? []) {
+    source = addImport(source, line)
+  }
+
+  await Bun.write(path, edit.append ? `${source.trimEnd()}\n${edit.append}` : source)
+  return `${path}: connected Sentry`
+}
+
+// `expo install` cannot edit a dynamic app.config.js and writes a range, so read the version the
+// installed Expo SDK supports and pin it.
+async function getExpoCompatibleVersion(appPath: string, name: string) {
+  const path = Bun.resolveSync("expo/bundledNativeModules.json", `${process.cwd()}/${appPath}`)
+  const versions = BundledModulesSchema.parse(await Bun.file(path).json())
+  const range = versions[name]
+
+  if (!range) {
+    throw new Error(`The installed Expo SDK does not declare a version of ${name}.`)
+  }
+
+  return range.replace(/^[~^]/, "")
+}
+
+async function getDependencyVersion(appPath: string, packageName: string, dependency: string) {
+  const path = Bun.resolveSync(`${packageName}/package.json`, `${process.cwd()}/${appPath}`)
+  const manifest = await readPackageJson(path)
+  const version = manifest.dependencies?.[dependency]
+
+  if (!version) {
+    throw new Error(`${packageName} does not declare a version of ${dependency}.`)
+  }
+
+  return version.replace(/^[~^]/, "")
+}
+
+async function trustSentryCli() {
+  const manifest = ManifestSchema.parse(await Bun.file("package.json").json())
+  const trusted = TrustedDependenciesSchema.parse(manifest.trustedDependencies) ?? []
+
+  if (trusted.includes("@sentry/cli")) {
+    return
+  }
+
+  const trustedDependencies = [...trusted, "@sentry/cli"].toSorted()
+  await Bun.write(
+    "package.json",
+    `${JSON.stringify({ ...manifest, trustedDependencies }, null, 2)}\n`
+  )
 }
 
 const SETUPS: Record<SentryApp, SentrySetup> = {
@@ -190,7 +270,7 @@ SENTRY_AUTH_TOKEN=
   },
 }
 
-export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI): void {
+export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI) {
   const apps = [
     ...new Bun.Glob("*/package.json").scanSync({
       cwd: `${process.cwd()}/apps`,
@@ -202,7 +282,7 @@ export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI): void {
 
   plop.setGenerator("sentry", {
     actions: (rawAnswers) => {
-      const { app } = AnswersSchema.parse(rawAnswers)
+      const { app } = SentryAnswersSchema.parse(rawAnswers)
       const appPath = `apps/${app}`
       const setup = SETUPS[app]
 
@@ -259,86 +339,4 @@ export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI): void {
       },
     ],
   })
-}
-
-async function applyEdit(path: string, edit: Edit) {
-  const file = Bun.file(path)
-
-  if (!(await file.exists())) {
-    return `[MANUAL] ${path} is missing. ${edit.manual}`
-  }
-
-  let source = await file.text()
-
-  if (source.includes(edit.marker)) {
-    return `[SKIPPED] ${path} already uses Sentry`
-  }
-
-  if (edit.replacements.some(([anchor]) => !source.includes(anchor))) {
-    return `[MANUAL] ${path} changed since generation. ${edit.manual}`
-  }
-
-  for (const [anchor, replacement] of edit.replacements) {
-    source = source.replace(anchor, replacement)
-  }
-
-  for (const line of edit.imports ?? []) {
-    source = addImport(source, line)
-  }
-
-  await Bun.write(path, edit.append ? `${source.trimEnd()}\n${edit.append}` : source)
-  return `${path}: connected Sentry`
-}
-
-function addImport(source: string, line: string) {
-  if (source.includes(line)) {
-    return source
-  }
-
-  const lines = source.split("\n")
-  const lastImport = lines.findLastIndex((text) => /^(import .+|\}) from "[^"]+"$/.test(text))
-  lines.splice(lastImport + 1, 0, line)
-
-  return lines.join("\n")
-}
-
-// `expo install` cannot edit a dynamic app.config.js and writes a range, so read the version the
-// installed Expo SDK supports and pin it.
-async function getExpoCompatibleVersion(appPath: string, name: string) {
-  const path = Bun.resolveSync("expo/bundledNativeModules.json", `${process.cwd()}/${appPath}`)
-  const versions = BundledModulesSchema.parse(await Bun.file(path).json())
-  const range = versions[name]
-
-  if (!range) {
-    throw new Error(`The installed Expo SDK does not declare a version of ${name}.`)
-  }
-
-  return range.replace(/^[~^]/, "")
-}
-
-async function getDependencyVersion(appPath: string, packageName: string, dependency: string) {
-  const path = Bun.resolveSync(`${packageName}/package.json`, `${process.cwd()}/${appPath}`)
-  const manifest = await readPackageJson(path)
-  const version = manifest.dependencies?.[dependency]
-
-  if (!version) {
-    throw new Error(`${packageName} does not declare a version of ${dependency}.`)
-  }
-
-  return version.replace(/^[~^]/, "")
-}
-
-async function trustSentryCli() {
-  const manifest = ManifestSchema.parse(await Bun.file("package.json").json())
-  const trusted = TrustedDependenciesSchema.parse(manifest.trustedDependencies) ?? []
-
-  if (trusted.includes("@sentry/cli")) {
-    return
-  }
-
-  const trustedDependencies = [...trusted, "@sentry/cli"].toSorted()
-  await Bun.write(
-    "package.json",
-    `${JSON.stringify({ ...manifest, trustedDependencies }, null, 2)}\n`
-  )
 }

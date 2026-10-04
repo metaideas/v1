@@ -1,5 +1,12 @@
 import type { ChartConfig } from "@v1/ui/components/chart"
 
+export type Payment = {
+  amount: number
+  email: string
+  id: string
+  status: "failed" | "processing" | "success"
+}
+
 export const SHOWCASE_GROUPS = [
   {
     id: "actions",
@@ -249,7 +256,7 @@ export const MONTHLY_VISITORS = [
   { desktop: 73, mobile: 190, month: "April" },
   { desktop: 209, mobile: 130, month: "May" },
   { desktop: 214, mobile: 140, month: "June" },
-]
+] as const
 
 export const VISITORS_CHART_CONFIG = {
   desktop: { color: "var(--chart-1)", label: "Desktop" },
@@ -262,7 +269,7 @@ export const BROWSER_SHARE = [
   { browser: "firefox", fill: "var(--color-firefox)", visitors: 187 },
   { browser: "edge", fill: "var(--color-edge)", visitors: 173 },
   { browser: "other", fill: "var(--color-other)", visitors: 90 },
-]
+] as const
 
 export const BROWSER_CHART_CONFIG = {
   chrome: { color: "var(--chart-1)", label: "Chrome" },
@@ -328,7 +335,7 @@ export const QUESTIONNAIRE_ITEMS = [
   },
   { choices: QUESTIONNAIRE_TOOLS.map((choice) => ({ value: choice.value })), name: "tools" },
   { name: "feedback" },
-]
+] as const
 
 export const ATTACHMENT_DESCRIPTIONS = {
   done: "1.2 MB",
@@ -365,10 +372,3 @@ export const TEXT_DIRECTIONS = [
 
 export const AVATAR_IMAGE_SRC =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%236366f1'/><stop offset='1' stop-color='%23ec4899'/></linearGradient></defs><rect width='64' height='64' fill='url(%23g)'/></svg>"
-
-export type Payment = {
-  amount: number
-  email: string
-  id: string
-  status: "failed" | "processing" | "success"
-}

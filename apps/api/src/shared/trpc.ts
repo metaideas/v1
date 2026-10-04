@@ -5,8 +5,6 @@ import * as z from "@v1/utils/schema"
 import superjson from "superjson"
 import type { AppContext } from "#shared/types.ts"
 
-const transformer = superjson
-
 export function createTRPCContext(opts: FetchCreateContextFnOptions, c: Context<AppContext>) {
   return {
     auth: c.var.auth,
@@ -34,7 +32,7 @@ export const t = initTRPC.context<TRPCContext>().create({
       },
     }
   },
-  transformer,
+  transformer: superjson,
 })
 
 export const createRouter = t.router

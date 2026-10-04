@@ -30,9 +30,9 @@ export default function SignUpForm() {
 
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
+      onSubmit={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
         void form.handleSubmit()
       }}
     >
@@ -92,7 +92,7 @@ export default function SignUpForm() {
             name="confirmPassword"
             validators={{
               onBlur: PasswordSchema.check(
-                z.refine((v) => v === form.getFieldValue("password"), {
+                z.refine((value) => value === form.getFieldValue("password"), {
                   error: "Passwords don't match",
                 })
               ),

@@ -1,1 +1,1 @@
-export { LargeTitleHeader } from "./large-title-header/large-title-header"
+export { default } from "./large-title-header/large-title-header"

@@ -1,3 +1,7 @@
+type {{pascalCase name}}Options = {
+  name: string
+}
+
 /**
  * Builds the {{kebabCase name}} service. An application builds it once in its composition root and
  * passes configuration, such as values from its `ENV`, and other services as options.
@@ -9,7 +13,3 @@ export function create{{pascalCase name}}({ name }: {{pascalCase name}}Options) 
 }
 
 export type {{pascalCase name}} = ReturnType<typeof create{{pascalCase name}}>
-
-type {{pascalCase name}}Options = {
-  name: string
-}

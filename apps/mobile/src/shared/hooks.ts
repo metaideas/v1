@@ -11,12 +11,8 @@ import { log } from "#shared/logger.ts"
 
 const LOCALE_STORAGE_KEY = "v1-locale"
 
-export function useHideSplashScreen(loaded: boolean) {
+export function useHideSplashScreen() {
   useEffect(() => {
-    if (!loaded) {
-      return
-    }
-
     async function hideSplash() {
       try {
         await SplashScreen.hideAsync()
@@ -26,7 +22,7 @@ export function useHideSplashScreen(loaded: boolean) {
     }
 
     void hideSplash()
-  }, [loaded])
+  }, [])
 }
 
 export function useLogRenderError(error: unknown) {

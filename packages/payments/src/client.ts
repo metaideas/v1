@@ -1,9 +1,37 @@
 import type { Storage } from "unstorage"
 import { InvalidWebhookError, PaymentsFault } from "@v1/core/errors"
-import * as z from "@v1/utils/schema"
 import Stripe from "stripe"
 import * as try$ from "tryharder"
 import { prefixStorage } from "unstorage"
+import { ExpandedPaymentMethodSchema } from "#schemas.ts"
+
+export type { Stripe } from "stripe"
+
+export type SubscriptionCache =
+  | {
+      subscriptionId: string | null
+      status: Stripe.Subscription.Status
+      priceId: string | null
+      currentPeriodStart: number | null
+      currentPeriodEnd: number | null
+      cancelAtPeriodEnd: boolean
+      paymentMethod: {
+        brand: string | null
+        last4: string | null
+      } | null
+    }
+  | {
+      status: "none"
+    }
+
+type PaymentsOptions = {
+  secretKey: string
+  webhookSecret: string
+  /**
+   * Storage for the subscription cache. Keys are prefixed with `payments:customer:`.
+   */
+  storage: Storage
+}
 
 const ALLOWED_EVENTS = [
   "checkout.session.completed",
@@ -26,15 +54,11 @@ const ALLOWED_EVENTS = [
   "payment_intent.canceled",
 ] as const satisfies Stripe.Event.Type[]
 
-const ExpandedPaymentMethodSchema = z.object({
-  card: z
-    .object({
-      brand: z.string(),
-      last4: z.string(),
-    })
-    .nullable()
-    .optional(),
-})
+type AllowedEvent = (typeof ALLOWED_EVENTS)[number]
+
+function checkIsAllowedEvent(event: Stripe.Event): event is Stripe.Event & { type: AllowedEvent } {
+  return ALLOWED_EVENTS.some((type) => type === event.type)
+}
 
 /**
  * Stripe payments with a subscription cache. Stripe stays the source of truth: webhooks call
@@ -136,38 +160,4 @@ export function createPayments({ secretKey, storage, webhookSecret }: PaymentsOp
   }
 }
 
-function checkIsAllowedEvent(event: Stripe.Event): event is Stripe.Event & { type: AllowedEvent } {
-  return ALLOWED_EVENTS.some((type) => type === event.type)
-}
-
 export type Payments = ReturnType<typeof createPayments>
-
-export type SubscriptionCache =
-  | {
-      subscriptionId: string | null
-      status: Stripe.Subscription.Status
-      priceId: string | null
-      currentPeriodStart: number | null
-      currentPeriodEnd: number | null
-      cancelAtPeriodEnd: boolean
-      paymentMethod: {
-        brand: string | null
-        last4: string | null
-      } | null
-    }
-  | {
-      status: "none"
-    }
-
-export type { Stripe } from "stripe"
-
-type AllowedEvent = (typeof ALLOWED_EVENTS)[number]
-
-type PaymentsOptions = {
-  secretKey: string
-  webhookSecret: string
-  /**
-   * Storage for the subscription cache. Keys are prefixed with `payments:customer:`.
-   */
-  storage: Storage
-}

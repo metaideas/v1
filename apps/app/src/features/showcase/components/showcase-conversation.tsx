@@ -61,6 +61,18 @@ import {
   QUESTIONNAIRE_TOOLS,
 } from "#features/showcase/constants.ts"
 
+function AttachmentIcon({ state }: Readonly<{ state: (typeof ATTACHMENT_STATES)[number] }>) {
+  if (state === "error") {
+    return <Icon.AlertCircle />
+  }
+
+  if (state === "done") {
+    return <Icon.CircleCheck />
+  }
+
+  return <Icon.Plus />
+}
+
 export default function ShowcaseConversation() {
   return (
     <>
@@ -286,16 +298,4 @@ export default function ShowcaseConversation() {
       </ShowcaseSection>
     </>
   )
-}
-
-function AttachmentIcon({ state }: Readonly<{ state: (typeof ATTACHMENT_STATES)[number] }>) {
-  if (state === "error") {
-    return <Icon.AlertCircle />
-  }
-
-  if (state === "done") {
-    return <Icon.CircleCheck />
-  }
-
-  return <Icon.Plus />
 }

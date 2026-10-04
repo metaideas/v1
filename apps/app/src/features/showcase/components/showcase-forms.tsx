@@ -78,6 +78,151 @@ import {
 import { useCalendarSelection } from "#features/showcase/hooks.ts"
 import { ShowcaseFormSchema } from "#features/showcase/schemas.ts"
 
+function ComboboxChipsDemo() {
+  const anchor = useComboboxAnchor()
+
+  return (
+    <Combobox defaultValue={["TanStack Start", "Astro"]} items={FRAMEWORKS} multiple>
+      <ComboboxChips ref={anchor}>
+        <ComboboxValue>
+          {(values: string[]) => (
+            <>
+              {values.map((value) => (
+                <ComboboxChip key={value}>{value}</ComboboxChip>
+              ))}
+              <ComboboxChipsInput aria-label="Frameworks" placeholder="Add framework" />
+            </>
+          )}
+        </ComboboxValue>
+      </ComboboxChips>
+      <ComboboxContent anchor={anchor}>
+        <ComboboxEmpty>No frameworks found.</ComboboxEmpty>
+        <ComboboxList>
+          {(item: string) => (
+            <ComboboxItem key={item} value={item}>
+              {item}
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  )
+}
+
+function CalendarDemos() {
+  const { date, range, setDate, setRange } = useCalendarSelection()
+
+  return (
+    <div className="flex flex-wrap items-start gap-6">
+      <ShowcaseDemo label="Single date">
+        <Calendar
+          className="rounded-lg border"
+          defaultMonth={CALENDAR_DEFAULT_MONTH}
+          mode="single"
+          onSelect={setDate}
+          selected={date}
+        />
+      </ShowcaseDemo>
+      <ShowcaseDemo label="Range across two months">
+        <Calendar
+          className="rounded-lg border"
+          defaultMonth={CALENDAR_DEFAULT_MONTH}
+          mode="range"
+          numberOfMonths={2}
+          onSelect={setRange}
+          selected={range}
+        />
+      </ShowcaseDemo>
+      <ShowcaseDemo label="Dropdown caption and week numbers">
+        <Calendar
+          captionLayout="dropdown"
+          className="rounded-lg border"
+          defaultMonth={CALENDAR_DEFAULT_MONTH}
+          mode="single"
+          showWeekNumber
+        />
+      </ShowcaseDemo>
+      <ShowcaseDemo label="Disabled weekends">
+        <Calendar
+          className="rounded-lg border"
+          defaultMonth={CALENDAR_DEFAULT_MONTH}
+          disabled={{ dayOfWeek: [0, 6] }}
+          mode="single"
+        />
+      </ShowcaseDemo>
+    </div>
+  )
+}
+
+function ShowcaseFormDemo() {
+  const form = useForm({
+    defaultValues: { bio: "", email: "", name: "" },
+    onSubmit: ({ formApi, value }) => {
+      toast.add({ description: `Thanks, ${value.name}.`, title: "Profile saved", type: "success" })
+      formApi.reset()
+    },
+    validators: {
+      onSubmit: ShowcaseFormSchema,
+      onSubmitAsync: async ({ value }) => {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 1200)
+        })
+
+        return value.email === TAKEN_EMAIL
+          ? { fields: { email: { message: "This email is already registered." } } }
+          : undefined
+      },
+    },
+  })
+
+  return (
+    <form
+      className="max-w-md"
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        void form.handleSubmit()
+      }}
+    >
+      <form.AppForm>
+        <FieldGroup>
+          <form.AppField name="name">
+            {(field) => (
+              <field.Field>
+                <field.Label>Name</field.Label>
+                <field.Input autoComplete="name" placeholder="Jane Doe" />
+                <field.Error errors={field.state.meta.errors} />
+              </field.Field>
+            )}
+          </form.AppField>
+          <form.AppField name="email">
+            {(field) => (
+              <field.Field>
+                <field.Label>Email</field.Label>
+                <field.Input autoComplete="email" placeholder="you@example.com" type="email" />
+                <field.Description>We never share your email.</field.Description>
+                <field.Error errors={field.state.meta.errors} />
+              </field.Field>
+            )}
+          </form.AppField>
+          <form.AppField name="bio">
+            {(field) => (
+              <field.Field>
+                <field.Label>Bio</field.Label>
+                <field.Textarea placeholder="Tell us about yourself" />
+                <field.Error errors={field.state.meta.errors} />
+              </field.Field>
+            )}
+          </form.AppField>
+          <form.ServerError title="Could not save profile" />
+          <form.Submit loadingText="Saving...">Save profile</form.Submit>
+        </FieldGroup>
+      </form.AppForm>
+    </form>
+  )
+}
+
 export default function ShowcaseForms() {
   return (
     <>
@@ -658,150 +803,5 @@ export default function ShowcaseForms() {
         <ShowcaseFormDemo />
       </ShowcaseSection>
     </>
-  )
-}
-
-function ComboboxChipsDemo() {
-  const anchor = useComboboxAnchor()
-
-  return (
-    <Combobox defaultValue={["TanStack Start", "Astro"]} items={FRAMEWORKS} multiple>
-      <ComboboxChips ref={anchor}>
-        <ComboboxValue>
-          {(values: string[]) => (
-            <>
-              {values.map((value) => (
-                <ComboboxChip key={value}>{value}</ComboboxChip>
-              ))}
-              <ComboboxChipsInput aria-label="Frameworks" placeholder="Add framework" />
-            </>
-          )}
-        </ComboboxValue>
-      </ComboboxChips>
-      <ComboboxContent anchor={anchor}>
-        <ComboboxEmpty>No frameworks found.</ComboboxEmpty>
-        <ComboboxList>
-          {(item: string) => (
-            <ComboboxItem key={item} value={item}>
-              {item}
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
-  )
-}
-
-function CalendarDemos() {
-  const { date, range, setDate, setRange } = useCalendarSelection()
-
-  return (
-    <div className="flex flex-wrap items-start gap-6">
-      <ShowcaseDemo label="Single date">
-        <Calendar
-          className="rounded-lg border"
-          defaultMonth={CALENDAR_DEFAULT_MONTH}
-          mode="single"
-          onSelect={setDate}
-          selected={date}
-        />
-      </ShowcaseDemo>
-      <ShowcaseDemo label="Range across two months">
-        <Calendar
-          className="rounded-lg border"
-          defaultMonth={CALENDAR_DEFAULT_MONTH}
-          mode="range"
-          numberOfMonths={2}
-          onSelect={setRange}
-          selected={range}
-        />
-      </ShowcaseDemo>
-      <ShowcaseDemo label="Dropdown caption and week numbers">
-        <Calendar
-          captionLayout="dropdown"
-          className="rounded-lg border"
-          defaultMonth={CALENDAR_DEFAULT_MONTH}
-          mode="single"
-          showWeekNumber
-        />
-      </ShowcaseDemo>
-      <ShowcaseDemo label="Disabled weekends">
-        <Calendar
-          className="rounded-lg border"
-          defaultMonth={CALENDAR_DEFAULT_MONTH}
-          disabled={{ dayOfWeek: [0, 6] }}
-          mode="single"
-        />
-      </ShowcaseDemo>
-    </div>
-  )
-}
-
-function ShowcaseFormDemo() {
-  const form = useForm({
-    defaultValues: { bio: "", email: "", name: "" },
-    onSubmit: ({ formApi, value }) => {
-      toast.add({ description: `Thanks, ${value.name}.`, title: "Profile saved", type: "success" })
-      formApi.reset()
-    },
-    validators: {
-      onSubmit: ShowcaseFormSchema,
-      onSubmitAsync: async ({ value }) => {
-        await new Promise((resolve) => {
-          setTimeout(resolve, 1200)
-        })
-
-        return value.email === TAKEN_EMAIL
-          ? { fields: { email: { message: "This email is already registered." } } }
-          : undefined
-      },
-    },
-  })
-
-  return (
-    <form
-      className="max-w-md"
-      noValidate
-      onSubmit={(event) => {
-        event.preventDefault()
-        event.stopPropagation()
-        void form.handleSubmit()
-      }}
-    >
-      <form.AppForm>
-        <FieldGroup>
-          <form.AppField name="name">
-            {(field) => (
-              <field.Field>
-                <field.Label>Name</field.Label>
-                <field.Input autoComplete="name" placeholder="Jane Doe" />
-                <field.Error errors={field.state.meta.errors} />
-              </field.Field>
-            )}
-          </form.AppField>
-          <form.AppField name="email">
-            {(field) => (
-              <field.Field>
-                <field.Label>Email</field.Label>
-                <field.Input autoComplete="email" placeholder="you@example.com" type="email" />
-                <field.Description>We never share your email.</field.Description>
-                <field.Error errors={field.state.meta.errors} />
-              </field.Field>
-            )}
-          </form.AppField>
-          <form.AppField name="bio">
-            {(field) => (
-              <field.Field>
-                <field.Label>Bio</field.Label>
-                <field.Textarea placeholder="Tell us about yourself" />
-                <field.Error errors={field.state.meta.errors} />
-              </field.Field>
-            )}
-          </form.AppField>
-          <form.ServerError title="Could not save profile" />
-          <form.Submit loadingText="Saving...">Save profile</form.Submit>
-        </FieldGroup>
-      </form.AppForm>
-    </form>
   )
 }

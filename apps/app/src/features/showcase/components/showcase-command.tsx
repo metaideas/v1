@@ -14,15 +14,45 @@ import { Icon } from "@v1/ui/components/icon"
 import ShowcaseDemo from "#features/showcase/components/showcase-demo.tsx"
 import { useHasBeenInView, useOpenState } from "#features/showcase/hooks.ts"
 
-export default function ShowcaseCommand() {
+function CommandItems() {
   return (
     <>
-      <ShowcaseDemo className="grid grid-cols-1" label="Inline">
-        <InlineCommandDemo />
-      </ShowcaseDemo>
-      <ShowcaseDemo label="Dialog">
-        <CommandDialogDemo />
-      </ShowcaseDemo>
+      <CommandInput placeholder="Type a command or search..." />
+      <CommandList>
+        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandGroup heading="Suggestions">
+          <CommandItem>
+            <Icon.Home />
+            Home
+          </CommandItem>
+          <CommandItem>
+            <Icon.Search />
+            Search
+          </CommandItem>
+          <CommandItem disabled>
+            <Icon.Bot />
+            Assistant (disabled)
+          </CommandItem>
+        </CommandGroup>
+        <CommandSeparator />
+        <CommandGroup heading="Settings">
+          <CommandItem>
+            <Icon.Sun />
+            Light theme
+            <CommandShortcut>⌘L</CommandShortcut>
+          </CommandItem>
+          <CommandItem>
+            <Icon.Moon />
+            Dark theme
+            <CommandShortcut>⌘D</CommandShortcut>
+          </CommandItem>
+          <CommandItem>
+            <Icon.Languages />
+            Language
+            <CommandShortcut>⌘J</CommandShortcut>
+          </CommandItem>
+        </CommandGroup>
+      </CommandList>
     </>
   )
 }
@@ -64,45 +94,15 @@ function CommandDialogDemo() {
   )
 }
 
-function CommandItems() {
+export default function ShowcaseCommand() {
   return (
     <>
-      <CommandInput placeholder="Type a command or search..." />
-      <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Suggestions">
-          <CommandItem>
-            <Icon.Home />
-            Home
-          </CommandItem>
-          <CommandItem>
-            <Icon.Search />
-            Search
-          </CommandItem>
-          <CommandItem disabled>
-            <Icon.Bot />
-            Assistant (disabled)
-          </CommandItem>
-        </CommandGroup>
-        <CommandSeparator />
-        <CommandGroup heading="Settings">
-          <CommandItem>
-            <Icon.Sun />
-            Light theme
-            <CommandShortcut>⌘L</CommandShortcut>
-          </CommandItem>
-          <CommandItem>
-            <Icon.Moon />
-            Dark theme
-            <CommandShortcut>⌘D</CommandShortcut>
-          </CommandItem>
-          <CommandItem>
-            <Icon.Languages />
-            Language
-            <CommandShortcut>⌘J</CommandShortcut>
-          </CommandItem>
-        </CommandGroup>
-      </CommandList>
+      <ShowcaseDemo className="grid grid-cols-1" label="Inline">
+        <InlineCommandDemo />
+      </ShowcaseDemo>
+      <ShowcaseDemo label="Dialog">
+        <CommandDialogDemo />
+      </ShowcaseDemo>
     </>
   )
 }

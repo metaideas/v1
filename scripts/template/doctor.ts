@@ -1,8 +1,8 @@
 import { dirname, join, relative, resolve } from "node:path"
 import { defineCommand } from "citty"
 import consola from "consola"
-import * as z from "zod"
 
+import { type TemplateStamp, TemplateCleanupSchema, TurboJsonSchema } from "./schemas"
 import {
   checkIsRemovedByCleanup,
   findTextReferences,
@@ -16,8 +16,6 @@ import {
   TEMPLATE_SCOPE,
   TEMPLATE_SECTION_START,
   TEMPLATE_STAMP_FILE,
-  TemplateCleanupSchema,
-  type TemplateStamp,
   type WorkspaceNode,
 } from "./shared"
 
@@ -53,10 +51,6 @@ const COMPOSING_PACKAGES = new Set(["backend"])
 // A value import of the generated `ENV`. Type-only imports are erased, so they are allowed.
 const ENV_VALUE_IMPORT =
   /^(?:import|export)\s+(?!type\b)(?:\{[^}]*\}|[^"'\n{]*)\s*from\s*["'][^"']*env\.generated(?:\.ts)?["']/m
-
-const TurboJsonSchema = z.object({
-  tasks: z.record(z.string(), z.looseObject({ env: z.array(z.string()).optional() })),
-})
 
 const TOOL_COMMANDS = [
   ["check"],
@@ -371,7 +365,7 @@ export default defineCommand({
   },
   run: async ({ args }) => {
     const rootDir = process.cwd()
-    const context: Context = {
+    const context = {
       envFiles: await collectEnvFiles(rootDir),
       rootDir,
       scope: await getProjectScope(rootDir),

@@ -3,10 +3,11 @@ import { createIdGenerator } from "@v1/utils/id"
 import * as z from "@v1/utils/schema"
 import * as pg from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm/relations"
+import { UserIdSchema } from "#schemas.ts"
+
+const UNIQUE_ID_LENGTH = 24
 
 export const createTable = pg.pgTableCreator((name) => name)
-
-export const UNIQUE_ID_LENGTH = 24
 
 export function id<Schema extends z.ZodType<string>, P extends string>(
   IdSchema: Schema,
@@ -33,37 +34,8 @@ export const timestamps = {
     .$onUpdateFn(() => new Date()),
 }
 
-// Insert your tables here
-export const documents = createTable("documents", {
-  ...id(z.branded("DocumentId"), "doc"),
-  ...timestamps,
-
-  content: pg.text().notNull(),
-  name: pg.text().notNull(),
-})
-
-export const profiles = createTable("profiles", {
-  ...id(z.branded("ProfileId"), "prof"),
-  ...timestamps,
-
-  userId: pg
-    .text()
-    .notNull()
-    .unique()
-    .references(() => users.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    })
-    .$type<UserId>(),
-})
-export type Profile = typeof profiles.$inferSelect
-export type NewProfile = typeof profiles.$inferInsert
-export type ProfileId = Profile["id"]
-
 // ==========================AUTH==========================
 export const authSchema = pg.pgSchema("auth")
-
-export const UserIdSchema = z.branded("UserId")
 
 export const users = authSchema.table(
   "users",
@@ -231,6 +203,33 @@ export const assets = storageSchema.table(
 export type Asset = typeof assets.$inferSelect
 export type NewAsset = typeof assets.$inferInsert
 export type AssetId = Asset["id"]
+
+// Insert your tables here
+export const documents = createTable("documents", {
+  ...id(z.branded("DocumentId"), "doc"),
+  ...timestamps,
+
+  content: pg.text().notNull(),
+  name: pg.text().notNull(),
+})
+
+export const profiles = createTable("profiles", {
+  ...id(z.branded("ProfileId"), "prof"),
+  ...timestamps,
+
+  userId: pg
+    .text()
+    .notNull()
+    .unique()
+    .references(() => users.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    })
+    .$type<UserId>(),
+})
+export type Profile = typeof profiles.$inferSelect
+export type NewProfile = typeof profiles.$inferInsert
+export type ProfileId = Profile["id"]
 
 // Relations
 

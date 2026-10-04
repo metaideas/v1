@@ -1,12 +1,21 @@
 import { Host, Picker } from "@expo/ui"
 import { Platform, Text, View } from "react-native"
-import { LargeTitleHeader } from "#shared/components/large-title-header.ts"
+import LargeTitleHeader from "#shared/components/large-title-header.ts"
 import { usePersistedLocale } from "#shared/hooks.ts"
 import { m } from "#shared/internationalization/messages.js"
 
 // React Native Web renders the "label" role as a <label>, which names the picker's <select>.
 // React Native's Role type omits "label", so these props stay untyped.
 const pickerLabelProps: Record<string, string> = Platform.OS === "web" ? { role: "label" } : {}
+
+function WelcomeCard({ description, title }: { description: string; title: string }) {
+  return (
+    <View className="gap-2 rounded-xl border border-border bg-card p-6">
+      <Text className="text-lg font-semibold text-card-foreground">{title}</Text>
+      <Text className="text-base leading-6 text-muted-foreground">{description}</Text>
+    </View>
+  )
+}
 
 export default function Screen() {
   const { locale, selectLocale } = usePersistedLocale()
@@ -37,14 +46,5 @@ export default function Screen() {
         </View>
       </View>
     </>
-  )
-}
-
-function WelcomeCard({ description, title }: { description: string; title: string }) {
-  return (
-    <View className="gap-2 rounded-xl border border-border bg-card p-6">
-      <Text className="text-lg font-semibold text-card-foreground">{title}</Text>
-      <Text className="text-base leading-6 text-muted-foreground">{description}</Text>
-    </View>
   )
 }

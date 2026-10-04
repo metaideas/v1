@@ -2,10 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { Card, CardContent, CardHeader, CardTitle } from "@v1/ui/components/card"
 import SignUpForm from "#features/auth/components/sign-up-form.tsx"
 
-export const Route = createFileRoute("/_unauthenticated/sign-up")({
-  component: RouteComponent,
-})
-
 function RouteComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-12 sm:px-8">
@@ -30,3 +26,7 @@ function RouteComponent() {
     </div>
   )
 }
+
+export const Route = createFileRoute("/_unauthenticated/sign-up")({
+  component: RouteComponent,
+})

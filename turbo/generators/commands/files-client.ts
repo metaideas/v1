@@ -1,26 +1,24 @@
 import type { PlopTypes } from "@turbo/gen"
 import Bun from "bun"
 
-import * as z from "zod"
+import type * as z from "zod"
 
-import { readPackageJson } from "../schemas"
-
-const AnswersSchema = z.object({
-  app: z.string().min(1),
-  endpoint: z.url(),
-})
+import { FilesClientAnswersSchema, readPackageJson } from "../schemas"
 
 type FilesClientAnswers = PlopTypes.Answers
-  & z.infer<typeof AnswersSchema> & { dependencyRequired?: boolean; isInstalled?: boolean }
+  & z.infer<typeof FilesClientAnswersSchema> & {
+    isDependencyRequired?: boolean
+    isInstalled?: boolean
+  }
 
-async function getMissingPaths(paths: readonly string[]): Promise<string[]> {
+async function getMissingPaths(paths: readonly string[]) {
   const checks = await Promise.all(
     paths.map(async (path) => ({ exists: await Bun.file(path).exists(), path }))
   )
   return checks.filter(({ exists }) => !exists).map(({ path }) => path)
 }
 
-export function registerFilesClientGenerator(plop: PlopTypes.NodePlopAPI): void {
+export function registerFilesClientGenerator(plop: PlopTypes.NodePlopAPI) {
   const apps = [
     ...new Bun.Glob("*/package.json").scanSync({
       cwd: `${process.cwd()}/apps`,
@@ -34,7 +32,7 @@ export function registerFilesClientGenerator(plop: PlopTypes.NodePlopAPI): void 
     actions: (rawAnswers) => {
       const answers: FilesClientAnswers = Object.assign(
         rawAnswers ?? {},
-        AnswersSchema.parse(rawAnswers)
+        FilesClientAnswersSchema.parse(rawAnswers)
       )
       const appPath = `apps/${answers.app}`
       const clientPath = `${appPath}/src/shared/files.ts`
@@ -65,15 +63,16 @@ export function registerFilesClientGenerator(plop: PlopTypes.NodePlopAPI): void 
             ...packageJson.dependencies,
             ...packageJson.devDependencies,
           }
-          answers.dependencyRequired = !("files-sdk" in installedPackages)
-          answers.isInstalled = hasClient && !answers.dependencyRequired
+          answers.isDependencyRequired = !("files-sdk" in installedPackages)
+          answers.isInstalled = hasClient && !answers.isDependencyRequired
 
           return answers.isInstalled
             ? `Prepared the existing Files SDK client in ${appPath}`
             : `Prepared the Files SDK React client in ${appPath}`
         },
         async () => {
-          if (!answers.dependencyRequired) return `[SKIPPED] ${appPath} already contains files-sdk`
+          if (!answers.isDependencyRequired)
+            return `[SKIPPED] ${appPath} already contains files-sdk`
 
           await Bun.$`cd ${appPath} && bun add --exact files-sdk`
           return `${appPath}: installed files-sdk`

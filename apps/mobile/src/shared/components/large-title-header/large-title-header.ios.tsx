@@ -11,7 +11,58 @@ import type {
 import { useLargeTitleSearch } from "#shared/components/large-title-header/use-large-title-search.ts"
 import { isLiquidGlassSupported } from "#shared/utils.ts"
 
-export function LargeTitleHeader(props: LargeTitleHeaderProps) {
+function propsToScreenOptions(
+  props: LargeTitleHeaderProps,
+  backgroundColor: string | undefined,
+  search: ReturnType<typeof useLargeTitleSearch>
+): NativeStackNavigationOptions {
+  return {
+    headerBackButtonMenuEnabled: props.iosBackButtonMenuEnabled,
+    headerBackTitle: props.iosBackButtonTitle,
+    headerBackVisible: props.backVisible,
+    headerBlurEffect: isLiquidGlassSupported
+      ? undefined
+      : props.iosBlurEffect === "none"
+        ? undefined
+        : (props.iosBlurEffect ?? "systemMaterial"),
+    headerLargeStyle: isLiquidGlassSupported
+      ? undefined
+      : { backgroundColor: props.backgroundColor ?? backgroundColor },
+    headerLargeTitle: true,
+    headerLargeTitleShadowVisible: props.shadowVisible,
+    headerLeft: props.leftView,
+    headerRight: props.rightView,
+    headerSearchBarOptions: props.searchBar
+      ? {
+          autoCapitalize: props.searchBar.autoCapitalize,
+          cancelButtonText: props.searchBar.iosCancelButtonText,
+          hideWhenScrolling: props.searchBar.iosHideWhenScrolling ?? false,
+          inputType: props.searchBar.inputType,
+          onBlur: search.handleBlur,
+          onCancelButtonPress: props.searchBar.onCancelButtonPress,
+          onChangeText: (event) => {
+            search.changeText(event.nativeEvent.text)
+          },
+          onFocus: search.handleFocus,
+          onSearchButtonPress: props.searchBar.onSearchButtonPress,
+          placeholder: props.searchBar.placeholder ?? "Search...",
+          textColor: props.searchBar.textColor,
+          tintColor: props.searchBar.iosTintColor,
+        }
+      : undefined,
+    headerShadowVisible: props.shadowVisible,
+    headerShown: props.shown,
+    headerStyle:
+      props.iosBlurEffect === "none"
+        ? { backgroundColor: props.backgroundColor ?? backgroundColor }
+        : undefined,
+    headerTitle: props.title,
+    headerTransparent: isLiquidGlassSupported || props.iosBlurEffect !== "none",
+    ...props.screen,
+  }
+}
+
+export default function LargeTitleHeader(props: LargeTitleHeaderProps) {
   const { theme } = useUniwind()
   const [background, card] = useCSSVariable(["--color-background", "--color-card"])
   const search = useLargeTitleSearch(props.searchBar)
@@ -53,55 +104,4 @@ export function LargeTitleHeader(props: LargeTitleHeaderProps) {
       ) : null}
     </>
   )
-}
-
-function propsToScreenOptions(
-  props: LargeTitleHeaderProps,
-  backgroundColor: string | undefined,
-  search: ReturnType<typeof useLargeTitleSearch>
-): NativeStackNavigationOptions {
-  return {
-    headerBackButtonMenuEnabled: props.iosBackButtonMenuEnabled,
-    headerBackTitle: props.iosBackButtonTitle,
-    headerBackVisible: props.backVisible,
-    headerBlurEffect: isLiquidGlassSupported
-      ? undefined
-      : props.iosBlurEffect === "none"
-        ? undefined
-        : (props.iosBlurEffect ?? "systemMaterial"),
-    headerLargeStyle: isLiquidGlassSupported
-      ? undefined
-      : { backgroundColor: props.backgroundColor ?? backgroundColor },
-    headerLargeTitle: true,
-    headerLargeTitleShadowVisible: props.shadowVisible,
-    headerLeft: props.leftView,
-    headerRight: props.rightView,
-    headerSearchBarOptions: props.searchBar
-      ? {
-          autoCapitalize: props.searchBar.autoCapitalize,
-          cancelButtonText: props.searchBar.iosCancelButtonText,
-          hideWhenScrolling: props.searchBar.iosHideWhenScrolling ?? false,
-          inputType: props.searchBar.inputType,
-          onBlur: search.blur,
-          onCancelButtonPress: props.searchBar.onCancelButtonPress,
-          onChangeText: (event) => {
-            search.changeText(event.nativeEvent.text)
-          },
-          onFocus: search.focus,
-          onSearchButtonPress: props.searchBar.onSearchButtonPress,
-          placeholder: props.searchBar.placeholder ?? "Search...",
-          textColor: props.searchBar.textColor,
-          tintColor: props.searchBar.iosTintColor,
-        }
-      : undefined,
-    headerShadowVisible: props.shadowVisible,
-    headerShown: props.shown,
-    headerStyle:
-      props.iosBlurEffect === "none"
-        ? { backgroundColor: props.backgroundColor ?? backgroundColor }
-        : undefined,
-    headerTitle: props.title,
-    headerTransparent: isLiquidGlassSupported || props.iosBlurEffect !== "none",
-    ...props.screen,
-  }
 }

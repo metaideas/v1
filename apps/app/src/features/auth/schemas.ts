@@ -42,3 +42,7 @@ export const ResetPasswordFormSchema = z
       path: ["confirmPassword"],
     })
   )
+
+export const ResetPasswordSearchSchema = z.object({
+  token: z.optional(z.string()),
+})

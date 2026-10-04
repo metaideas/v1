@@ -7,7 +7,7 @@ const APP_PATH = "apps/app"
 const AI_PACKAGE_PATH = "packages/ai/package.json"
 const CHAT_PLAYGROUND_PATH = `${APP_PATH}/src/features/demo/components/chat-playground.tsx`
 
-export function registerAiChatDemoGenerator(plop: PlopTypes.NodePlopAPI): void {
+export function registerAiChatDemoGenerator(plop: PlopTypes.NodePlopAPI) {
   plop.setGenerator("ai-chat-demo", {
     actions: () => [
       async () => {

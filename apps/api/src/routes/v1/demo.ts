@@ -1,10 +1,9 @@
 import { greetUser } from "#features/demo/handlers.ts"
 import { requireSession } from "#shared/middleware.ts"
 import { factory } from "#shared/utils.ts"
-import { workflows } from "#shared/workflows.ts"
 
 export default factory.createApp().post("/", requireSession, async (c) => {
-  const run = await workflows.run(
+  const run = await c.var.workflows.run(
     greetUser,
     { userId: c.var.session.user.id },
     { queue: "default" }

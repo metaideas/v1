@@ -4,7 +4,7 @@ type StringToArray<
 > = S extends `${infer Char}${infer Rest}` ? StringToArray<Rest, [...Acc, Char]> : Acc
 
 /**
- * Helper type to check if A <= B using tuple length comparison.
+ * Checks if A <= B using tuple length comparison.
  */
 type LessThanOrEqual<
   A extends number,
@@ -52,15 +52,13 @@ export type Prettify<T> = {
 export type ConstrainedString<
   ActualString extends string,
   MaxLengthSpec extends number,
-  // --- Internal Helper Types ---
   _MaxNumericLength extends number = MaxLengthSpec extends number
-    ? MaxLengthSpec // If MaxLengthSpec is already a number
+    ? MaxLengthSpec
     : MaxLengthSpec extends string
-      ? MaxLengthSpec // If it's a string like "3", convert to 3
+      ? MaxLengthSpec
       : never, // Invalid MaxLengthSpec format
   _ActualCharsTuple extends string[] = StringToArray<ActualString>,
   _ActualNumericLength extends number = _ActualCharsTuple["length"],
-  // Helper type to check if A <= B
   _IsLengthValid extends boolean = _ActualNumericLength extends number
     ? _MaxNumericLength extends number
       ? LessThanOrEqual<_ActualNumericLength, _MaxNumericLength>

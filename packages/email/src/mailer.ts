@@ -6,6 +6,27 @@ import { isTimeoutError } from "tryharder/errors"
 import type { EmailTransport } from "#transports.ts"
 import { type TemplateName, type TemplateProps, templates } from "#registry.ts"
 
+export type { TemplateName, TemplateProps } from "#registry.ts"
+
+type MailerOptions = {
+  from: string
+  transport: EmailTransport
+  logger?: Logger
+  /**
+   * Delivery attempts per send, including the first.
+   */
+  attempts?: number
+  /**
+   * Deadline for one send across all attempts.
+   */
+  timeoutMs?: number
+}
+
+type SendOptions = {
+  to: string[]
+  from?: string
+}
+
 export function createMailer({
   attempts = 3,
   from,
@@ -65,24 +86,3 @@ export function createMailer({
 }
 
 export type Mailer = ReturnType<typeof createMailer>
-
-export type { TemplateName, TemplateProps } from "#registry.ts"
-
-type MailerOptions = {
-  from: string
-  transport: EmailTransport
-  logger?: Logger
-  /**
-   * Delivery attempts per send, including the first.
-   */
-  attempts?: number
-  /**
-   * Deadline for one send across all attempts.
-   */
-  timeoutMs?: number
-}
-
-type SendOptions = {
-  to: string[]
-  from?: string
-}

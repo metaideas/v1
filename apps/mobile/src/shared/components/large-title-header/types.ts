@@ -53,7 +53,6 @@ type LargeTitleSearchBarMethods = Omit<SearchBarCommands, "blur" | "toggleCancel
 type LargeTitleHeaderProps = {
   iosBackButtonMenuEnabled?: boolean
   iosBackButtonTitle?: string
-  iosBackButtonTitleVisible?: boolean
   /**
    * Default is 'systemMaterial'
    */

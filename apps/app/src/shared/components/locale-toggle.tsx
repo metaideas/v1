@@ -9,7 +9,7 @@ import { Icon } from "@v1/ui/components/icon"
 import { m } from "#shared/internationalization/messages.js"
 import { setLocale } from "#shared/internationalization/runtime.js"
 
-export function LocaleToggle() {
+export default function LocaleToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button size="icon" variant="outline" />}>

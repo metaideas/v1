@@ -8,7 +8,7 @@ import {
   writeJson,
 } from "./shared"
 
-export type RenameOptions = {
+type RenameOptions = {
   projectName?: string
   rootDir: string
   scope: string

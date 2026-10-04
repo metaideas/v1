@@ -3,9 +3,6 @@ import authProcedures from "#features/auth/handlers.ts"
 import { createRouter, createTRPCContext, protectedProcedure } from "#shared/trpc.ts"
 import { factory } from "#shared/utils.ts"
 
-/**
- * This is the main router for TRPC. It contains all the routes for this API.
- */
 export const trpcRouter = createRouter({
   auth: authProcedures,
   hello: protectedProcedure.query(() => ({
@@ -15,9 +12,6 @@ export const trpcRouter = createRouter({
 
 export type TRPCRouter = typeof trpcRouter
 
-/**
- * The TRPC router is used to handle all TRPC requests by the TRPC client.
- */
 export default factory.createApp().use(
   "/*",
   trpcServer({

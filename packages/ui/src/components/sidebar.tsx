@@ -57,7 +57,7 @@ function SidebarProvider({
   onOpenChange?: (open: boolean) => void
 }) {
   const { className, children, ...props } = rest
-  const contextValue: SidebarContextProps = useSidebarState({ defaultOpen, onOpenChange, open })
+  const contextValue = useSidebarState({ defaultOpen, onOpenChange, open })
   const wrapperStyle: React.CSSProperties
     & Record<"--sidebar-width" | "--sidebar-width-icon", string> = {
     "--sidebar-width": SIDEBAR_WIDTH,
@@ -163,7 +163,6 @@ function Sidebar({
         data-side={side}
         className={cn(
           "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
-          // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
@@ -428,7 +427,7 @@ function SidebarMenuButton({
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const { variant = "default", size = "default", className, ...props } = rest
   const { isMobile, state } = useSidebar()
-  const comp = useRender({
+  const menuButton = useRender({
     defaultTagName: "button",
     props: mergeProps<"button">(
       {
@@ -446,14 +445,14 @@ function SidebarMenuButton({
   })
 
   if (!tooltip) {
-    return comp
+    return menuButton
   }
 
   const tooltipProps = typeof tooltip === "string" ? { children: tooltip } : tooltip
 
   return (
     <Tooltip>
-      {comp}
+      {menuButton}
       <TooltipContent
         side="right"
         align="center"

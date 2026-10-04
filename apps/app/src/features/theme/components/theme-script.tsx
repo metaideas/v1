@@ -1,6 +1,6 @@
 import { ScriptOnce } from "@tanstack/react-router"
 
-const themeScript: string = (() => {
+const themeScript = (() => {
   function themeFn() {
     const root = document.documentElement
 
@@ -13,6 +13,6 @@ const themeScript: string = (() => {
   return `(${themeFn.toString()})();`
 })()
 
-export function ThemeScript() {
+export default function ThemeScript() {
   return <ScriptOnce>{themeScript}</ScriptOnce>
 }

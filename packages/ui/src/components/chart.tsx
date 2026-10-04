@@ -4,6 +4,8 @@ import * as RechartsPrimitive from "recharts"
 
 import { cn } from "cn"
 
+type TooltipNameType = number | string
+
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = [
   ["dark", ".dark"],
@@ -11,7 +13,6 @@ const THEMES = [
 ] as const
 
 const INITIAL_DIMENSION = { height: 200, width: 320 } as const
-type TooltipNameType = number | string
 
 export type ChartConfig = Record<
   string,
@@ -34,6 +35,34 @@ function useChart() {
   }
 
   return { config }
+}
+
+function ChartStyle({ id, config }: { id: string; config: ChartConfig }) {
+  const colorConfig = Object.entries(config).filter(([, config]) => config.theme ?? config.color)
+
+  if (colorConfig.length === 0) {
+    return null
+  }
+
+  return (
+    <style
+      // oxlint-disable-next-line react/no-danger -- The chart's color config is rendered as scoped CSS custom properties.
+      dangerouslySetInnerHTML={{
+        __html: THEMES.map(
+          ([theme, prefix]) => `
+${prefix} [data-chart=${id}] {
+${colorConfig
+  .map(([key, itemConfig]) => {
+    const color = itemConfig.theme?.[theme] ?? itemConfig.color
+    return color ? `  --color-${key}: ${color};` : null
+  })
+  .join("\n")}
+}
+`
+        ).join("\n"),
+      }}
+    />
+  )
 }
 
 function ChartContainer({
@@ -74,35 +103,31 @@ function ChartContainer({
   )
 }
 
-function ChartStyle({ id, config }: { id: string; config: ChartConfig }) {
-  const colorConfig = Object.entries(config).filter(([, config]) => config.theme ?? config.color)
+const ChartTooltip = RechartsPrimitive.Tooltip
 
-  if (colorConfig.length === 0) {
-    return null
+function getStringProperty(value: object, key: string) {
+  const property: unknown = Reflect.get(value, key)
+
+  return typeof property === "string" ? property : undefined
+}
+
+function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key: string) {
+  if (typeof payload !== "object" || payload === null) {
+    return
   }
 
-  return (
-    <style
-      // oxlint-disable-next-line react/no-danger -- The chart's color config is rendered as scoped CSS custom properties.
-      dangerouslySetInnerHTML={{
-        __html: THEMES.map(
-          ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme] ?? itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
-  })
-  .join("\n")}
-}
-`
-        ).join("\n"),
-      }}
-    />
-  )
-}
+  const payloadPayload =
+    "payload" in payload && typeof payload.payload === "object" && payload.payload !== null
+      ? payload.payload
+      : undefined
 
-const ChartTooltip = RechartsPrimitive.Tooltip
+  const configLabelKey =
+    getStringProperty(payload, key)
+    ?? (payloadPayload ? getStringProperty(payloadPayload, key) : undefined)
+    ?? key
+
+  return configLabelKey in config ? config[configLabelKey] : config[key]
+}
 
 function ChartTooltipContent({
   indicator = "dot",
@@ -296,30 +321,6 @@ function ChartLegendContent({
         })}
     </div>
   )
-}
-
-function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key: string) {
-  if (typeof payload !== "object" || payload === null) {
-    return
-  }
-
-  const payloadPayload =
-    "payload" in payload && typeof payload.payload === "object" && payload.payload !== null
-      ? payload.payload
-      : undefined
-
-  const configLabelKey =
-    getStringProperty(payload, key)
-    ?? (payloadPayload ? getStringProperty(payloadPayload, key) : undefined)
-    ?? key
-
-  return configLabelKey in config ? config[configLabelKey] : config[key]
-}
-
-function getStringProperty(value: object, key: string) {
-  const property: unknown = Reflect.get(value, key)
-
-  return typeof property === "string" ? property : undefined
 }
 
 export {

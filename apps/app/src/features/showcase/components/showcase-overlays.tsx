@@ -98,6 +98,41 @@ import { useOpenState } from "#features/showcase/hooks.ts"
 
 const ShowcaseCommand = lazy(() => import("#features/showcase/components/showcase-command.tsx"))
 
+function DestructiveAlertDialog() {
+  const { isOpen, setIsOpen } = useOpenState()
+
+  return (
+    <AlertDialog onOpenChange={setIsOpen} open={isOpen}>
+      <AlertDialogTrigger render={<Button variant="destructive" />}>
+        Delete project
+      </AlertDialogTrigger>
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogMedia>
+            <Icon.TriangleAlert />
+          </AlertDialogMedia>
+          <AlertDialogTitle>Delete project?</AlertDialogTitle>
+          <AlertDialogDescription>
+            All of its data will be permanently removed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              setIsOpen(false)
+              toast.add({ title: "Project deleted", type: "success" })
+            }}
+            variant="destructive"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 export default function ShowcaseOverlays() {
   return (
     <>
@@ -455,40 +490,5 @@ export default function ShowcaseOverlays() {
         </ClientOnly>
       </ShowcaseSection>
     </>
-  )
-}
-
-function DestructiveAlertDialog() {
-  const { isOpen, setIsOpen } = useOpenState()
-
-  return (
-    <AlertDialog onOpenChange={setIsOpen} open={isOpen}>
-      <AlertDialogTrigger render={<Button variant="destructive" />}>
-        Delete project
-      </AlertDialogTrigger>
-      <AlertDialogContent size="sm">
-        <AlertDialogHeader>
-          <AlertDialogMedia>
-            <Icon.TriangleAlert />
-          </AlertDialogMedia>
-          <AlertDialogTitle>Delete project?</AlertDialogTitle>
-          <AlertDialogDescription>
-            All of its data will be permanently removed.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => {
-              setIsOpen(false)
-              toast.add({ title: "Project deleted", type: "success" })
-            }}
-            variant="destructive"
-          >
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   )
 }

@@ -1,9 +1,9 @@
 import { join, relative } from "node:path"
 import { defineCommand } from "citty"
 import consola from "consola"
-import * as z from "zod"
 
 import { renameProject } from "./rename"
+import { GitHubCommitSchema, type TemplateCleanup, TemplateCleanupSchema } from "./schemas"
 import {
   getProjectScope,
   getWorkspaceGraph,
@@ -17,7 +17,6 @@ import {
   runCommand,
   TEMPLATE_REPO,
   TEMPLATE_SCOPE,
-  TemplateCleanupSchema,
   type Workspace,
   type WorkspaceKind,
   type WorkspaceNode,
@@ -50,7 +49,7 @@ async function getTemplateCommit() {
   const response = await fetch(`https://api.github.com/repos/${TEMPLATE_REPO}/commits/main`)
   if (!response.ok) throw new Error(`GitHub returned ${response.status}.`)
 
-  return z.object({ sha: z.string() }).parse(await response.json()).sha
+  return GitHubCommitSchema.parse(await response.json()).sha
 }
 
 async function stampProject(rootDir: string) {
@@ -65,11 +64,7 @@ async function stampProject(rootDir: string) {
   })
 }
 
-function getSelectionError(
-  kind: WorkspaceKind,
-  selected: string[],
-  available: string[]
-): string | null {
+function getSelectionError(kind: WorkspaceKind, selected: string[], available: string[]) {
   const unknown = selected.filter((name) => !available.includes(name))
   if (unknown.length > 0) {
     return `Unknown ${kind} workspace(s): ${unknown.join(", ")}. Available: ${available.join(", ") || "none"}.`
@@ -122,8 +117,6 @@ async function pruneWorkspaces(rootDir: string, workspaces: Workspace[], selecte
       .map((workspace) => removePath(rootDir, relative(rootDir, workspace.directory)))
   )
 }
-
-type TemplateCleanup = z.infer<typeof TemplateCleanupSchema>
 
 async function cleanupTemplateFiles(
   rootDir: string,
@@ -180,7 +173,7 @@ export default defineCommand({
   },
   run: async ({ args, rawArgs }) => {
     const rootDir = process.cwd()
-    const yes = args.yes ?? false
+    const shouldAcceptDefaults = args.yes ?? false
     const hasEmptyKeepAppsOption = rawArgs.some(
       (argument, index) =>
         (argument === "--keep-apps" || argument === "--keepApps")
@@ -234,7 +227,7 @@ export default defineCommand({
 
     const keepApps =
       selectedApps
-      ?? (yes
+      ?? (shouldAcceptDefaults
         ? apps.map((workspace) => workspace.name)
         : await promptForWorkspaceNames(
             "app",
@@ -242,18 +235,21 @@ export default defineCommand({
           ))
     const keepPackages =
       selectedPackages
-      ?? (yes
+      ?? (shouldAcceptDefaults
         ? packages.map((workspace) => workspace.name)
         : await promptForWorkspaceNames(
             "package",
             packages.map((workspace) => workspace.name)
           ))
     const projectName =
-      args.name ?? (yes ? defaultName : await promptForText("Project name", defaultName))
+      args.name
+      ?? (shouldAcceptDefaults ? defaultName : await promptForText("Project name", defaultName))
     const shouldInitializeGit =
-      args.git ?? (yes ? true : await promptForConfirmation("Initialize a git repository?"))
+      args.git
+      ?? (shouldAcceptDefaults ? true : await promptForConfirmation("Initialize a git repository?"))
     const shouldInstall =
-      args.install ?? (yes ? true : await promptForConfirmation("Run bun install?"))
+      args.install
+      ?? (shouldAcceptDefaults ? true : await promptForConfirmation("Run bun install?"))
 
     const selectionError =
       getSelectionError(
