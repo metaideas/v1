@@ -66,6 +66,9 @@
   "bun-create": {
     "postinstall": "echo 'Next step: run `bun template setup`, or ask your coding agent to use the setup skill.'"
   },
+  "patchedDependencies": {
+    "evlog@2.30.0": "patches/evlog@2.30.0.patch"
+  },
   "trustedDependencies": [
     "@parcel/watcher",
     "@tailwindcss/oxide",

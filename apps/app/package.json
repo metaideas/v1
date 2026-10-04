@@ -32,7 +32,7 @@
     "@v1/ui": "workspace:*",
     "@v1/utils": "workspace:*",
     "cn": "0.3.0",
-    "evlog": "2.29.0",
+    "evlog": "2.30.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "3.10.1",
