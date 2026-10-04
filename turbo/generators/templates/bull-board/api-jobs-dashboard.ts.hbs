@@ -17,7 +17,14 @@ function createJobsDashboard(credentials: { password: string; username: string }
   )
   const serverAdapter = new HonoAdapter(serveStatic).setBasePath(JOBS_DASHBOARD_PATH)
 
-  createBullBoard({ queues: queues.map((queue) => new BullMQAdapter(queue)), serverAdapter })
+  createBullBoard({
+{{#if theme}}
+    // Copied from the shadcn theme in packages/ui when this file was generated.
+    options: { uiConfig: { theme: {{{theme}}} } },
+{{/if}}
+    queues: queues.map((queue) => new BullMQAdapter(queue)),
+    serverAdapter,
+  })
 
   return {
     async close() {
