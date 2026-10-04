@@ -1,4 +1,5 @@
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
+import { parseJSON, stringifyJSON } from "confbox"
 import {
   type PackageJson,
   PackageJsonSchema,
@@ -35,14 +36,14 @@ function assertPackageJson(value: unknown): asserts value is PackageJson {
 }
 
 export async function readPackageJson(path: string) {
-  const value: unknown = await Bun.file(path).json()
+  const value = parseJSON(await Bun.file(path).text())
   assertPackageJson(value)
 
   return value
 }
 
 export async function writeJson(path: string, value: unknown) {
-  await Bun.write(path, `${JSON.stringify(value, null, 2)}\n`)
+  await Bun.write(path, `${stringifyJSON(value).trimEnd()}\n`)
 }
 
 export function normalizeScope(scope: string) {

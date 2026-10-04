@@ -1,4 +1,5 @@
 import Bun from "bun"
+import { parseJSON } from "confbox"
 import * as z from "zod"
 
 const PackageJsonSchema = z.looseObject({
@@ -32,8 +33,6 @@ export const SentryAnswersSchema = z.object({
 
 export const BundledModulesSchema = z.record(z.string(), z.string())
 
-export const ManifestSchema = z.record(z.string(), z.unknown())
-
 export const TrustedDependenciesSchema = z.array(z.string()).optional()
 
 // Narrowing the original value instead of returning the parsed copy keeps the key order of manifests that are written back.
@@ -42,7 +41,7 @@ function assertPackageJson(value: unknown): asserts value is z.infer<typeof Pack
 }
 
 export async function readPackageJson(path: string) {
-  const value: unknown = await Bun.file(path).json()
+  const value = parseJSON(await Bun.file(path).text())
   assertPackageJson(value)
 
   return value

@@ -1,5 +1,6 @@
 import type { PlopTypes } from "@turbo/gen"
 import Bun from "bun"
+import { generateCode, type ImportItemInput, parseModule } from "magicast"
 
 import type * as z from "zod"
 
@@ -10,7 +11,7 @@ type PostHogApp = z.infer<typeof PostHogAnswersSchema>["app"]
 type Edit = {
   path: string
   marker: string
-  imports?: readonly string[]
+  imports?: readonly ImportItemInput[]
   replacements: ReadonlyArray<readonly [anchor: string, replacement: string]>
   manual: string
 }
@@ -34,16 +35,20 @@ const EXPO_PEER_MODULES = [
   "expo-localization",
 ] as const
 
-function addImport(source: string, line: string) {
-  if (source.includes(line)) {
-    return source
+function addImports(source: string, imports: readonly ImportItemInput[]) {
+  const mod = parseModule(source)
+
+  for (const item of imports) {
+    const isImported = mod.imports.$items.some(
+      ({ from, imported }) => from === item.from && imported === item.imported
+    )
+
+    if (!isImported) {
+      mod.imports.$append(item)
+    }
   }
 
-  const lines = source.split("\n")
-  const lastImport = lines.findLastIndex((text) => /^(import .+|\}) from "[^"]+"$/.test(text))
-  lines.splice(lastImport + 1, 0, line)
-
-  return lines.join("\n")
+  return `${generateCode(mod).code.trimEnd()}\n`
 }
 
 async function applyEdit(path: string, edit: Edit) {
@@ -67,8 +72,8 @@ async function applyEdit(path: string, edit: Edit) {
     source = source.replace(anchor, replacement)
   }
 
-  for (const line of edit.imports ?? []) {
-    source = addImport(source, line)
+  if (edit.imports) {
+    source = addImports(source, edit.imports)
   }
 
   await Bun.write(path, source)
@@ -93,7 +98,7 @@ const SETUPS: Record<PostHogApp, PostHogSetup> = {
   api: {
     edits: [
       {
-        imports: ['import { analytics } from "#shared/analytics.ts"'],
+        imports: [{ from: "#shared/analytics.ts", imported: "analytics" }],
         manual: "Call `await analytics?.shutdown()` in the shutdown handler of src/index.ts.",
         marker: "analytics?.shutdown()",
         path: "src/index.ts",
@@ -119,7 +124,13 @@ POSTHOG_HOST=https://us.i.posthog.com
   app: {
     edits: [
       {
-        imports: ['import AnalyticsProvider from "#shared/components/analytics-provider.tsx"'],
+        imports: [
+          {
+            from: "#shared/components/analytics-provider.tsx",
+            imported: "default",
+            local: "AnalyticsProvider",
+          },
+        ],
         manual:
           "Wrap the providers in src/shared/components/providers.tsx with the default export of #shared/components/analytics-provider.tsx.",
         marker: "<AnalyticsProvider>",
@@ -157,7 +168,13 @@ PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
   mobile: {
     edits: [
       {
-        imports: ['import AnalyticsProvider from "#shared/components/analytics-provider.tsx"'],
+        imports: [
+          {
+            from: "#shared/components/analytics-provider.tsx",
+            imported: "default",
+            local: "AnalyticsProvider",
+          },
+        ],
         manual:
           "Wrap the providers in src/shared/components/providers.tsx with the default export of #shared/components/analytics-provider.tsx.",
         marker: "<AnalyticsProvider>",
