@@ -9,7 +9,16 @@ import {
 } from "#layers.ts"
 
 const app: Boundaries = { routes: "routes" }
-const desktop: Boundaries = { routes: "renderer/routes", tiers: ["renderer", "shell"] }
+const desktop: Boundaries = {
+  featureTiers: {
+    components: "renderer",
+    data: "renderer",
+    handlers: "shell",
+    hooks: "renderer",
+  },
+  routes: "renderer/routes",
+  tiers: ["renderer", "shell"],
+}
 
 function check(file: string, specifier: string, boundaries: Boundaries = app) {
   const root = findSourceRoot(file)
@@ -104,7 +113,116 @@ describe("findViolation", () => {
 
   test("lets entrypoint tiers import shared", () => {
     expect(
-      check("/repo/apps/desktop/src/shell/main.ts", "#shared/desktop-bridge.ts", desktop)
+      check("/repo/apps/desktop/src/shell/main.ts", "#shared/bridge.ts", desktop)
+    ).toBeUndefined()
+  })
+
+  test("puts a feature's tiered roles in their tier", () => {
+    const feature = "/repo/apps/desktop/src/features/local-files"
+
+    expect(check(`${feature}/data.ts`, "./handlers.ts", desktop)).toBe("tierImportsTier")
+    expect(
+      check(`${feature}/components/file-editor.tsx`, "#features/local-files/handlers.ts", desktop)
+    ).toBe("tierImportsTier")
+    expect(check(`${feature}/handlers.ts`, "./hooks.ts", desktop)).toBe("tierImportsTier")
+    expect(check(`${feature}/handlers/open.ts`, "../data.ts", desktop)).toBe("tierImportsTier")
+    expect(
+      check("/repo/apps/desktop/src/shell/bridge.ts", `#features/local-files/data.ts`, desktop)
+    ).toBe("tierImportsTier")
+    expect(
+      check(
+        "/repo/apps/desktop/src/renderer/routes/files.tsx",
+        "#features/local-files/handlers.ts",
+        desktop
+      )
+    ).toBe("tierImportsTier")
+  })
+
+  test("lets each tier import its own roles and the untiered ones", () => {
+    const feature = "/repo/apps/desktop/src/features/local-files"
+
+    expect(check(`${feature}/handlers.ts`, "./schemas.ts", desktop)).toBeUndefined()
+    expect(check(`${feature}/data.ts`, "./schemas.ts", desktop)).toBeUndefined()
+    expect(check(`${feature}/hooks.ts`, "./data.ts", desktop)).toBeUndefined()
+    expect(
+      check("/repo/apps/desktop/src/shell/bridge.ts", "#features/local-files/handlers.ts", desktop)
+    ).toBeUndefined()
+    expect(
+      check(
+        "/repo/apps/desktop/src/renderer/routes/files.tsx",
+        "#features/local-files/components/editor.tsx",
+        desktop
+      )
+    ).toBeUndefined()
+  })
+
+  test("rejects an untiered role importing a tiered one", () => {
+    const feature = "/repo/apps/desktop/src/features/local-files"
+
+    expect(check(`${feature}/schemas.ts`, "./handlers.ts", desktop)).toBe("untieredImportsTier")
+    expect(check(`${feature}/errors.ts`, "./data.ts", desktop)).toBe("untieredImportsTier")
+  })
+
+  test("puts a shared folder named after a tier in that tier", () => {
+    const src = "/repo/apps/desktop/src"
+
+    expect(
+      check(`${src}/features/local-files/handlers.ts`, "#shared/shell/opened-paths.ts", desktop)
+    ).toBeUndefined()
+    expect(check(`${src}/shell/main.ts`, "#shared/shell/opened-paths.ts", desktop)).toBeUndefined()
+    expect(
+      check(`${src}/shared/shell/opened-paths.ts`, "#shared/logger.ts", desktop)
+    ).toBeUndefined()
+    expect(
+      check(`${src}/features/local-files/data.ts`, "#shared/shell/opened-paths.ts", desktop)
+    ).toBe("tierImportsTier")
+    expect(
+      check(
+        `${src}/features/local-files/components/file-editor.tsx`,
+        "#shared/shell/opened-paths.ts",
+        desktop
+      )
+    ).toBe("tierImportsTier")
+    expect(
+      check(`${src}/renderer/routes/files.tsx`, "#shared/shell/opened-paths.ts", desktop)
+    ).toBe("tierImportsTier")
+    expect(check(`${src}/shared/shell/opened-paths.ts`, "#shared/renderer/theme.ts", desktop)).toBe(
+      "tierImportsTier"
+    )
+  })
+
+  test("rejects untiered shared code and untiered roles importing a tiered shared folder", () => {
+    const src = "/repo/apps/desktop/src"
+
+    expect(check(`${src}/shared/bridge.ts`, "./shell/opened-paths.ts", desktop)).toBe(
+      "untieredImportsTier"
+    )
+    expect(
+      check(`${src}/features/local-files/schemas.ts`, "#shared/shell/opened-paths.ts", desktop)
+    ).toBe("untieredImportsTier")
+  })
+
+  test("keeps a tiered shared folder from importing features", () => {
+    expect(
+      check(
+        "/repo/apps/desktop/src/shared/shell/opened-paths.ts",
+        "#features/local-files/handlers.ts",
+        desktop
+      )
+    ).toBe("sharedImportsUp")
+  })
+
+  test("leaves shared folders untiered when they don't match a tier", () => {
+    const src = "/repo/apps/desktop/src"
+
+    expect(check(`${src}/shell/main.ts`, "#shared/components/error.tsx", desktop)).toBeUndefined()
+    expect(check(`${src}/shared/bridge.ts`, "./shell.ts", desktop)).toBeUndefined()
+    expect(check("/repo/apps/app/src/shared/auth.ts", "#shared/shell/utils.ts")).toBeUndefined()
+  })
+
+  test("leaves features untiered when the app declares no feature tiers", () => {
+    expect(
+      check("/repo/apps/app/src/features/auth/components/form.tsx", "#features/auth/handlers.ts")
     ).toBeUndefined()
   })
 

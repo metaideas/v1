@@ -9,7 +9,17 @@ import { defineConfig } from "oxlint"
 const APP_BOUNDARIES = {
   api: { folders: ["routes"] },
   app: { routes: "routes" },
-  desktop: { routes: "renderer/routes", tiers: ["renderer", "shell"] },
+  desktop: {
+    // A feature's handlers run in the main process; its UI and data layer run in the renderer.
+    featureTiers: {
+      components: "renderer",
+      data: "renderer",
+      handlers: "shell",
+      hooks: "renderer",
+    },
+    routes: "renderer/routes",
+    tiers: ["renderer", "shell"],
+  },
   docs: { routes: "pages" },
   extension: { folders: ["entrypoints"] },
   mobile: { routes: "app" },

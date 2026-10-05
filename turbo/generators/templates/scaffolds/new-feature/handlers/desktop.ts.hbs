@@ -1,0 +1,6 @@
+import { createShellRouter } from "#shared/bridge.ts"
+import { {{camelCase name}}Contract } from "#features/{{kebabCase name}}/schemas.ts"
+
+export const {{camelCase name}}Router = createShellRouter({{camelCase name}}Contract, {
+  "{{camelCase name}}.ping": () => "pong",
+})

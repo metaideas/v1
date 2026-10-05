@@ -1,6 +1,10 @@
 import path from "node:path"
 
 export type Boundaries = {
+  /**
+   * Maps a feature role, such as `handlers`, to the entrypoint tier that runs it.
+   */
+  featureTiers?: Readonly<Record<string, string>>
   folders?: readonly string[]
   routes?: string
   tiers?: readonly string[]
@@ -28,8 +32,10 @@ export type Violation =
   | "routeImportsRoute"
   | "sharedImportsUp"
   | "tierImportsTier"
+  | "untieredImportsTier"
 
 const LAYER_FOLDERS = ["shared", "features"] as const
+const TEST_FOLDER = "__tests__"
 const SOURCE_ROOT = /^(?<root>.*\/apps\/(?<app>[^/]+)\/src)\//u
 const MODULE_EXTENSIONS = new Set([
   "",
@@ -90,11 +96,14 @@ export function locate(
   const tier = top !== undefined && boundaries.tiers?.includes(top) ? top : undefined
 
   if (top === "shared") {
-    return { layer: { kind: "shared" } }
+    // A shared folder named after a tier, such as `shared/shell/`, holds code only that tier runs.
+    const sharedTier = name !== undefined && boundaries.tiers?.includes(name) ? name : undefined
+
+    return { layer: { kind: "shared" }, tier: sharedTier }
   }
 
   if (top === "features" && name !== undefined) {
-    return { layer: { kind: "feature", name } }
+    return { layer: { kind: "feature", name }, tier: findFeatureTier(boundaries, relative) }
   }
 
   if (
@@ -105,6 +114,17 @@ export function locate(
   }
 
   return { layer: { kind: "composition" }, tier }
+}
+
+// A role is the first segment after the feature name, without its extension, so
+// `handlers.ts` and `handlers/sign-in.ts` share the `handlers` role.
+function findFeatureTier(boundaries: Boundaries, relative: string) {
+  const role = relative
+    .split("/")
+    .slice(2)
+    .find((segment) => segment !== TEST_FOLDER)
+
+  return role === undefined ? undefined : boundaries.featureTiers?.[role.split(".")[0] ?? role]
 }
 
 export function listLayerFolders(boundaries: Boundaries) {
@@ -133,6 +153,16 @@ export function findStrayFolder(root: SourceRoot, boundaries: Boundaries, file: 
 export function findViolation(from: Location, to: Location, target: string): Violation | undefined {
   if (from.tier !== undefined && to.tier !== undefined && from.tier !== to.tier) {
     return "tierImportsTier"
+  }
+
+  // Both tiers load untiered shared code and a feature's untiered roles, such as `schemas.ts`, so
+  // neither can pull in a tier's code.
+  if (
+    (from.layer.kind === "feature" || from.layer.kind === "shared")
+    && from.tier === undefined
+    && to.tier !== undefined
+  ) {
+    return "untieredImportsTier"
   }
 
   switch (from.layer.kind) {

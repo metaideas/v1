@@ -1,12 +1,16 @@
 import { mutationOptions } from "@tanstack/react-query"
-import type { LocalTextFile } from "#shared/desktop-bridge.ts"
+import { createClient } from "typedport"
+import { type LocalTextFile, localFilesContract } from "#features/local-files/schemas.ts"
+import { transport } from "#shared/bridge.ts"
+
+const shell = createClient(localFilesContract, transport)
 
 export const openTextFileOptions = mutationOptions({
-  mutationFn: () => globalThis.desktop.openTextFile(),
+  mutationFn: () => shell.localFiles.open(),
   mutationKey: ["local-files", "open"],
 })
 
 export const saveTextFileOptions = mutationOptions({
-  mutationFn: (file: LocalTextFile) => globalThis.desktop.saveTextFile(file),
+  mutationFn: (file: LocalTextFile) => shell.localFiles.save(file),
   mutationKey: ["local-files", "save"],
 })

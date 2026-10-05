@@ -63,7 +63,7 @@ Application workspaces usually use three folders:
 
 These folders have a one-way import flow. The `features` folder can import from the `shared` folder. The `shared` folder cannot import from the `features` folder. The router folder can import from the `features` or `shared` folder. Neither folder can import from the router folder. This flow organizes the code and makes it easier to understand.
 
-The `v1/layers` lint rule in `tooling/linting/src/rules` enforces these flows for both `#` and relative imports, and covers a new feature folder without a configuration change. A route can import style and image assets, but not another route. The `v1/layer-folders` rule keeps every source folder in a layer: a file at the root of `src` is an entrypoint, and every other file lives in `shared/`, `features/`, or a folder that the rules' options declare. The options in `oxlint.config.ts` name each application workspace's route folder, entrypoint tiers, and other composition folders, such as the API's `routes/`, whose routes compose each other.
+The `v1/layers` lint rule in `tooling/linting/src/rules` enforces these flows for both `#` and relative imports, and covers a new feature folder without a configuration change. A route can import style and image assets, but not another route. The `v1/layer-folders` rule keeps every source folder in a layer: a file at the root of `src` is an entrypoint, and every other file lives in `shared/`, `features/`, or a folder that the rules' options declare. The options in `oxlint.config.ts` name each application workspace's route folder, entrypoint tiers, and other composition folders, such as the API's `routes/`, whose routes compose each other. An application workspace can also assign feature roles to tiers, such as the desktop's `handlers.ts` to the main process. A `shared/` folder named after a tier, such as the desktop's `shared/shell/`, belongs to that tier, so it can hold code that only that tier runs, such as main-process helpers that two features' handlers share. Tiered code follows the tier rule below, and untiered code, such as `schemas.ts` or the rest of `shared/`, can't import it, because both tiers load untiered code.
 
 When an application workspace has more than one entrypoint tier, such as a desktop main process and a renderer, the tiers never import each other. They communicate through a typed contract in `shared`.
 
@@ -92,14 +92,14 @@ features/<feature>/
 | `assets/`, `components/`                  |     | ✓   | ✓       | ✓         | ✓      | ✓   |        |
 | `constants.ts`, `errors.ts`, `schemas.ts` | ✓   | ✓   | ✓       | ✓         | ✓      | ✓   | ✓      |
 | `data.ts`, `hooks.ts`                     |     | ✓   | ✓       | ✓         | ✓      |     |        |
-| `handlers.ts`                             | ✓   | ✓   |         |           |        |     | ✓      |
+| `handlers.ts`                             | ✓   | ✓   | ✓       |           |        |     | ✓      |
 
 - A role file that grows becomes a folder of the same name with one file per item, such as `handlers/sign-in.ts`. No other folder names exist inside a feature.
 - `handlers.ts` implements what the app exposes. It defines no contracts of its own. Payloads and errors that cross applications belong in `@v1/core` or the package workspace that owns them.
 - Components reach the server through `data.ts` or `hooks.ts`. TanStack Start server functions are the exception: components and routes call them from `handlers.ts` directly, because a server function is already its own client entry point.
 - `schemas.ts` and `errors.ts` hold only what the app owns. Types derive from schemas with `z.infer`, so features have no `types.ts`.
 - A helper lives in the file that uses it until another feature needs it. Then it moves to `shared/`.
-- Desktop features run in the renderer. Main-process code stays in `shell/`.
+- A desktop feature's `handlers.ts` runs in the main process. Its `data.ts`, `hooks.ts`, and components run in the renderer, and both sides share its `schemas.ts`, `errors.ts`, and `constants.ts`.
 
 The `v1/feature-files` lint rule in `tooling/linting/src/rules` enforces these names. Run `bun run generate new-feature` to scaffold a feature with the roles its application workspace supports.
 
@@ -158,11 +158,21 @@ An Electron Forge application with a TanStack Router renderer.
 
 ```sh
 apps/desktop/src
-  ├── shell/        # Electron main process and preload script
+  ├── shell/        # Electron main process, preload script, and the bridge that serves feature handlers
   ├── renderer/     # Renderer entry and file-based routes
-  ├── shared/       # Components, utilities, and the typed shell-renderer bridge
+  ├── shared/       # Components, utilities, and the bridge transport
   └── features/     # Feature folders
 ```
+
+A feature calls the main process through a [typedport](https://github.com/adelrodriguez/typedport) contract that it owns. Imports flow one way on each side, and the two sides meet only at the contract:
+
+```sh
+features/<feature>/schemas.ts, errors.ts  # Contract named after the feature, and its errors
+  → features/<feature>/handlers.ts        # Resolvers and router → shell/bridge.ts → shell/main.ts
+  → features/<feature>/data.ts            # Client over #shared/bridge.ts → hooks.ts → components/ → renderer/routes/
+```
+
+A feature's `handlers.ts` builds its router with `createShellRouter` from `#shared/bridge.ts`. `shell/bridge.ts` merges every feature's router with typedport's `mergeRouters` and serves the result over IPC, and `bun run generate new-feature` adds a new desktop feature's router to that merge. The router parses every payload before a resolver runs, because renderer input is untrusted. Faults that features define reach the renderer with their message, and every other failure crosses as `internal`. The preload exposes only the transport, so it never changes. Name the contract's root key after the feature, such as `localFiles`, so channel names can't collide; `mergeRouters` throws at startup if two features declare the same channel.
 
 ### Extension
 
