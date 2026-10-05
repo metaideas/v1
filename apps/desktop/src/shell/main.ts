@@ -1,50 +1,10 @@
-import { readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { app, BrowserWindow, dialog, ipcMain } from "electron"
+import { app, BrowserWindow } from "electron"
 import isSquirrelStartup from "electron-squirrel-startup"
-import { IPC_CHANNELS, type LocalTextFile } from "#shared/desktop-bridge.ts"
-import { LocalFilesFault } from "#shared/errors.ts"
+import { serveBridge } from "#shell/bridge/router.ts"
 
 if (isSquirrelStartup) {
   app.quit()
-}
-
-// Only paths that the user selected through the open dialog are writable.
-const openedPaths = new Set<string>()
-
-function registerLocalFileHandlers() {
-  ipcMain.handle(IPC_CHANNELS.openTextFile, async (): Promise<LocalTextFile | null> => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-      filters: [
-        {
-          extensions: ["json", "md", "txt"],
-          name: "Text",
-        },
-      ],
-      properties: ["openFile"],
-    })
-
-    const selectedPath = filePaths[0]
-
-    if (canceled || !selectedPath) return null
-
-    openedPaths.add(selectedPath)
-
-    return {
-      contents: await readFile(selectedPath, "utf8"),
-      path: selectedPath,
-    }
-  })
-
-  ipcMain.handle(IPC_CHANNELS.saveTextFile, async (_event, file: LocalTextFile) => {
-    if (!openedPaths.has(file.path)) {
-      throw LocalFilesFault.create("UnselectedPathError", { path: file.path }).withMessage(
-        "Cannot save to a path that the open dialog did not select"
-      )
-    }
-
-    await writeFile(file.path, file.contents, "utf8")
-  })
 }
 
 function createWindow() {
@@ -86,7 +46,7 @@ function createWindow() {
 }
 
 app.on("ready", () => {
-  registerLocalFileHandlers()
+  serveBridge()
   createWindow()
 
   app.on("activate", () => {

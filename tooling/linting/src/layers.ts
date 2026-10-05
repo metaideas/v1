@@ -2,6 +2,10 @@ import path from "node:path"
 
 export type Boundaries = {
   folders?: readonly string[]
+  /**
+   * Maps a module or folder to the only modules and folders that may import it.
+   */
+  restricted?: Readonly<Record<string, readonly string[]>>
   routes?: string
   tiers?: readonly string[]
 }
@@ -105,6 +109,30 @@ export function locate(
   }
 
   return { layer: { kind: "composition" }, tier }
+}
+
+function isWithin(file: string, target: string) {
+  return file === target || file.startsWith(`${target}/`)
+}
+
+/**
+ * Returns the importers allowed to import `target` when `importer` isn't one of them.
+ */
+export function findRestriction(
+  root: SourceRoot,
+  boundaries: Boundaries,
+  importer: string,
+  target: string
+) {
+  const from = path.posix.relative(root.path, importer.replaceAll("\\", "/"))
+  const to = path.posix.relative(root.path, target)
+
+  const restriction = Object.entries(boundaries.restricted ?? {}).find(
+    ([restricted, importers]) =>
+      isWithin(to, restricted) && !importers.some((allowed) => isWithin(from, allowed))
+  )
+
+  return restriction?.[1]
 }
 
 export function listLayerFolders(boundaries: Boundaries) {

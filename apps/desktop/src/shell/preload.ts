@@ -1,9 +1,10 @@
 import { contextBridge, ipcRenderer } from "electron"
-import { type DesktopBridge, IPC_CHANNELS } from "#shared/desktop-bridge.ts"
+import type { Bridge } from "#shared/bridge/contract.ts"
 
-const bridge: DesktopBridge = {
-  openTextFile: () => ipcRenderer.invoke(IPC_CHANNELS.openTextFile),
-  saveTextFile: (file) => ipcRenderer.invoke(IPC_CHANNELS.saveTextFile, file),
+// The typedport client is a Proxy, which `contextBridge` can't clone, so the preload exposes only
+// the transport. The renderer builds the client in `#shared/bridge/client.ts`.
+const bridge: Bridge = {
+  send: (path, payload) => ipcRenderer.invoke(path, payload),
 }
 
-contextBridge.exposeInMainWorld("desktop", bridge)
+contextBridge.exposeInMainWorld("bridge", bridge)

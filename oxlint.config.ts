@@ -9,7 +9,16 @@ import { defineConfig } from "oxlint"
 const APP_BOUNDARIES = {
   api: { folders: ["routes"] },
   app: { routes: "routes" },
-  desktop: { routes: "renderer/routes", tiers: ["renderer", "shell"] },
+  desktop: {
+    restricted: {
+      // The client reads the bridge that the preload exposes, which exists only in the renderer.
+      "shared/bridge/client.ts": ["features", "renderer"],
+      // Resolvers run Node code, which the sandboxed preload can't bundle.
+      "shell/bridge": ["shell/bridge", "shell/main.ts"],
+    },
+    routes: "renderer/routes",
+    tiers: ["renderer", "shell"],
+  },
   docs: { routes: "pages" },
   extension: { folders: ["entrypoints"] },
   mobile: { routes: "app" },

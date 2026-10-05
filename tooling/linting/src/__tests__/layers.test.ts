@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import {
   type Boundaries,
   findSourceRoot,
+  findRestriction,
   findStrayFolder,
   findViolation,
   locate,
@@ -9,7 +10,14 @@ import {
 } from "#layers.ts"
 
 const app: Boundaries = { routes: "routes" }
-const desktop: Boundaries = { routes: "renderer/routes", tiers: ["renderer", "shell"] }
+const desktop: Boundaries = {
+  restricted: {
+    "shared/bridge/client.ts": ["features", "renderer"],
+    "shell/bridge": ["shell/bridge", "shell/main.ts"],
+  },
+  routes: "renderer/routes",
+  tiers: ["renderer", "shell"],
+}
 
 function check(file: string, specifier: string, boundaries: Boundaries = app) {
   const root = findSourceRoot(file)
@@ -104,12 +112,56 @@ describe("findViolation", () => {
 
   test("lets entrypoint tiers import shared", () => {
     expect(
-      check("/repo/apps/desktop/src/shell/main.ts", "#shared/desktop-bridge.ts", desktop)
+      check("/repo/apps/desktop/src/shell/main.ts", "#shared/bridge/contract.ts", desktop)
     ).toBeUndefined()
   })
 
   test("ignores package imports", () => {
     expect(check("/repo/apps/app/src/shared/auth.ts", "@v1/auth/client")).toBeUndefined()
+  })
+})
+
+describe("findRestriction", () => {
+  const root = { app: "desktop", path: "/repo/apps/desktop/src" }
+
+  function restrict(file: string, specifier: string) {
+    const target = resolveImport(root, file, specifier)
+
+    if (target === undefined) throw new Error(`Cannot resolve ${specifier}`)
+
+    return findRestriction(root, desktop, file, target)
+  }
+
+  test("lets allowed modules and folders import a restricted module", () => {
+    expect(
+      restrict("/repo/apps/desktop/src/features/local-files/data.ts", "#shared/bridge/client.ts")
+    ).toBeUndefined()
+    expect(
+      restrict("/repo/apps/desktop/src/shell/main.ts", "#shell/bridge/router.ts")
+    ).toBeUndefined()
+    expect(
+      restrict("/repo/apps/desktop/src/shell/bridge/router.ts", "./local-files.ts")
+    ).toBeUndefined()
+  })
+
+  test("rejects other importers", () => {
+    expect(restrict("/repo/apps/desktop/src/shell/main.ts", "#shared/bridge/client.ts")).toEqual([
+      "features",
+      "renderer",
+    ])
+    expect(restrict("/repo/apps/desktop/src/shell/preload.ts", "#shell/bridge/handle.ts")).toEqual([
+      "shell/bridge",
+      "shell/main.ts",
+    ])
+  })
+
+  test("ignores unrestricted modules and folder name prefixes", () => {
+    expect(
+      restrict("/repo/apps/desktop/src/shell/preload.ts", "#shared/bridge/contract.ts")
+    ).toBeUndefined()
+    expect(
+      restrict("/repo/apps/desktop/src/shell/preload.ts", "#shell/bridge-utils.ts")
+    ).toBeUndefined()
   })
 })
 

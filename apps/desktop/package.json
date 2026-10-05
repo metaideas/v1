@@ -33,7 +33,9 @@
     "faultier": "3.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "varlock": "1.16.0"
+    "typedport": "0.2.0",
+    "varlock": "1.16.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.2",
