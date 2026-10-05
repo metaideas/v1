@@ -10,11 +10,12 @@ const APP_BOUNDARIES = {
   api: { folders: ["routes"] },
   app: { routes: "routes" },
   desktop: {
-    restricted: {
-      // The client reads the bridge that the preload exposes, which exists only in the renderer.
-      "shared/bridge/client.ts": ["features", "renderer"],
-      // Resolvers run Node code, which the sandboxed preload can't bundle.
-      "shell/bridge": ["shell/bridge", "shell/main.ts"],
+    // A feature's handlers run in the main process; its UI and data layer run in the renderer.
+    featureTiers: {
+      components: "renderer",
+      data: "renderer",
+      handlers: "shell",
+      hooks: "renderer",
     },
     routes: "renderer/routes",
     tiers: ["renderer", "shell"],

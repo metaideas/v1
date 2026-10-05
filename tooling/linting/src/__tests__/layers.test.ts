@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test"
 import {
   type Boundaries,
   findSourceRoot,
-  findRestriction,
   findStrayFolder,
   findViolation,
   locate,
@@ -11,9 +10,11 @@ import {
 
 const app: Boundaries = { routes: "routes" }
 const desktop: Boundaries = {
-  restricted: {
-    "shared/bridge/client.ts": ["features", "renderer"],
-    "shell/bridge": ["shell/bridge", "shell/main.ts"],
+  featureTiers: {
+    components: "renderer",
+    data: "renderer",
+    handlers: "shell",
+    hooks: "renderer",
   },
   routes: "renderer/routes",
   tiers: ["renderer", "shell"],
@@ -112,56 +113,64 @@ describe("findViolation", () => {
 
   test("lets entrypoint tiers import shared", () => {
     expect(
-      check("/repo/apps/desktop/src/shell/main.ts", "#shared/bridge/contract.ts", desktop)
+      check("/repo/apps/desktop/src/shell/main.ts", "#shared/bridge.ts", desktop)
+    ).toBeUndefined()
+  })
+
+  test("puts a feature's tiered roles in their tier", () => {
+    const feature = "/repo/apps/desktop/src/features/local-files"
+
+    expect(check(`${feature}/data.ts`, "./handlers.ts", desktop)).toBe("tierImportsTier")
+    expect(
+      check(`${feature}/components/file-editor.tsx`, "#features/local-files/handlers.ts", desktop)
+    ).toBe("tierImportsTier")
+    expect(check(`${feature}/handlers.ts`, "./hooks.ts", desktop)).toBe("tierImportsTier")
+    expect(check(`${feature}/handlers/open.ts`, "../data.ts", desktop)).toBe("tierImportsTier")
+    expect(
+      check("/repo/apps/desktop/src/shell/bridge.ts", `#features/local-files/data.ts`, desktop)
+    ).toBe("tierImportsTier")
+    expect(
+      check(
+        "/repo/apps/desktop/src/renderer/routes/files.tsx",
+        "#features/local-files/handlers.ts",
+        desktop
+      )
+    ).toBe("tierImportsTier")
+  })
+
+  test("lets each tier import its own roles and the untiered ones", () => {
+    const feature = "/repo/apps/desktop/src/features/local-files"
+
+    expect(check(`${feature}/handlers.ts`, "./schemas.ts", desktop)).toBeUndefined()
+    expect(check(`${feature}/data.ts`, "./schemas.ts", desktop)).toBeUndefined()
+    expect(check(`${feature}/hooks.ts`, "./data.ts", desktop)).toBeUndefined()
+    expect(
+      check("/repo/apps/desktop/src/shell/bridge.ts", "#features/local-files/handlers.ts", desktop)
+    ).toBeUndefined()
+    expect(
+      check(
+        "/repo/apps/desktop/src/renderer/routes/files.tsx",
+        "#features/local-files/components/editor.tsx",
+        desktop
+      )
+    ).toBeUndefined()
+  })
+
+  test("rejects an untiered role importing a tiered one", () => {
+    const feature = "/repo/apps/desktop/src/features/local-files"
+
+    expect(check(`${feature}/schemas.ts`, "./handlers.ts", desktop)).toBe("untieredImportsTier")
+    expect(check(`${feature}/errors.ts`, "./data.ts", desktop)).toBe("untieredImportsTier")
+  })
+
+  test("leaves features untiered when the app declares no feature tiers", () => {
+    expect(
+      check("/repo/apps/app/src/features/auth/components/form.tsx", "#features/auth/handlers.ts")
     ).toBeUndefined()
   })
 
   test("ignores package imports", () => {
     expect(check("/repo/apps/app/src/shared/auth.ts", "@v1/auth/client")).toBeUndefined()
-  })
-})
-
-describe("findRestriction", () => {
-  const root = { app: "desktop", path: "/repo/apps/desktop/src" }
-
-  function restrict(file: string, specifier: string) {
-    const target = resolveImport(root, file, specifier)
-
-    if (target === undefined) throw new Error(`Cannot resolve ${specifier}`)
-
-    return findRestriction(root, desktop, file, target)
-  }
-
-  test("lets allowed modules and folders import a restricted module", () => {
-    expect(
-      restrict("/repo/apps/desktop/src/features/local-files/data.ts", "#shared/bridge/client.ts")
-    ).toBeUndefined()
-    expect(
-      restrict("/repo/apps/desktop/src/shell/main.ts", "#shell/bridge/router.ts")
-    ).toBeUndefined()
-    expect(
-      restrict("/repo/apps/desktop/src/shell/bridge/router.ts", "./local-files.ts")
-    ).toBeUndefined()
-  })
-
-  test("rejects other importers", () => {
-    expect(restrict("/repo/apps/desktop/src/shell/main.ts", "#shared/bridge/client.ts")).toEqual([
-      "features",
-      "renderer",
-    ])
-    expect(restrict("/repo/apps/desktop/src/shell/preload.ts", "#shell/bridge/handle.ts")).toEqual([
-      "shell/bridge",
-      "shell/main.ts",
-    ])
-  })
-
-  test("ignores unrestricted modules and folder name prefixes", () => {
-    expect(
-      restrict("/repo/apps/desktop/src/shell/preload.ts", "#shared/bridge/contract.ts")
-    ).toBeUndefined()
-    expect(
-      restrict("/repo/apps/desktop/src/shell/preload.ts", "#shell/bridge-utils.ts")
-    ).toBeUndefined()
   })
 })
 

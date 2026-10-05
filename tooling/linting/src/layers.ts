@@ -1,11 +1,11 @@
 import path from "node:path"
 
 export type Boundaries = {
-  folders?: readonly string[]
   /**
-   * Maps a module or folder to the only modules and folders that may import it.
+   * Maps a feature role, such as `handlers`, to the entrypoint tier that runs it.
    */
-  restricted?: Readonly<Record<string, readonly string[]>>
+  featureTiers?: Readonly<Record<string, string>>
+  folders?: readonly string[]
   routes?: string
   tiers?: readonly string[]
 }
@@ -32,8 +32,10 @@ export type Violation =
   | "routeImportsRoute"
   | "sharedImportsUp"
   | "tierImportsTier"
+  | "untieredImportsTier"
 
 const LAYER_FOLDERS = ["shared", "features"] as const
+const TEST_FOLDER = "__tests__"
 const SOURCE_ROOT = /^(?<root>.*\/apps\/(?<app>[^/]+)\/src)\//u
 const MODULE_EXTENSIONS = new Set([
   "",
@@ -98,7 +100,7 @@ export function locate(
   }
 
   if (top === "features" && name !== undefined) {
-    return { layer: { kind: "feature", name } }
+    return { layer: { kind: "feature", name }, tier: findFeatureTier(boundaries, relative) }
   }
 
   if (
@@ -111,28 +113,15 @@ export function locate(
   return { layer: { kind: "composition" }, tier }
 }
 
-function isWithin(file: string, target: string) {
-  return file === target || file.startsWith(`${target}/`)
-}
+// A role is the first segment after the feature name, without its extension, so
+// `handlers.ts` and `handlers/sign-in.ts` share the `handlers` role.
+function findFeatureTier(boundaries: Boundaries, relative: string) {
+  const role = relative
+    .split("/")
+    .slice(2)
+    .find((segment) => segment !== TEST_FOLDER)
 
-/**
- * Returns the importers allowed to import `target` when `importer` isn't one of them.
- */
-export function findRestriction(
-  root: SourceRoot,
-  boundaries: Boundaries,
-  importer: string,
-  target: string
-) {
-  const from = path.posix.relative(root.path, importer.replaceAll("\\", "/"))
-  const to = path.posix.relative(root.path, target)
-
-  const restriction = Object.entries(boundaries.restricted ?? {}).find(
-    ([restricted, importers]) =>
-      isWithin(to, restricted) && !importers.some((allowed) => isWithin(from, allowed))
-  )
-
-  return restriction?.[1]
+  return role === undefined ? undefined : boundaries.featureTiers?.[role.split(".")[0] ?? role]
 }
 
 export function listLayerFolders(boundaries: Boundaries) {
@@ -161,6 +150,12 @@ export function findStrayFolder(root: SourceRoot, boundaries: Boundaries, file: 
 export function findViolation(from: Location, to: Location, target: string): Violation | undefined {
   if (from.tier !== undefined && to.tier !== undefined && from.tier !== to.tier) {
     return "tierImportsTier"
+  }
+
+  // Both tiers load a feature's untiered roles, such as `schemas.ts`, so those roles can't pull in
+  // a tier's code.
+  if (from.layer.kind === "feature" && from.tier === undefined && to.tier !== undefined) {
+    return "untieredImportsTier"
   }
 
   switch (from.layer.kind) {

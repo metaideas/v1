@@ -1,0 +1,11 @@
+import { createRouter, implement } from "typedport"
+import { {{camelCase name}}Contract } from "#features/{{kebabCase name}}/schemas.ts"
+import type { ShellContext } from "#shared/bridge.ts"
+
+const handle = implement({{camelCase name}}Contract).$context<ShellContext>()
+
+const ping = handle.{{camelCase name}}.ping(() => "pong")
+
+export const {{camelCase name}}Router = createRouter({{camelCase name}}Contract, {
+  {{camelCase name}}: { ping },
+})

@@ -1,12 +1,5 @@
 import { defineRule, type ESTree } from "adamantite/rules"
-import {
-  findRestriction,
-  findSourceRoot,
-  findViolation,
-  locate,
-  resolveImport,
-  selectBoundaries,
-} from "#layers.ts"
+import { findSourceRoot, findViolation, locate, resolveImport, selectBoundaries } from "#layers.ts"
 
 export default defineRule({
   create(context) {
@@ -34,20 +27,6 @@ export default defineRule({
 
       if (violation !== undefined) {
         context.report({ data: { specifier: source.value }, messageId: violation, node: source })
-        return
-      }
-
-      const importers =
-        target === undefined
-          ? undefined
-          : findRestriction(sourceRoot, boundaries, context.filename, target)
-
-      if (importers !== undefined) {
-        context.report({
-          data: { importers: importers.join(", "), specifier: source.value },
-          messageId: "restrictedImport",
-          node: source,
-        })
       }
     }
 
@@ -78,13 +57,13 @@ export default defineRule({
         "A feature can't import routes or entrypoints ({{specifier}}). Move the code into the feature or shared/.",
       featureImportsFeature:
         "A feature can't import another feature ({{specifier}}). Move the shared code into shared/.",
-      restrictedImport:
-        "Only {{importers}} can import {{specifier}}. See docs/project-structure.md.",
       routeImportsRoute:
         "A route can't import another route ({{specifier}}). Move the shared code into a feature or shared/.",
       sharedImportsUp: "shared/ can't import features, routes, or entrypoints ({{specifier}}).",
       tierImportsTier:
-        "Entrypoint tiers can't import each other ({{specifier}}). Communicate through a typed contract in shared/.",
+        "Entrypoint tiers can't import each other ({{specifier}}). Communicate through a typed contract in shared/ or the feature's schemas.ts.",
+      untieredImportsTier:
+        "Both entrypoint tiers load this file, so it can't import a single tier's code ({{specifier}}). Move the shared code into an untiered role.",
     },
     schema: false,
     type: "problem",

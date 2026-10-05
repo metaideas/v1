@@ -1,0 +1,8 @@
+import { channel, defineContract } from "typedport"
+import * as z from "zod"
+
+export const {{camelCase name}}Contract = defineContract({
+  {{camelCase name}}: {
+    ping: channel({ input: z.void(), output: z.string() }),
+  },
+})

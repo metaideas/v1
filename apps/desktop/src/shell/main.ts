@@ -1,7 +1,7 @@
 import path from "node:path"
 import { app, BrowserWindow } from "electron"
 import isSquirrelStartup from "electron-squirrel-startup"
-import { serveBridge } from "#shell/bridge/router.ts"
+import { serveBridge } from "#shell/bridge.ts"
 
 if (isSquirrelStartup) {
   app.quit()
