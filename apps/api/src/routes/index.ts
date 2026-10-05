@@ -6,6 +6,7 @@ import { contextStorage } from "hono/context-storage"
 import { cors } from "hono/cors"
 import { HTTPException } from "hono/http-exception"
 import { secureHeaders } from "hono/secure-headers"
+import { seconds } from "humanspan"
 import filesRoutes from "#routes/files.ts"
 import healthRoutes from "#routes/health.ts"
 import trpcRoutes from "#routes/trpc.ts"
@@ -30,7 +31,7 @@ app.use(
     allowMethods: ["POST", "GET", "PUT", "OPTIONS"],
     credentials: true,
     exposeHeaders: ["Content-Length"],
-    maxAge: 600,
+    maxAge: seconds("10m"),
     origin: allowedOrigins,
   })
 )

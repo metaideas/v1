@@ -23,6 +23,7 @@
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
     "files-sdk": "2.2.2",
+    "humanspan": "0.2.0",
     "tryharder": "0.4.0"
   },
   "devDependencies": {

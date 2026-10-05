@@ -1,9 +1,10 @@
+import { seconds } from "humanspan"
 import { useEffect, useEffectEvent, useState } from "react"
 
 import { useIsMobile } from "#hooks/use-mobile.ts"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+const SIDEBAR_COOKIE_MAX_AGE = seconds("7d")
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarStateOptions = {
