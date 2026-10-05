@@ -50,38 +50,88 @@ function listRoles(app: string) {
   ).map((role) => ({ checked: role.isChecked ?? false, name: role.name, value: role.value }))
 }
 
-function templateFor(app: string, file: string, files: readonly string[]) {
+function templateFor(app: string, file: string) {
   if (file === "handlers") {
     return `handlers/${["api", "desktop", "worker"].includes(app) ? app : "app"}.ts.hbs`
-  }
-
-  // A desktop feature's handlers serve the contract that its schemas declare.
-  if (file === "schemas" && app === "desktop" && files.includes("handlers")) {
-    return "schemas/desktop.ts.hbs"
   }
 
   return `${file}.ts.hbs`
 }
 
-// Adds the feature's router to the routers that the shell serves over IPC.
-async function serveDesktopRouter(feature: string, router: string) {
-  const manual = `Add ${router} from #features/${feature}/handlers.ts to the routers in ${DESKTOP_BRIDGE_PATH}.`
-  const file = Bun.file(DESKTOP_BRIDGE_PATH)
+/**
+ * Names that a desktop feature's handlers share with its schemas and the shell's bridge.
+ */
+export type DesktopHandlers = {
+  bridgePath: string
+  contract: string
+  feature: string
+  key: string
+  router: string
+  schemasPath: string
+}
+
+async function declaresContract({ contract, schemasPath }: DesktopHandlers) {
+  const file = Bun.file(schemasPath)
+
+  return (await file.exists()) && new RegExp(`export const ${contract}\\b`).test(await file.text())
+}
+
+/**
+ * Adds the contract that a desktop feature's handlers serve to its `schemas.ts`, keeping what the
+ * file already holds, such as the schemas of a feature generated before it had handlers.
+ */
+export async function addDesktopContract(handlers: DesktopHandlers) {
+  const { contract, key, schemasPath } = handlers
+
+  if (await declaresContract(handlers)) {
+    return `[SKIPPED] ${schemasPath} already declares ${contract}`
+  }
+
+  const file = Bun.file(schemasPath)
+  const source = (await file.exists()) ? await file.text() : ""
+  const declaration = `export const ${contract} = defineContract({\n  ${key}: {\n    ping: channel({ input: z.void(), output: z.string() }),\n  },\n})\n`
+  const updated = addImports([source.trimEnd(), declaration].filter(Boolean).join("\n\n"), [
+    { from: "typedport", imported: "channel" },
+    { from: "typedport", imported: "defineContract" },
+    { from: "zod", imported: "*", local: "z" },
+  ])
+
+  if (updated === undefined) {
+    return `[MANUAL] ${schemasPath} already binds a name the contract needs. Declare ${contract} with typedport's defineContract.`
+  }
+
+  await Bun.write(schemasPath, updated)
+  return `${schemasPath}: declared ${contract}`
+}
+
+/**
+ * Adds a desktop feature's router to the routers that the shell serves over IPC. It mounts only a
+ * router whose contract exists, so a failed contract step leaves the shell buildable.
+ */
+export async function serveDesktopRouter(handlers: DesktopHandlers) {
+  const { bridgePath, contract, feature, router, schemasPath } = handlers
+  const manual = `Add ${router} from #features/${feature}/handlers.ts to the routers in ${bridgePath}.`
+
+  if (!(await declaresContract(handlers))) {
+    return `[MANUAL] ${schemasPath} doesn't declare ${contract}, so ${bridgePath} doesn't serve ${router} yet. ${manual}`
+  }
+
+  const file = Bun.file(bridgePath)
 
   if (!(await file.exists())) {
-    return `[MANUAL] ${DESKTOP_BRIDGE_PATH} is missing. ${manual}`
+    return `[MANUAL] ${bridgePath} is missing. ${manual}`
   }
 
   const source = await file.text()
 
   if (source.includes(router)) {
-    return `[SKIPPED] ${DESKTOP_BRIDGE_PATH} already serves ${router}`
+    return `[SKIPPED] ${bridgePath} already serves ${router}`
   }
 
   const routers = DESKTOP_ROUTERS.exec(source)?.groups?.routers
 
   if (routers === undefined) {
-    return `[MANUAL] ${DESKTOP_BRIDGE_PATH} changed since generation. ${manual}`
+    return `[MANUAL] ${bridgePath} changed since generation. ${manual}`
   }
 
   const listed = [...routers.split(","), router].map((name) => name.trim()).filter(Boolean)
@@ -91,11 +141,11 @@ async function serveDesktopRouter(feature: string, router: string) {
   )
 
   if (updated === undefined) {
-    return `[MANUAL] ${DESKTOP_BRIDGE_PATH} already binds ${router}. ${manual}`
+    return `[MANUAL] ${bridgePath} already binds ${router}. ${manual}`
   }
 
-  await Bun.write(DESKTOP_BRIDGE_PATH, updated)
-  return `${DESKTOP_BRIDGE_PATH}: served ${router}`
+  await Bun.write(bridgePath, updated)
+  return `${bridgePath}: served ${router}`
 }
 
 export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
@@ -137,17 +187,26 @@ export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
         actions.push({
           path: `${featurePath}/${file}.ts`,
           skipIfExists: true,
-          templateFile: `templates/scaffolds/new-feature/${templateFor(app, file, files)}`,
+          templateFile: `templates/scaffolds/new-feature/${templateFor(app, file)}`,
           type: "add",
         })
       }
 
       if (hasDesktopHandlers) {
-        actions.push(() =>
-          serveDesktopRouter(
-            plop.renderString("{{kebabCase name}}", { name }),
-            plop.renderString("{{camelCase name}}Router", { name })
-          )
+        const feature = plop.renderString("{{kebabCase name}}", { name })
+        const key = plop.renderString("{{camelCase name}}", { name })
+        const handlers: DesktopHandlers = {
+          bridgePath: DESKTOP_BRIDGE_PATH,
+          contract: `${key}Contract`,
+          feature,
+          key,
+          router: `${key}Router`,
+          schemasPath: `apps/desktop/src/features/${feature}/schemas.ts`,
+        }
+
+        actions.push(
+          () => addDesktopContract(handlers),
+          () => serveDesktopRouter(handlers)
         )
       }
 
