@@ -63,7 +63,7 @@ export default defineRule({
       tierImportsTier:
         "Entrypoint tiers can't import each other ({{specifier}}). Communicate through a typed contract in shared/ or the feature's schemas.ts.",
       untieredImportsTier:
-        "Both entrypoint tiers load this file, so it can't import a single tier's code ({{specifier}}). Move the shared code into an untiered role.",
+        "Both entrypoint tiers load this file, so it can't import code that only one tier runs ({{specifier}}). Import it from that tier's code instead.",
     },
     schema: false,
     type: "problem",

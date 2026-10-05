@@ -163,6 +163,63 @@ describe("findViolation", () => {
     expect(check(`${feature}/errors.ts`, "./data.ts", desktop)).toBe("untieredImportsTier")
   })
 
+  test("puts a shared folder named after a tier in that tier", () => {
+    const src = "/repo/apps/desktop/src"
+
+    expect(
+      check(`${src}/features/local-files/handlers.ts`, "#shared/shell/opened-paths.ts", desktop)
+    ).toBeUndefined()
+    expect(check(`${src}/shell/main.ts`, "#shared/shell/opened-paths.ts", desktop)).toBeUndefined()
+    expect(
+      check(`${src}/shared/shell/opened-paths.ts`, "#shared/logger.ts", desktop)
+    ).toBeUndefined()
+    expect(
+      check(`${src}/features/local-files/data.ts`, "#shared/shell/opened-paths.ts", desktop)
+    ).toBe("tierImportsTier")
+    expect(
+      check(
+        `${src}/features/local-files/components/file-editor.tsx`,
+        "#shared/shell/opened-paths.ts",
+        desktop
+      )
+    ).toBe("tierImportsTier")
+    expect(
+      check(`${src}/renderer/routes/files.tsx`, "#shared/shell/opened-paths.ts", desktop)
+    ).toBe("tierImportsTier")
+    expect(check(`${src}/shared/shell/opened-paths.ts`, "#shared/renderer/theme.ts", desktop)).toBe(
+      "tierImportsTier"
+    )
+  })
+
+  test("rejects untiered shared code and untiered roles importing a tiered shared folder", () => {
+    const src = "/repo/apps/desktop/src"
+
+    expect(check(`${src}/shared/bridge.ts`, "./shell/opened-paths.ts", desktop)).toBe(
+      "untieredImportsTier"
+    )
+    expect(
+      check(`${src}/features/local-files/schemas.ts`, "#shared/shell/opened-paths.ts", desktop)
+    ).toBe("untieredImportsTier")
+  })
+
+  test("keeps a tiered shared folder from importing features", () => {
+    expect(
+      check(
+        "/repo/apps/desktop/src/shared/shell/opened-paths.ts",
+        "#features/local-files/handlers.ts",
+        desktop
+      )
+    ).toBe("sharedImportsUp")
+  })
+
+  test("leaves shared folders untiered when they don't match a tier", () => {
+    const src = "/repo/apps/desktop/src"
+
+    expect(check(`${src}/shell/main.ts`, "#shared/components/error.tsx", desktop)).toBeUndefined()
+    expect(check(`${src}/shared/bridge.ts`, "./shell.ts", desktop)).toBeUndefined()
+    expect(check("/repo/apps/app/src/shared/auth.ts", "#shared/shell/utils.ts")).toBeUndefined()
+  })
+
   test("leaves features untiered when the app declares no feature tiers", () => {
     expect(
       check("/repo/apps/app/src/features/auth/components/form.tsx", "#features/auth/handlers.ts")

@@ -96,7 +96,10 @@ export function locate(
   const tier = top !== undefined && boundaries.tiers?.includes(top) ? top : undefined
 
   if (top === "shared") {
-    return { layer: { kind: "shared" } }
+    // A shared folder named after a tier, such as `shared/shell/`, holds code only that tier runs.
+    const sharedTier = name !== undefined && boundaries.tiers?.includes(name) ? name : undefined
+
+    return { layer: { kind: "shared" }, tier: sharedTier }
   }
 
   if (top === "features" && name !== undefined) {
@@ -152,9 +155,13 @@ export function findViolation(from: Location, to: Location, target: string): Vio
     return "tierImportsTier"
   }
 
-  // Both tiers load a feature's untiered roles, such as `schemas.ts`, so those roles can't pull in
-  // a tier's code.
-  if (from.layer.kind === "feature" && from.tier === undefined && to.tier !== undefined) {
+  // Both tiers load untiered shared code and a feature's untiered roles, such as `schemas.ts`, so
+  // neither can pull in a tier's code.
+  if (
+    (from.layer.kind === "feature" || from.layer.kind === "shared")
+    && from.tier === undefined
+    && to.tier !== undefined
+  ) {
     return "untieredImportsTier"
   }
 
