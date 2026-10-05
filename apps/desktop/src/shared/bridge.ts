@@ -1,6 +1,6 @@
 import type { WebContents } from "electron"
-import type { Transport } from "typedport"
 import * as Faultier from "faultier"
+import { type ContractTree, createRouter, type InferResolvers, type Transport } from "typedport"
 import { fromWire } from "typedport/wire"
 
 /**
@@ -20,6 +20,18 @@ declare global {
  */
 export type ShellContext = {
   sender: WebContents
+}
+
+/**
+ * Builds a feature's router with the shell context, so the feature's `handlers.ts` doesn't restate
+ * its contract's type. Replace it with typedport's own form once
+ * https://github.com/adelrodriguez/typedport/issues/30 ships.
+ */
+export function createShellRouter<Tree extends ContractTree>(
+  contract: Tree,
+  resolvers: InferResolvers<Tree, ShellContext>
+) {
+  return createRouter<Tree, ShellContext>(contract, resolvers)
 }
 
 /**
