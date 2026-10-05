@@ -12,7 +12,7 @@ const APPS_WITHOUT_FEATURES = new Set(["docs"])
 const KNOWN_APPS = new Set([...APPS_WITHOUT_FEATURES, ...FRONTEND_APPS, ...SERVER_APPS])
 const DIRECTORY_ROLES = new Set(["assets", "components"])
 const DESKTOP_BRIDGE_PATH = "apps/desktop/src/shell/bridge.ts"
-const DESKTOP_ROUTERS = /const routers = \[(?<routers>[^\]]*)\]/
+const DESKTOP_ROUTERS = /mergeRouters\((?<routers>[^)]*)\)/
 
 const FEATURE_ROLES: ReadonlyArray<{
   apps?: readonly string[]
@@ -110,7 +110,7 @@ export async function addDesktopContract(handlers: DesktopHandlers) {
  */
 export async function serveDesktopRouter(handlers: DesktopHandlers) {
   const { bridgePath, contract, feature, router, schemasPath } = handlers
-  const manual = `Add ${router} from #features/${feature}/handlers.ts to the routers in ${bridgePath}.`
+  const manual = `Add ${router} from #features/${feature}/handlers.ts to the mergeRouters call in ${bridgePath}.`
 
   if (!(await declaresContract(handlers))) {
     return `[MANUAL] ${schemasPath} doesn't declare ${contract}, so ${bridgePath} doesn't serve ${router} yet. ${manual}`
@@ -136,7 +136,7 @@ export async function serveDesktopRouter(handlers: DesktopHandlers) {
 
   const listed = [...routers.split(","), router].map((name) => name.trim()).filter(Boolean)
   const updated = addImports(
-    source.replace(DESKTOP_ROUTERS, `const routers = [${listed.join(", ")}]`),
+    source.replace(DESKTOP_ROUTERS, `mergeRouters(${listed.join(", ")})`),
     [{ from: `#features/${feature}/handlers.ts`, imported: router }]
   )
 

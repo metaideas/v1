@@ -33,7 +33,7 @@
     "faultier": "3.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "typedport": "0.2.1",
+    "typedport": "0.3.0",
     "varlock": "1.16.0",
     "zod": "4.6.5"
   },

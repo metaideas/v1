@@ -117,7 +117,7 @@
         "faultier": "3.0.1",
         "react": "19.2.3",
         "react-dom": "19.2.3",
-        "typedport": "0.2.1",
+        "typedport": "0.3.0",
         "varlock": "1.16.0",
         "zod": "4.6.5",
       },
@@ -4714,7 +4714,7 @@
 
     "type-is": ["type-is@2.1.0", "", { "dependencies": { "content-type": "^2.0.0", "media-typer": "^1.1.0", "mime-types": "^3.0.0" } }, "sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA=="],
 
-    "typedport": ["typedport@0.2.1", "", { "dependencies": { "@standard-schema/spec": "^1.0.0" } }, "sha512-FaACVB6I14jVfhYv6RBmcNnXbcBxgwhM7OAT0aR3qfV2re/gElgBBzVrkWLmMlRQRJXzh0bLfF70S6zzVs4IPw=="],
+    "typedport": ["typedport@0.3.0", "", { "dependencies": { "@standard-schema/spec": "^1.0.0" } }, "sha512-i2WNVNIHqmTpahs3PLx6RwaZmZSWL9k0sEgNOU4CoFRf826j3SAFTo+nwDrQ+NEnJx+on4nM7RxkXikdu6avRg=="],
 
     "typescript": ["typescript@7.0.2", "", { "optionalDependencies": { "@typescript/typescript-aix-ppc64": "7.0.2", "@typescript/typescript-darwin-arm64": "7.0.2", "@typescript/typescript-darwin-x64": "7.0.2", "@typescript/typescript-freebsd-arm64": "7.0.2", "@typescript/typescript-freebsd-x64": "7.0.2", "@typescript/typescript-linux-arm": "7.0.2", "@typescript/typescript-linux-arm64": "7.0.2", "@typescript/typescript-linux-loong64": "7.0.2", "@typescript/typescript-linux-mips64el": "7.0.2", "@typescript/typescript-linux-ppc64": "7.0.2", "@typescript/typescript-linux-riscv64": "7.0.2", "@typescript/typescript-linux-s390x": "7.0.2", "@typescript/typescript-linux-x64": "7.0.2", "@typescript/typescript-netbsd-arm64": "7.0.2", "@typescript/typescript-netbsd-x64": "7.0.2", "@typescript/typescript-openbsd-arm64": "7.0.2", "@typescript/typescript-openbsd-x64": "7.0.2", "@typescript/typescript-sunos-x64": "7.0.2", "@typescript/typescript-win32-arm64": "7.0.2", "@typescript/typescript-win32-x64": "7.0.2" }, "bin": { "tsc": "bin/tsc" } }, "sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA=="],
 
