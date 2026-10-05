@@ -1,4 +1,4 @@
-import type { JobPayload } from "@v1/jobs/worker"
+import type { JobPayload } from "@v1/jobs/runner"
 import { events } from "@v1/workflows/events"
 import { log } from "#shared/logger.ts"
 import { workflows } from "#shared/services.ts"

@@ -89,10 +89,16 @@ const SETUPS: Record<PostHogApp, PostHogSetup> = {
     edits: [
       {
         imports: [{ from: "#shared/analytics.ts", imported: "analytics" }],
-        manual: "Call `await analytics?.shutdown()` in the shutdown handler of src/index.ts.",
+        manual:
+          "Call `await analytics?.shutdown()` in the `close` that src/index.ts passes to `lifecycle`.",
         marker: "analytics?.shutdown()",
         path: "src/index.ts",
-        replacements: [["  process.exit(0)", "  await analytics?.shutdown()\n  process.exit(0)"]],
+        replacements: [
+          [
+            "    },\n    logger: log,\n",
+            "      await analytics?.shutdown()\n    },\n    logger: log,\n",
+          ],
+        ],
       },
     ],
     environment: `

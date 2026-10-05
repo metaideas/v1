@@ -30,7 +30,7 @@ description: Follow the TypeScript, service, import, UI, component, test, commen
 - A package accepts an optional `logger` that satisfies `@v1/core/services/logging`. The application decides where logs go.
 - Each application builds its services once in its composition root: `#shared/services.ts`, or `#shared/server/services.ts` for server-only services in a full-stack application. Code deeper in the application receives those instances and never calls a factory itself.
 - Pass services through the framework context: `c.var` in Hono, request middleware context in TanStack Start, and `ctx` in Convex. Import the composition root directly only where no framework context exists, such as a workflow definition or a script.
-- A service that holds connections exposes a way to close them, and the application closes it on shutdown.
+- A service that holds connections exposes a way to close them, and the application closes it on shutdown. A long-running server process, such as `apps/api` or `apps/worker`, starts with `lifecycle` from `@v1/utils/lifecycle`, which runs the startup function and closes its services in `close` on a signal, an uncaught exception, or a failed startup, within a deadline.
 
 ## Imports and Boundaries
 

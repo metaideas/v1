@@ -9,7 +9,8 @@
   },
   "exports": {
     "./client": "./src/client.ts",
-    "./events": "./src/events/index.ts"
+    "./events": "./src/events/index.ts",
+    "./runner": "./src/runner.ts"
   },
   "scripts": {
     "bump:deps": "bun update --interactive",
@@ -18,7 +19,8 @@
   "dependencies": {
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
-    "inngest": "4.21.1"
+    "inngest": "4.21.1",
+    "tryharder": "0.4.0"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",

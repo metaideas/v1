@@ -1,24 +1,23 @@
-import "#shared/logger.ts"
-import type { Serve } from "bun"
-
+import type { Server } from "bun"
+import { lifecycle } from "@v1/utils/lifecycle"
 import app from "#routes/index.ts"
 import { ENV } from "#shared/env.generated.ts"
+import { log } from "#shared/logger.ts"
 import { database, dispatcher, kv } from "#shared/services.ts"
 
-async function shutdown() {
-  await dispatcher.close()
-  await kv.dispose()
-  await database.$client.close()
-  process.exit(0)
-}
+let server: Server<undefined> | undefined
 
-for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.once(signal, () => {
-    void shutdown()
-  })
-}
-
-export default {
-  fetch: app.fetch,
-  port: ENV.PORT,
-} satisfies Serve.Options<unknown>
+await lifecycle(
+  () => {
+    server = Bun.serve({ fetch: app.fetch, port: ENV.PORT })
+  },
+  {
+    // The server stops taking requests and finishes the ones in progress before the services close.
+    close: async () => {
+      await server?.stop()
+      await Promise.all([dispatcher.close(), kv.dispose(), database.$client.close()])
+    },
+    logger: log,
+    scope: "api",
+  }
+)

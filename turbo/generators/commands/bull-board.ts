@@ -104,10 +104,16 @@ const EDITS: readonly Edit[] = [
   },
   {
     imports: [DASHBOARD_IMPORT],
-    manual: "Call `await jobsDashboard?.close()` in the shutdown handler of src/index.ts.",
+    manual:
+      "Call `await jobsDashboard?.close()` in the `close` that src/index.ts passes to `lifecycle`.",
     marker: "jobsDashboard?.close()",
     path: "src/index.ts",
-    replacements: [["  process.exit(0)", "  await jobsDashboard?.close()\n  process.exit(0)"]],
+    replacements: [
+      [
+        "    },\n    logger: log,\n",
+        "      await jobsDashboard?.close()\n    },\n    logger: log,\n",
+      ],
+    ],
   },
 ]
 

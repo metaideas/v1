@@ -1,43 +1,36 @@
-import { createJobWorker } from "@v1/jobs/worker"
-import { connect, type WorkerConnection } from "inngest/connect"
+import { createJobsRunner } from "@v1/jobs/runner"
+import { lifecycle } from "@v1/utils/lifecycle"
+import { createWorkflowsRunner } from "@v1/workflows/runner"
 import { greetUser, welcomeUser } from "#features/demo/handlers.ts"
 import { ENV } from "#shared/env.generated.ts"
 import { log } from "#shared/logger.ts"
-import { workflows } from "#shared/services.ts"
+import { workflows as workflowsClient } from "#shared/services.ts"
 
-const worker = createJobWorker({
+const jobs = createJobsRunner({
   handlers: { default: { "greet-user": greetUser } },
   logger: log,
   url: ENV.JOBS_REDIS_URL,
 })
 
-// `connect` retries until Inngest is reachable, so jobs start without waiting for it.
-let connection: WorkerConnection | undefined
+const workflows = createWorkflowsRunner({
+  client: workflowsClient,
+  functions: [welcomeUser],
+  gatewayUrl: ENV.INNGEST_CONNECT_GATEWAY_URL,
+  logger: log,
+})
 
-async function connectWorkflows() {
-  try {
-    connection = await connect({
-      apps: [{ client: workflows, functions: [welcomeUser] }],
-      gatewayUrl: ENV.INNGEST_CONNECT_GATEWAY_URL,
-      handleShutdownSignals: [],
-    })
-  } catch (error) {
-    log.error({ error, message: "Workflows could not connect", scope: "workflows" })
+await lifecycle(
+  () => {
+    workflows.connect()
+    log.info({ message: "Worker started", scope: "worker" })
+
+    return jobs.run()
+  },
+  {
+    // Closing waits for the jobs and steps in progress. BullMQ retries a job that outlives the
+    // deadline as stalled once its lock expires, and Inngest retries the step.
+    close: () => Promise.all([jobs.close(), workflows.close()]),
+    logger: log,
+    scope: "worker",
   }
-}
-
-void connectWorkflows()
-
-async function shutdown() {
-  await Promise.all([worker.close(), connection?.close()])
-  process.exit(0)
-}
-
-for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.once(signal, () => {
-    void shutdown()
-  })
-}
-
-log.info({ message: "Worker started", scope: "worker" })
-await worker.run()
+)
