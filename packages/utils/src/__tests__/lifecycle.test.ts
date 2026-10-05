@@ -133,4 +133,51 @@ describe("lifecycle", () => {
     expect(await exited).toBe(1)
     expect(close).toHaveBeenCalledTimes(1)
   })
+  test("exits with code 1 when an uncaught exception arrives while it closes", async () => {
+    const closing = Promise.withResolvers<undefined>()
+    await lifecycle(idle, { close: () => closing.promise, logger, scope: "test" })
+
+    process.emit("SIGTERM")
+    process.emit("uncaughtException", new Error("thrown"))
+    closing.resolve()
+
+    expect(await exited).toBe(1)
+  })
+
+  test("exits with code 1 when run fails while it closes", async () => {
+    const closing = Promise.withResolvers<undefined>()
+    const running = Promise.withResolvers<undefined>()
+    const started = lifecycle(() => running.promise, {
+      close: () => closing.promise,
+      logger,
+      scope: "test",
+    })
+
+    process.emit("SIGTERM")
+    running.reject(new Error("failed"))
+    await Bun.sleep(0)
+    closing.resolve()
+    await started
+
+    expect(await exited).toBe(1)
+  })
+
+  test("exits at once with code 1 on a second signal of another kind", async () => {
+    const close = mock(hang)
+    await lifecycle(idle, { close, logger, scope: "test" })
+
+    process.emit("SIGTERM")
+    process.emit("SIGINT")
+
+    expect(await exited).toBe(1)
+    expect(close).toHaveBeenCalledTimes(1)
+  })
+
+  test("logs the original error when run fails", async () => {
+    const error = new Error("failed")
+
+    await lifecycle(() => Promise.reject(error), { close: idle, logger, scope: "test" })
+
+    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ error }))
+  })
 })

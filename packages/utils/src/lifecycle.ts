@@ -6,16 +6,16 @@ import { isUnhandledException } from "tryharder/errors"
 const DEFAULT_TIMEOUT_MS = 25_000
 
 // tryharder wraps an error that it does not map, which hides the original in the log.
-function unwrap(error: Error) {
+function unwrap(error: unknown) {
   return isUnhandledException(error) ? error.cause : error
 }
 
 /**
  * Starts a server process with `run`, and stops it on SIGINT, SIGTERM, an uncaught exception, or a
  * failed `run`, leaving the restart to the process supervisor. `close` gets `timeoutMs` to release
- * the process's services. The process exits with code 1 when it stops after an error, or when
- * `close` fails or runs out of time. A second signal exits at once. An unhandled rejection is
- * logged, and the process keeps running.
+ * the process's services. The process exits with code 1 when an error occurs before it exits, or
+ * when `close` fails or runs out of time. A second signal exits at once with code 1. An unhandled
+ * rejection is logged, and the process keeps running.
  *
  * Resolves once `run` settles. A `run` that returns leaves the process running until it stops.
  */
@@ -23,25 +23,38 @@ export async function lifecycle(
   run: () => unknown,
   { close, logger, scope, timeoutMs = DEFAULT_TIMEOUT_MS }: LifecycleOptions
 ) {
-  let isStopping = false
+  // Stays undefined until the process starts stopping. An error while it stops raises it to 1.
+  let exitCode: number | undefined
+  let signals = 0
 
-  async function stop(exitCode: number) {
+  async function stop(code: number) {
+    const isStopping = exitCode !== undefined
+    exitCode = Math.max(exitCode ?? 0, code)
+
     if (isStopping) return
-    isStopping = true
 
     const closed = await try$.timeout(timeoutMs).run(() => close())
 
     if (closed instanceof Error) {
       logger.error({ error: unwrap(closed), message: "Process did not stop cleanly", scope })
+      exitCode = 1
     }
 
-    process.exit(closed instanceof Error ? 1 : exitCode)
+    process.exit(exitCode)
+  }
+
+  function onSignal() {
+    signals += 1
+
+    if (signals > 1) {
+      process.exit(1)
+    }
+
+    void stop(0)
   }
 
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
-    process.once(signal, () => {
-      void stop(0)
-    })
+    process.on(signal, onSignal)
   }
 
   process.on("unhandledRejection", (error) => {
