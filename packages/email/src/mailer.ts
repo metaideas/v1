@@ -1,6 +1,7 @@
 import type { Logger } from "@v1/core/services/logging"
 import { render } from "@react-email/render"
 import { EmailDeliveryError, EmailFault, SendEmailError } from "@v1/core/errors"
+import { ms } from "humanspan"
 import * as try$ from "tryharder"
 import { isTimeoutError } from "tryharder/errors"
 import type { EmailTransport } from "#transports.ts"
@@ -31,7 +32,7 @@ export function createMailer({
   attempts = 3,
   from,
   logger,
-  timeoutMs = 15_000,
+  timeoutMs = ms("15s"),
   transport,
 }: MailerOptions) {
   return {

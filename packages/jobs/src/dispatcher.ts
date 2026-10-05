@@ -1,6 +1,7 @@
 import type { Logger } from "@v1/core/services/logging"
 import { DispatchJobError, type JobPayloadError, JobsFault } from "@v1/core/errors"
 import { Queue } from "bullmq"
+import { ms, seconds } from "humanspan"
 import { Redis } from "ioredis"
 import * as try$ from "tryharder"
 import type { JobInput, JobName, QueueName } from "#catalog.ts"
@@ -10,9 +11,9 @@ const DEFAULT_ATTEMPTS = 3
 
 const DEFAULT_JOB_OPTIONS = {
   attempts: DEFAULT_ATTEMPTS,
-  backoff: { delay: 1000, type: "exponential" },
-  removeOnComplete: { age: 24 * 60 * 60, count: 1000 },
-  removeOnFail: { age: 7 * 24 * 60 * 60 },
+  backoff: { delay: ms("1s"), type: "exponential" },
+  removeOnComplete: { age: seconds("1d"), count: 1000 },
+  removeOnFail: { age: seconds("7d") },
 } as const
 
 export function createDispatcher({ logger, url }: DispatcherOptions) {
