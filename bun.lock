@@ -465,6 +465,7 @@
       "name": "@v1/utils",
       "dependencies": {
         "@v1/core": "workspace:*",
+        "humanspan": "0.2.0",
         "nanoid": "5.1.16",
         "tryharder": "0.4.0",
         "ufo": "1.5.4",
