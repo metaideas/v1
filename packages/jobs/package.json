@@ -20,8 +20,8 @@
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
     "bullmq": "6.3.11",
-    "humanspan": "0.2.0",
-    "ioredis": "5.11.1",
+    "humanspan": "0.3.0",
+    "ioredis": "6.0.0",
     "tryharder": "0.4.0"
   },
   "devDependencies": {

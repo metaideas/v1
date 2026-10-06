@@ -35,7 +35,7 @@
     "test:watch": "bun test --watch"
   },
   "devDependencies": {
-    "@turbo/gen": "2.10.7",
+    "@turbo/gen": "2.11.7",
     "@types/bun": "1.4.2",
     "adamantite": "0.43.0",
     "citty": "0.2.2",
@@ -43,13 +43,13 @@
     "consola": "3.4.2",
     "knip": "6.39.0",
     "magicast": "0.5.5",
-    "oxfmt": "0.71.0",
-    "oxlint": "1.86.0",
+    "oxfmt": "0.72.0",
+    "oxlint": "1.87.0",
     "oxlint-tsgolint": "7.0.2003",
     "sherif": "1.13.0",
-    "turbo": "2.10.7",
+    "turbo": "2.11.7",
     "typescript": "7.0.2",
-    "varlock": "1.16.0",
+    "varlock": "1.21.1",
     "zod": "4.6.5"
   },
   "overrides": {
@@ -57,7 +57,7 @@
     "@types/react-dom": "19.2.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "sharp": "0.35.3"
+    "sharp": "0.35.5"
   },
   "engines": {
     "node": ">=24"

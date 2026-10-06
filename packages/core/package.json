@@ -17,7 +17,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "dependencies": {
-    "faultier": "3.0.1"
+    "faultier": "3.1.1"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",

@@ -28,13 +28,13 @@
   "dependencies": {
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
-    "drizzle-orm": "0.45.2",
+    "drizzle-orm": "0.45.3",
     "drizzle-zod": "0.8.3",
-    "varlock": "1.16.0"
+    "varlock": "1.21.1"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",
-    "drizzle-kit": "0.31.10",
+    "drizzle-kit": "0.31.11",
     "drizzle-seed": "0.3.1",
     "postgres": "3.4.9",
     "typescript": "7.0.2"

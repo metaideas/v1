@@ -23,8 +23,8 @@
     "@better-auth/expo": "1.6.30",
     "@v1/core": "workspace:*",
     "better-auth": "1.6.30",
-    "drizzle-orm": "0.45.2",
-    "humanspan": "0.2.0"
+    "drizzle-orm": "0.45.3",
+    "humanspan": "0.3.0"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",

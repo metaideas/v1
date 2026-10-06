@@ -16,7 +16,7 @@
     "codegen": "paraglide-js compile --project ./project.inlang --outdir ./.cache/paraglide"
   },
   "devDependencies": {
-    "@inlang/paraglide-js": "2.23.0",
+    "@inlang/paraglide-js": "2.25.4",
     "@tooling/tsconfig": "workspace:*"
   }
 }

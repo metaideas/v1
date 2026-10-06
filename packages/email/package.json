@@ -21,19 +21,19 @@
     "@react-email/components": "1.0.12",
     "@react-email/render": "2.1.0",
     "@v1/core": "workspace:*",
-    "humanspan": "0.2.0",
-    "nodemailer": "10.0.14",
+    "humanspan": "0.3.0",
+    "nodemailer": "10.0.15",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "resend": "6.7.0",
+    "resend": "6.32.0",
     "tryharder": "0.4.0"
   },
   "devDependencies": {
-    "@react-email/ui": "6.9.1",
+    "@react-email/ui": "6.11.0",
     "@tooling/tsconfig": "workspace:*",
     "@types/bun": "1.4.2",
     "@types/react": "19.2.4",
-    "react-email": "6.9.1",
+    "react-email": "6.11.0",
     "typescript": "7.0.2"
   }
 }
