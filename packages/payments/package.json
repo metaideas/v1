@@ -17,7 +17,7 @@
   "dependencies": {
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
-    "stripe": "20.1.2",
+    "stripe": "23.0.0",
     "tryharder": "0.4.0",
     "unstorage": "1.17.5"
   },

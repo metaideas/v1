@@ -16,15 +16,16 @@ services:
       retries: 10
 
   postgres:
-    image: postgres:17
+    image: postgres:18
     ports:
       - "8001:5432"
     environment:
       POSTGRES_DB: main
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    # Postgres keeps each major version's data in its own subdirectory, such as `18/docker`.
     volumes:
-      - ./.data/postgres:/var/lib/postgresql/data
+      - ./.data/postgres:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d main"]
       interval: 5s

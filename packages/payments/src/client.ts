@@ -65,7 +65,7 @@ function checkIsAllowedEvent(event: Stripe.Event): event is Stripe.Event & { typ
  * `syncSubscription`, and reads go through the cache in `storage`.
  */
 export function createPayments({ secretKey, storage, webhookSecret }: PaymentsOptions) {
-  const stripe = new Stripe(secretKey, { apiVersion: "2025-12-15.clover" })
+  const stripe = new Stripe(secretKey, { apiVersion: "2026-09-30.endive" })
   const subscriptions = prefixStorage<SubscriptionCache>(storage, "payments:customer")
 
   async function syncSubscription(customerId: string): Promise<SubscriptionCache> {

@@ -1,4 +1,3 @@
-import { resolve } from "node:path"
 import starlight from "@astrojs/starlight"
 import { paraglideVitePlugin as paraglide } from "@inlang/paraglide-js"
 import tailwindcss from "@tailwindcss/vite"
@@ -71,16 +70,5 @@ export default defineConfig({
         strategy: ["url", "globalVariable", "baseLocale"],
       }),
     ],
-    resolve: {
-      alias: [
-        {
-          find: /^@astrojs\/starlight\/components$/,
-          replacement: resolve(
-            import.meta.dirname,
-            "node_modules/@astrojs/starlight/components.ts"
-          ),
-        },
-      ],
-    },
   },
 })

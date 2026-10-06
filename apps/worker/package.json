@@ -19,8 +19,8 @@
     "@v1/utils": "workspace:*",
     "@v1/workflows": "workspace:*",
     "evlog": "2.30.0",
-    "std-env": "4.2.0",
-    "varlock": "1.16.0"
+    "std-env": "4.3.0",
+    "varlock": "1.21.1"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",

@@ -99,6 +99,30 @@ Docker Compose services use fixed host ports in the `8000` block, declared in `i
 - For a Bun version mismatch, compare `bun --version` with the `packageManager` field in the root `package.json`.
 - For a Node.js version mismatch, install a version in the `engines` range with your version manager.
 - When Docker services do not run, examine `docker ps`. Then run `bun run docker:up`.
+- When Postgres exits with "in 18+, these Docker images are configured to store database data in a format which is compatible with pg_ctlcluster", the local data comes from an older major version. See [Upgrading local Postgres](#upgrading-local-postgres).
 - For missing environment variables, run `bun run env:check`. Then examine the owning `.env.schema` and the ignored `.env.local` overrides.
 - For a port conflict, find the process with `lsof -i :<port>`. See [Development servers](./development.md#development-servers) for where each port is declared.
 - Expo on a physical device requires the development machine's LAN IP instead of `localhost`.
+
+#### Upgrading Local Postgres
+
+Postgres cannot read data from an older major version. To start over, run `bun run docker:down`, move the old data aside, then run `bun run docker:up` and `bun run db:migrate`:
+
+```bash
+docker run --rm -v "$PWD/infra/local/.data:/data" alpine mv /data/postgres /data/postgres-17
+```
+
+To keep the data, dump it with the old version before you move it, then restore it into the new one:
+
+```bash
+bun run docker:down
+docker run -d --name postgres-17 -e POSTGRES_PASSWORD=postgres -v "$PWD/infra/local/.data/postgres:/var/lib/postgresql/data" postgres:17
+until docker exec postgres-17 pg_isready -U postgres; do sleep 1; done
+docker exec postgres-17 pg_dumpall -U postgres > postgres-17.sql
+docker rm -f postgres-17
+docker run --rm -v "$PWD/infra/local/.data:/data" alpine mv /data/postgres /data/postgres-17
+bun run docker:up
+docker compose -f infra/local/docker-compose.yml exec -T postgres psql -U postgres -d postgres < postgres-17.sql
+```
+
+The restore reports that the `postgres` role and the `main` database already exist. You can ignore those errors.
