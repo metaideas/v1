@@ -143,5 +143,9 @@ export default defineCommand({
     consola.success(
       `Added ${copiedPaths.join(", ")} from ${TEMPLATE_REPO}@${ref.slice(0, 12)}. Run bun install, then bun template doctor.`
     )
+    if (copiedPaths.includes("apps/mobile"))
+      consola.warn(
+        "Run `bun run --filter mobile prebuild` on macOS to rename the native iOS and Android projects."
+      )
   },
 })

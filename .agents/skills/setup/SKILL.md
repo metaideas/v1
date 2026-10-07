@@ -20,5 +20,6 @@ Turn the template into the user's project. `bun template setup` does the mechani
 
    Add `--no-git` when the repository already has history and `--no-install` when the user will install later.
 
-5. Run `bun template doctor` and fix everything it reports. Removing workspaces often leaves an env key in the `build` task of `turbo.json` or a doc page for a deleted surface.
-6. Report the kept workspaces, the scope, and the doctor result.
+5. If `apps/mobile` is kept and setup did not run prebuild, run `bun run --filter mobile prebuild` on macOS so the native projects use the new app identifier. On other systems, tell the user to run it on macOS.
+6. Run `bun template doctor` and fix everything it reports. Removing workspaces often leaves an env key in the `build` task of `turbo.json` or a doc page for a deleted surface.
+7. Report the kept workspaces, the scope, and the doctor result.

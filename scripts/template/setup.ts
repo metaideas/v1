@@ -357,6 +357,16 @@ export default defineCommand({
       await runCommand(["bun", "install"], rootDir)
       await runCommand(["bun", "run", "codegen"], rootDir)
     }
+    // Prebuild regenerates the committed native projects from app.config.js, but it can only
+    // install CocoaPods on macOS.
+    if (selection.keepApps.includes("mobile")) {
+      if (shouldInstall && process.platform === "darwin")
+        await runCommand(["bun", "run", "--filter", "mobile", "prebuild"], rootDir)
+      else
+        consola.warn(
+          "Run `bun run --filter mobile prebuild` on macOS to rename the native iOS and Android projects."
+        )
+    }
 
     consola.success("Template setup complete. Run `bun template doctor` to verify the project.")
   },
