@@ -41,6 +41,7 @@ The command does the following:
 
 - It lets you select the workspaces to include.
 - It renames the project and updates all imports.
+- It rewrites `README.md` to describe the project and its workspaces.
 - It initializes a Git repository when necessary.
 - It removes the internal template files.
 - It installs the dependencies.

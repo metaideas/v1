@@ -11,13 +11,14 @@ Turn the template into the user's project. `bun template setup` does the mechani
    - `apps/worker` when the product runs fire-and-forget background jobs, such as sending email or processing uploads. It consumes the queues that `apps/api` dispatches to.
    - Package workspaces such as `auth`, `database`, `email`, `payments`, `jobs`, `workflows` only when the product needs them. Setup keeps any package a kept workspace depends on.
 2. Confirm the project name. It becomes the root package name and the npm scope of every package workspace.
-3. Run setup non-interactively with the choices:
+3. Write a one-sentence description of the product from the answer in step 1. Setup replaces the template README with one that has the name, this description, the kept workspaces, and the docs.
+4. Run setup non-interactively with the choices:
 
    ```bash
-   bun template setup --yes --name <name> --keep-apps <a,b> --keep-packages <c,d>
+   bun template setup --yes --name <name> --description "<sentence>" --keep-apps <a,b> --keep-packages <c,d>
    ```
 
    Add `--no-git` when the repository already has history and `--no-install` when the user will install later.
 
-4. Run `bun template doctor` and fix everything it reports. Removing workspaces often leaves an env key in the `build` task of `turbo.json` or a doc page for a deleted surface.
-5. Report the kept workspaces, the scope, and the doctor result.
+5. Run `bun template doctor` and fix everything it reports. Removing workspaces often leaves an env key in the `build` task of `turbo.json` or a doc page for a deleted surface.
+6. Report the kept workspaces, the scope, and the doctor result.

@@ -14,11 +14,12 @@ Configure a newly created project. This command does the following:
 - It prompts you to select the application and package workspaces to keep, and keeps the packages they depend on.
 - It sets the project name, which is also the package scope, and rewrites `@v1/` references.
 - It records the source template, commit, and creation time in `.template.json`.
+- It replaces the template `README.md` with one that lists the project name, its description, the kept workspaces, and the docs.
 - It removes content that only template maintainers use, including the marked template sections of `AGENTS.md`.
 
 ```bash
 bun template setup
-bun template setup --yes --name <name> --keep-apps app,api --keep-packages auth,database
+bun template setup --yes --name <name> --description "<sentence>" --keep-apps app,api --keep-packages auth,database
 ```
 
 ### `bun template doctor`
@@ -30,6 +31,7 @@ Verify the project. The doctor checks the template invariants, then runs the exi
 - Every `@import` in an environment contract points at an existing fragment, and every `@generateTsTypes` output exists.
 - Every pattern in the `build` task `env` list of `turbo.json` matches a declared key.
 - Template-only content matches the project state: markers and `v1` fields are gone from a scaffolded project, and present in the template.
+- `README.md` in a scaffolded project is no longer the template README.
 - Every backend client file in an app has its backend workspace and dependency.
 - `bun run check`, `bun run boundaries`, `bun run analyze`, `bun run env:check`, and `bun run build` pass.
 

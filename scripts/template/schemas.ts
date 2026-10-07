@@ -4,6 +4,7 @@ const DependenciesSchema = z.record(z.string(), z.string()).optional()
 
 export const PackageJsonSchema = z.looseObject({
   dependencies: DependenciesSchema,
+  description: z.string().optional(),
   devDependencies: DependenciesSchema,
   name: z.string().optional(),
   peerDependencies: DependenciesSchema,

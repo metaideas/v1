@@ -14,6 +14,7 @@ import {
   readPackageJson,
   readTemplateStamp,
   removeTemplateSections,
+  TEMPLATE_REPO,
   TEMPLATE_SCOPE,
   TEMPLATE_SECTION_START,
   TEMPLATE_STAMP_FILE,
@@ -275,6 +276,19 @@ const checks: Check[] = [
         ...("v1" in packageJson ? ["package.json still has the v1 field"] : []),
         ...("bun-create" in packageJson ? ["package.json still has the bun-create field"] : []),
         ...markedFiles.map((path) => `${relative(rootDir, path)} still has TEMPLATE:START markers`),
+      ]
+    },
+  },
+  {
+    name: "README.md describes the project",
+    run: async ({ rootDir, stamp }) => {
+      const readme = Bun.file(join(rootDir, "README.md"))
+      if (!stamp || !(await readme.exists())) return []
+      const contents = await readme.text()
+      if (!contents.includes(`bun create ${TEMPLATE_REPO}`)) return []
+
+      return [
+        "README.md is still the template README. Rewrite it to describe the project and its workspaces",
       ]
     },
   },

@@ -1,4 +1,4 @@
-import { join, relative } from "node:path"
+import { basename, join, relative } from "node:path"
 import { defineCommand } from "citty"
 import consola from "consola"
 
@@ -138,8 +138,60 @@ async function cleanupTemplateFiles(
   await writeJson(packageJsonPath, packageJson)
 }
 
+async function getWorkspaceLines(rootDir: string) {
+  const workspaces = await getWorkspaceGraph(rootDir)
+
+  return Promise.all(
+    workspaces.map(async (workspace) => {
+      const path = getWorkspacePath(workspace)
+      const { description } = await readPackageJson(join(workspace.directory, "package.json"))
+
+      return description
+        ? `- [\`${path}\`](./${path}): ${description}`
+        : `- [\`${path}\`](./${path})`
+    })
+  )
+}
+
+async function getDocumentationLines(rootDir: string) {
+  const paths = await Array.fromAsync(new Bun.Glob("docs/*.md").scan({ cwd: rootDir }))
+  const documents = await Promise.all(
+    paths.map(async (path) => {
+      const title = /^title:\s*(.+)$/m.exec(await Bun.file(join(rootDir, path)).text())?.[1]
+      return { path, title: title ?? basename(path, ".md") }
+    })
+  )
+
+  return documents
+    .toSorted(
+      (left, right) =>
+        Number(right.path === "docs/getting-started.md")
+          - Number(left.path === "docs/getting-started.md") || left.title.localeCompare(right.title)
+    )
+    .map(({ path, title }) => `- [${title}](./${path})`)
+}
+
+// The template README describes v1 itself, so setup replaces it with one that describes the project.
+async function writeReadme(rootDir: string, projectName: string, description: string) {
+  const workspaceLines = await getWorkspaceLines(rootDir)
+  const documentationLines = await getDocumentationLines(rootDir)
+  const sections = [
+    `# ${projectName}`,
+    description,
+    "## Workspaces",
+    workspaceLines.join("\n"),
+    ...(documentationLines.length > 0 ? ["## Documentation", documentationLines.join("\n")] : []),
+  ].filter(Boolean)
+
+  await Bun.write(join(rootDir, "README.md"), `${sections.join("\n\n")}\n`)
+}
+
 export default defineCommand({
   args: {
+    description: {
+      description: "One-sentence description of the project for the README",
+      type: "string",
+    },
     git: {
       description: "Initialize a git repository",
       negativeDescription: "Skip git repository initialization",
@@ -168,7 +220,8 @@ export default defineCommand({
     },
   },
   meta: {
-    description: "Select workspaces, rename the project, and remove template files",
+    description:
+      "Select workspaces, rename the project, rewrite the README, and remove template files",
     name: "setup",
   },
   run: async ({ args, rawArgs }) => {
@@ -244,6 +297,11 @@ export default defineCommand({
     const projectName =
       args.name
       ?? (shouldAcceptDefaults ? defaultName : await promptForText("Project name", defaultName))
+    const description =
+      args.description
+      ?? (shouldAcceptDefaults
+        ? ""
+        : await promptForText("Describe the project in one sentence", ""))
     const shouldInitializeGit =
       args.git
       ?? (shouldAcceptDefaults ? true : await promptForConfirmation("Initialize a git repository?"))
@@ -291,6 +349,7 @@ export default defineCommand({
     await renameProject({ projectName, rootDir, scope: projectName, sourceScope })
     await stampProject(rootDir)
     await cleanupTemplateFiles(rootDir, cleanup.data)
+    await writeReadme(rootDir, projectName, description.trim())
 
     if (shouldInitializeGit && !(await Bun.file(join(rootDir, ".git")).exists()))
       await runCommand(["git", "init"], rootDir)
