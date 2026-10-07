@@ -27,7 +27,7 @@ A modern monorepo template for the next product you build.
 
 - [Getting Started](./docs/getting-started.md)
 - [Development](./docs/development.md)
-- [Coding Standards](./docs/coding-standards.md)
+- [Coding Standards](./CODING_STANDARDS.md)
 - [Internationalization](./docs/internationalization.md)
 - [Project Structure](./docs/project-structure.md)
 - [Package Guidance](./docs/packages.md)

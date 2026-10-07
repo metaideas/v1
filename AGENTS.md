@@ -47,7 +47,7 @@ Before you explore or change code, read `docs/project-structure.md`. Use the sam
 
 ## Coding standards
 
-Before you write or review code, read `docs/coding-standards.md`. It covers TypeScript style, services, imports and boundaries, UI, components, tests, comments, READMEs, commits, and conventions for each workspace.
+Before you write or review code, read `CODING_STANDARDS.md`. It covers TypeScript style, services, imports and boundaries, UI, components, tests, comments, READMEs, commits, and conventions for each workspace.
 
 ## Generated files
 
