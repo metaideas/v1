@@ -15,7 +15,16 @@ type RenameOptions = {
   sourceScope: string
 }
 
-// Expo derives the slug, scheme, display name, and native identifiers from these constants.
+// Expo schemes and Android package segments must start with a lowercase letter, which npm scopes
+// do not guarantee.
+export function getExpoAppId(scope: string) {
+  const appId = scope.toLowerCase()
+
+  return /^[a-z]/.test(appId) ? appId : `app-${appId}`
+}
+
+// Expo derives the slug, scheme, and native identifiers from APP_ID and the display name from
+// APP_NAME.
 async function renameExpoApps(rootDir: string, scope: string) {
   // Setup renames from the repository root, and add renames from inside the copied workspace.
   const configs = [
@@ -29,7 +38,7 @@ async function renameExpoApps(rootDir: string, scope: string) {
 
       const contents = await Bun.file(path).text()
       const renamed = contents
-        .replace(/^const APP_ID = ".*"$/m, `const APP_ID = "${scope}"`)
+        .replace(/^const APP_ID = ".*"$/m, `const APP_ID = "${getExpoAppId(scope)}"`)
         .replace(/^const APP_NAME = ".*"$/m, `const APP_NAME = "${scope}"`)
       if (renamed === contents) return null
 
