@@ -1,7 +1,6 @@
----
-title: Coding Standards
-description: Follow the TypeScript, service, import, UI, component, test, comment, and commit conventions that every v1 workspace shares.
----
+# Coding Standards
+
+Follow the TypeScript, service, import, UI, component, test, comment, and commit conventions that every v1 workspace shares.
 
 ## TypeScript Style
 
