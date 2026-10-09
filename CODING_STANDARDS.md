@@ -9,12 +9,14 @@ Follow the TypeScript, service, import, UI, component, test, comment, and commit
 - Avoid enums.
 - Use `readonly` arrays or maps with `as const`.
 - Rely on type inference. Annotate function parameters, exported contracts, and values that TypeScript cannot infer, such as an empty array. Do not annotate local variables, return types, or callback parameters that TypeScript already infers.
-- Use the `function` keyword for pure functions.
+- Declare components, hooks, and pure functions with the `function` keyword.
 - Use descriptive names without restating the context. Prefer `handlePress` to `press` or `handleComposeButtonPress`.
+- Group operations under the domain they act on, then name the operation with a verb: `trpc.students.create`, not `trpc.createStudent`.
 - Name event handlers `handle` followed by the event, such as `handlePress` or `handleRefresh`.
 - Use auxiliary verbs for state and behavior, such as `isRefreshing`, `hasError`, or `canSubmit`.
 - Name runtime validation schema constants in PascalCase, such as `UserIdSchema`. Put them in a `schemas.ts` file.
 - Use lowercase kebab-case names for directories.
+- Name a folder after the domain it serves, such as `features/billing/`, and put mechanism folders such as `components/` inside it.
 - Use a default export for a component.
 - Do not use a default export when a module exports multiple functions.
 - Order a module so that each part comes before the code that uses it: types, static content, helpers, subcomponents, and the exported component last.
@@ -33,6 +35,7 @@ Follow the TypeScript, service, import, UI, component, test, comment, and commit
 
 ## Imports and Boundaries
 
+- Inside an application workspace, import with `#` subpath imports. Imports flow one way, from `shared/` to `features/` to routes and entrypoints, and a feature never imports another feature. The `v1/layers`, `v1/layer-folders`, and `import/no-relative-parent-imports` lint rules enforce this. [Project structure](docs/project-structure.md) describes each layer.
 - Do not import between apps. An app that serves other apps exposes one client entry point, and other apps import only that.
 - Import validation from `@v1/utils/schema/mini` in browser-reachable code and from `@v1/utils/schema` when the full Zod API or a full-Zod integration is required. The Mini entry point never imports the full one.
 
