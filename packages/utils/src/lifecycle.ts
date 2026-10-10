@@ -1,4 +1,3 @@
-import type { Logger } from "@v1/core/services/logging"
 import { ms } from "humanspan"
 import * as try$ from "tryharder"
 import { isUnhandledException } from "tryharder/errors"
@@ -22,7 +21,7 @@ function unwrap(error: unknown) {
  */
 export async function lifecycle(
   run: () => unknown,
-  { close, logger, scope, timeoutMs = DEFAULT_TIMEOUT_MS }: LifecycleOptions
+  { close, onError, timeoutMs = DEFAULT_TIMEOUT_MS }: LifecycleOptions
 ) {
   // Stays undefined until the process starts stopping. An error while it stops raises it to 1.
   let exitCode: number | undefined
@@ -37,7 +36,7 @@ export async function lifecycle(
     const closed = await try$.timeout(timeoutMs).run(() => close())
 
     if (closed instanceof Error) {
-      logger.error({ error: unwrap(closed), message: "Process did not stop cleanly", scope })
+      onError(unwrap(closed), "Process did not stop cleanly")
       exitCode = 1
     }
 
@@ -59,12 +58,12 @@ export async function lifecycle(
   }
 
   process.on("unhandledRejection", (error) => {
-    logger.error({ error, message: "Unhandled promise rejection", scope })
+    onError(error, "Unhandled promise rejection")
   })
 
   // After an uncaught exception the process state is unknown, so a fresh process replaces it.
   process.on("uncaughtException", (error) => {
-    logger.error({ error, message: "Uncaught exception", scope })
+    onError(error, "Uncaught exception")
     void stop(1)
   })
 
@@ -73,7 +72,7 @@ export async function lifecycle(
   })
 
   if (result instanceof Error) {
-    logger.error({ error: unwrap(result), message: "Process failed", scope })
+    onError(unwrap(result), "Process failed")
     await stop(1)
   }
 }
@@ -83,10 +82,9 @@ type LifecycleOptions = {
    * Releases the process's services, such as servers, workers, and connections.
    */
   close: () => Promise<unknown>
-  logger: Logger
   /**
-   * The `scope` of the events that the lifecycle logs.
+   * Reports an error that the lifecycle catches, with a message that describes when it happened.
    */
-  scope: string
+  onError: (error: unknown, message: string) => void
   timeoutMs?: number
 }

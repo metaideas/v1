@@ -30,7 +30,8 @@ await lifecycle(
     // Closing waits for the jobs and steps in progress. BullMQ retries a job that outlives the
     // deadline as stalled once its lock expires, and Inngest retries the step.
     close: () => Promise.all([jobs.close(), workflows.close()]),
-    logger: log,
-    scope: "worker",
+    onError: (error, message) => {
+      log.error({ error, message, scope: "worker" })
+    },
   }
 )

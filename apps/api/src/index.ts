@@ -17,7 +17,8 @@ await lifecycle(
       await server?.stop()
       await Promise.all([dispatcher.close(), kv.dispose(), database.$client.close()])
     },
-    logger: log,
-    scope: "api",
+    onError: (error, message) => {
+      log.error({ error, message, scope: "api" })
+    },
   }
 )

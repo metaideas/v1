@@ -17,6 +17,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "dependencies": {
+    "@v1/utils": "workspace:*",
     "faultier": "3.1.1"
   },
   "devDependencies": {

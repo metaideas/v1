@@ -18,6 +18,11 @@
         "dependents": {
           "allow": []
         }
+      },
+      "utils": {
+        "dependencies": {
+          "allow": ["tooling"]
+        }
       }
     }
   },
