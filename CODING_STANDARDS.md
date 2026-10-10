@@ -35,7 +35,8 @@ Follow the TypeScript, service, import, UI, component, test, comment, and commit
 
 ## Imports and Boundaries
 
-- Inside an application workspace, import with `#` subpath imports. Imports flow one way, from `shared/` to `features/` to routes and entrypoints, and a feature never imports another feature. The `v1/layers`, `v1/layer-folders`, and `import/no-relative-parent-imports` lint rules enforce this. [Project structure](docs/project-structure.md) describes each layer.
+- Inside an application workspace, import with `#` subpath imports rather than relative paths. The `import/no-relative-parent-imports` lint rule bans `../` imports; the rest is convention.
+- Imports flow one way, from `shared/` to `features/` to routes and entrypoints, and a feature never imports another feature. The `v1/layers` and `v1/layer-folders` lint rules enforce this. [Project structure](docs/project-structure.md) describes each layer.
 - Do not import between apps. An app that serves other apps exposes one client entry point, and other apps import only that.
 - Import validation from `@v1/utils/schema/mini` in browser-reachable code and from `@v1/utils/schema` when the full Zod API or a full-Zod integration is required. The Mini entry point never imports the full one.
 
