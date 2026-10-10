@@ -62,9 +62,9 @@ Follow the TypeScript, service, import, UI, component, test, comment, and commit
   - Tests that a component renders its own markup, such as a "Save" button showing "Save".
   - Runtime tests that a type or schema matches itself, or that a typed function returns its declared shape. Enforce a contract with `satisfies` or type-level assertions instead.
   - Tests that a deleted feature, flag, route, or export stays deleted.
-  - Migration tests that only check that a column exists. Test a migration only when it transforms data, and then test the transformation.
+  - Migration tests that only check that a table or column exists. Test what the database enforces, such as a unique, foreign key, or cascade constraint, and test the transformation when a migration transforms data.
   - Tests that cannot fail: they assert that a thin wrapper was called, mock the code under test, or assert values the test set up itself.
-- When a change breaks a test that encodes no real requirement, delete the test instead of bending it to fit. When most of a test file is like this, delete the file.
+- When a change breaks a test that encodes no real requirement, delete the test instead of bending it to fit. When most of a test file is like this, move the tests that still encode a requirement and delete the file.
 - When a test covers important behavior but breaks on implementation details, such as internals, timing, or heavy mocking, rewrite it to test the behavior.
 - Keep test code in proportion to the change. A PR with 20 lines of change and 500 lines of tests has a test problem.
 - Use Bun to manage packages and execute scripts.
