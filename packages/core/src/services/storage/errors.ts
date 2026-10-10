@@ -10,4 +10,3 @@ export class StorageSyncError extends Faultier.Tagged("StorageSyncError")<{
 }>() {}
 
 export const StorageFault = Faultier.registry({ StorageSyncError })
-export type StorageError = StorageSyncError

@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@v1/utils": "workspace:*",
-    "faultier": "3.1.1"
+    "faultier": "3.2.0"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",

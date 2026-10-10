@@ -21,4 +21,3 @@ export const JobsFault = Faultier.registry({
   DispatchJobError,
   JobPayloadError,
 })
-export type JobsError = DispatchJobError | JobPayloadError

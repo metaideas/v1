@@ -30,7 +30,7 @@
     "@v1/ui": "workspace:*",
     "electron-squirrel-startup": "1.0.1",
     "evlog": "2.30.0",
-    "faultier": "3.1.1",
+    "faultier": "3.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "typedport": "0.3.0",
