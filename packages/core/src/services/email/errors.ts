@@ -21,4 +21,3 @@ export const EmailFault = Faultier.registry({
   EmailDeliveryError,
   SendEmailError,
 })
-export type EmailError = EmailConfigurationError | EmailDeliveryError | SendEmailError

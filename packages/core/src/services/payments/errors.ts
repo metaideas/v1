@@ -7,4 +7,3 @@ import * as Faultier from "faultier"
 export class InvalidWebhookError extends Faultier.Tagged("InvalidWebhookError")() {}
 
 export const PaymentsFault = Faultier.registry({ InvalidWebhookError })
-export type PaymentsError = InvalidWebhookError

@@ -113,7 +113,7 @@
         "@v1/ui": "workspace:*",
         "electron-squirrel-startup": "1.0.1",
         "evlog": "2.30.0",
-        "faultier": "3.1.1",
+        "faultier": "3.2.0",
         "react": "19.2.3",
         "react-dom": "19.2.3",
         "typedport": "0.3.0",
@@ -332,7 +332,7 @@
       "name": "@v1/core",
       "dependencies": {
         "@v1/utils": "workspace:*",
-        "faultier": "3.1.1",
+        "faultier": "3.2.0",
       },
       "devDependencies": {
         "@tooling/tsconfig": "workspace:*",
@@ -466,7 +466,7 @@
     "packages/utils": {
       "name": "@v1/utils",
       "dependencies": {
-        "faultier": "3.1.1",
+        "faultier": "3.2.0",
         "humanspan": "0.3.0",
         "nanoid": "6.0.2",
         "tryharder": "0.4.0",
@@ -3054,7 +3054,7 @@
 
     "fastq": ["fastq@1.20.1", "", { "dependencies": { "reusify": "^1.0.4" } }, "sha512-GGToxJ/w1x32s/D2EKND7kTil4n8OVk/9mycTc4VDza13lOvpUZTGX3mFSCtV9ksdGBVzvsyAVLM6mHFThxXxw=="],
 
-    "faultier": ["faultier@3.1.1", "", {}, "sha512-qSiLD2ZCBKsxJaSrJoA4g4HTs6jV3/02U6zxWQ71hD16Aytu7CZ0Qjz+PRrXuPiET6J6Eu7hdaKWeuPSQpmiMw=="],
+    "faultier": ["faultier@3.2.0", "", {}, "sha512-J8iaAUt2PXlkfIHyTv9+W45kOMjSGe4u/7BXTK9XRqeNdX7YCoa+ROt6DcmE6lWQfzoeJ1BHFNIo8AbZd5pdxw=="],
 
     "fb-dotslash": ["fb-dotslash@0.5.8", "", { "bin": { "dotslash": "bin/dotslash" } }, "sha512-XHYLKk9J4BupDxi9bSEhkfss0m+Vr9ChTrjhf9l2iw3jB5C7BnY4GVPoMcqbrTutsKJso6yj2nAB6BI/F2oZaA=="],
 
