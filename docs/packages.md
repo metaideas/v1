@@ -22,7 +22,7 @@ export const auth = createServerAuth({
 })
 ```
 
-Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/ui`. When a package needs another capability, it declares the smallest interface it needs, such as `sendPasswordReset` above, and the application connects the two. `bun template doctor` reports a package that depends on another capability package or reads `ENV` in its source.
+Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/ui`. `@v1/utils` imports no other workspace, which `bun run boundaries` checks. When a package needs another capability, it declares the smallest interface it needs, such as `sendPasswordReset` above, and the application connects the two. `bun template doctor` reports a package that depends on another capability package or reads `ENV` in its source.
 
 ## Convex Backend
 

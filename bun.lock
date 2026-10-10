@@ -331,6 +331,7 @@
     "packages/core": {
       "name": "@v1/core",
       "dependencies": {
+        "@v1/utils": "workspace:*",
         "faultier": "3.1.1",
       },
       "devDependencies": {
@@ -465,7 +466,7 @@
     "packages/utils": {
       "name": "@v1/utils",
       "dependencies": {
-        "@v1/core": "workspace:*",
+        "faultier": "3.1.1",
         "humanspan": "0.3.0",
         "nanoid": "6.0.2",
         "tryharder": "0.4.0",

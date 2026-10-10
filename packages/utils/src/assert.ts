@@ -1,4 +1,19 @@
-import { AssertConditionFailedError, AssertUnreachableError } from "@v1/core/errors"
+import * as Faultier from "faultier"
+
+export class AssertUnreachableError extends Faultier.Tagged("AssertUnreachableError")<{
+  value: string
+}>() {}
+
+export class AssertConditionFailedError extends Faultier.Tagged("AssertConditionFailedError")<{
+  condition: string
+}>() {}
+
+export const AssertFault = Faultier.registry({
+  AssertConditionFailedError,
+  AssertUnreachableError,
+})
+
+export type AssertError = AssertUnreachableError | AssertConditionFailedError
 
 /**
  * Asserts that a value is never, and throws an error if it is. Use this to make sure that all cases
