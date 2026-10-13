@@ -4,6 +4,7 @@ import { createMiddleware } from "@tanstack/react-start"
 import { getRequest, getResponseStatus } from "@tanstack/react-start/server"
 import { createRequestLogger } from "evlog"
 import "#shared/logger.ts"
+import { resolveErrorStatus } from "#shared/server/error-status.ts"
 import { auth, database } from "#shared/server/services.ts"
 
 /**
@@ -35,19 +36,7 @@ export const withLogger = createMiddleware({ type: "function" }).server(
         log.set({ status: 404 })
       } else {
         log.error(error instanceof Error ? error : String(error))
-        // Start answers a thrown error with an error status set through a response helper, else the
-        // error's own `status` or `statusCode`, else 500.
-        const helperStatus = getResponseStatus()
-        const errorStatus =
-          error instanceof Error
-            ? [
-                "status" in error ? error.status : undefined,
-                "statusCode" in error ? error.statusCode : undefined,
-              ].find(
-                (code): code is number => typeof code === "number" && code >= 400 && code <= 599
-              )
-            : undefined
-        log.set({ status: helperStatus >= 400 ? helperStatus : (errorStatus ?? 500) })
+        log.set({ status: resolveErrorStatus(error, getResponseStatus()) })
       }
 
       throw error
