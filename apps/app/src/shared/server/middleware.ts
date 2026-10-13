@@ -1,9 +1,10 @@
 import crypto from "node:crypto"
 import { isNotFound, isRedirect } from "@tanstack/react-router"
 import { createMiddleware } from "@tanstack/react-start"
-import { getRequest, getResponse, getResponseStatus } from "@tanstack/react-start/server"
+import { getRequest, getResponseStatus } from "@tanstack/react-start/server"
 import { createRequestLogger } from "evlog"
 import "#shared/logger.ts"
+import { resolveErrorStatus } from "#shared/server/error-status.ts"
 import { auth, database } from "#shared/server/services.ts"
 
 /**
@@ -35,9 +36,7 @@ export const withLogger = createMiddleware({ type: "function" }).server(
         log.set({ status: 404 })
       } else {
         log.error(error instanceof Error ? error : String(error))
-        // Start answers a thrown error with the status already set on the response, else 500; the
-        // error's own `status` is ignored.
-        log.set({ status: getResponse().status ?? 500 })
+        log.set({ status: resolveErrorStatus(error, getResponseStatus()) })
       }
 
       throw error

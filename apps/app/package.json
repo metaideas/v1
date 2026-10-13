@@ -22,9 +22,9 @@
   "dependencies": {
     "@tanstack/react-form-start": "1.33.5",
     "@tanstack/react-query": "5.104.1",
-    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-router": "1.170.44",
     "@tanstack/react-router-ssr-query": "1.167.3",
-    "@tanstack/react-start": "1.168.60",
+    "@tanstack/react-start": "1.169.1",
     "@v1/auth": "workspace:*",
     "@v1/core": "workspace:*",
     "@v1/database": "workspace:*",
