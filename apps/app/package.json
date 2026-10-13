@@ -17,7 +17,7 @@
     "env:check": "varlock load",
     "env:scan": "test -d .output/public && varlock scan --path .env.schema --path .env.development .output/public",
     "preview": "bun --bun vite preview",
-    "start": "varlock run -- node .output/server/index.mjs"
+    "start": "varlock run -- bun --no-env-file --bun .output/server/index.mjs"
   },
   "dependencies": {
     "@tanstack/react-form-start": "1.33.5",
