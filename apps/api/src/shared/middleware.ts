@@ -1,5 +1,5 @@
 import type { Context } from "hono"
-import { type Options, findIp } from "@arcjet/ip"
+import { type Options, findIpDetails } from "@arcjet/ip"
 import { getConnInfo } from "@hono/bun"
 import { identifyUser } from "evlog/better-auth"
 import { rateLimiter } from "hono-rate-limiter"
@@ -52,13 +52,15 @@ export const requireAccessToken = createMiddleware<AccessTokenAppContext>(async 
 
 /**
  * Finds the IP address of the client that sent the request. With a `platform`, it trusts only that
- * platform's client IP header. Otherwise it uses the connection's peer address, and reads
- * forwarding headers only when the peer is a private address or one of the trusted `proxies`.
+ * platform's client IP header. Otherwise it reads forwarding headers only when the peer is one of
+ * the trusted `proxies`. Any address it cannot verify falls back to the connection's peer address.
  */
 export function findClientIp(c: Context, options: Options) {
-  const peer = options.platform ? undefined : { remoteAddress: getConnInfo(c).remote.address }
+  const peer = getConnInfo(c).remote.address
+  const socket = options.platform ? undefined : { remoteAddress: peer }
+  const details = findIpDetails({ headers: c.req.raw.headers, socket }, options)
 
-  return findIp({ headers: c.req.raw.headers, socket: peer }, options)
+  return details.verified ? details.ip : (peer ?? "")
 }
 
 /**
