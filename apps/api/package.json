@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@arcjet/ip": "1.14.0",
+    "@hono/bun": "1.0.1",
     "@hono/trpc-server": "0.4.2",
     "@scalar/hono-api-reference": "0.12.10",
     "@trpc/server": "11.19.0",
