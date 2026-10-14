@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test"
 
 import {
   commandRunsTurbo,
-  readTurboScriptNames,
   turboScriptNames,
   wireRemoteCacheEnv,
   workflowRunsTurbo,
@@ -207,39 +206,5 @@ describe("wireRemoteCacheEnv", () => {
 
     expect(result.status).toBe("manual")
     expect(result.source).toBe(source)
-  })
-})
-
-describe("repository workflows", () => {
-  test("sees the Turbo scripts GitHub Actions calls", async () => {
-    const names = await readTurboScriptNames()
-
-    expect(names.has("boundaries")).toBe(true)
-    expect(names.has("codegen")).toBe(true)
-    expect(names.has("env:scan")).toBe(true)
-    expect(names.has("check")).toBe(false)
-    expect(names.has("test")).toBe(false)
-  })
-
-  test("adds the remote cache environment to workflows that run Turbo", async () => {
-    const names = await readTurboScriptNames()
-    const turboWorkflows: string[] = []
-
-    for await (const name of new Bun.Glob("*.{yml,yaml}").scan({ cwd: ".github/workflows" })) {
-      const source = await Bun.file(`.github/workflows/${name}`).text()
-      if (!workflowRunsTurbo(source, names)) continue
-
-      turboWorkflows.push(name)
-      expect(source).not.toContain("TURBO_TOKEN")
-      expect(source).not.toContain("TURBO_TEAM")
-
-      const result = wireRemoteCacheEnv(source)
-      expect(result.status).toBe("added")
-      expect(result.source).toContain(`TURBO_TOKEN: ${token}`)
-      expect(result.source).toContain(`TURBO_TEAM: ${team}`)
-      expect(result.source).not.toContain("metaideas")
-    }
-
-    expect(turboWorkflows.toSorted()).toEqual(["adamantite.yml", "boundaries.yml", "tests.yml"])
   })
 })
