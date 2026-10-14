@@ -26,7 +26,7 @@ async function presignUpload(type: string) {
       adapter: createS3Adapter({
         accessKeyId: "test",
         bucket: "uploads",
-        endpoint: "http://localhost:9000",
+        endpoint: "http://localhost:8002",
         region: "us-east-1",
         secretAccessKey: "test",
       }),
