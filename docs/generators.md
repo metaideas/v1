@@ -62,3 +62,13 @@ bun run generate bull-board
 The template command installs bull-board and the BullMQ version that `packages/jobs` uses, adds `src/shared/jobs-dashboard.ts`, and mounts the dashboard at `/jobs` outside the typed router, so it does not change the API client or the OpenAPI document. The dashboard opens one queue for each name in `@v1/jobs/queue-names` and closes them with the process. It rejects cross-site form posts, and it is protected by basic auth: set `JOBS_DASHBOARD_USERNAME` and a `JOBS_DASHBOARD_PASSWORD` of at least 16 characters in `apps/api`. Without them, `/jobs` is not mounted. From the dashboard you can retry, promote, and remove jobs, so share the credentials only with people who operate the queues.
 
 The dashboard copies the shadcn theme from `packages/ui/src/styles/globals.css` into bull-board's `uiConfig.theme`, so it uses the same colours, radius, and fonts as the other application workspaces in light and dark mode. The job status colours and the chart colours stay bull-board's, because they carry the meaning of each status. The theme is copied once, when the template recipe runs, so regenerate it or edit `uiConfig.theme` after you change `packages/ui`. Without `packages/ui`, the dashboard keeps bull-board's own theme.
+
+## Add the Turbo remote cache
+
+Remote cache is opt-in. `remote-cache` wires [Vercel Remote Cache](https://turborepo.com/docs/core-concepts/remote-caching) into every GitHub Actions workflow that runs Turbo, including a workflow that only reaches Turbo through a root script such as `bun run codegen` or `bun run boundaries`:
+
+```bash
+bun run generate remote-cache
+```
+
+The template command sets a workflow `env` block. `TURBO_TOKEN` reads the `TURBO_TOKEN` Actions secret. `TURBO_TEAM` reads the `TURBO_TEAM` Actions variable, which is the Vercel team slug. The command writes those references only. It never writes a token or a team slug into the repository. Create the secret and the variable in the GitHub repository before the workflows run. A repeat run leaves a workflow alone when both entries already point at that secret and that variable. When a workflow sets either name to something else, the command prints the edit to finish by hand and does not replace it.
