@@ -88,6 +88,20 @@ describe("workflowRunsTurbo", () => {
       "jobs:\n  unit:\n    steps:\n      - run: bun test apps packages tooling scripts turbo\n"
     expect(workflowRunsTurbo(source, scripts)).toBe(false)
   })
+
+  test("ignores a workflow that does not run Turbo", () => {
+    const source = `name: dispatch
+
+on:
+  workflow_dispatch:
+
+jobs:
+  agent:
+    steps:
+      - run: echo hello
+`
+    expect(workflowRunsTurbo(source, scripts)).toBe(false)
+  })
 })
 
 describe("wireRemoteCacheEnv", () => {
@@ -151,6 +165,49 @@ describe("wireRemoteCacheEnv", () => {
     expect(result.status).toBe("manual")
     expect(result.source).toBe(source)
   })
+
+  test("keeps a quoted env key that points somewhere else", () => {
+    const source = `env:\n  "TURBO_TOKEN": not-a-real-token\n  TURBO_TEAM: ${team}\n\njobs: {}\n`
+    const result = wireRemoteCacheEnv(source)
+
+    expect(result.status).toBe("manual")
+    expect(result.source).toBe(source)
+    expect(result.detail).not.toContain("not-a-real-token")
+  })
+
+  test("accepts quoted env keys that already point at the secret and variable", () => {
+    const source = `env:\n  "TURBO_TOKEN": "${token}"\n  'TURBO_TEAM': '${team}'\n\njobs: {}\n`
+    expect(wireRemoteCacheEnv(source).status).toBe("skipped")
+  })
+
+  test("does not treat text inside a block scalar as an env entry", () => {
+    const source = `env:\n  NOTE: |\n    TURBO_TOKEN: ${token}\n\njobs: {}\n`
+    const result = wireRemoteCacheEnv(source)
+
+    expect(result.status).toBe("updated")
+    expect(result.source).toContain(`\n  TURBO_TOKEN: ${token}\n`)
+    expect(result.source).toContain(`\n  TURBO_TEAM: ${team}\n`)
+    expect(result.source).toContain("    TURBO_TOKEN:")
+  })
+
+  test("indents new env entries like the existing keys, not a comment", () => {
+    const source =
+      "env:\n    # note\n  CI: true\n\njobs:\n  unit:\n    steps:\n      - run: turbo build\n"
+    const result = wireRemoteCacheEnv(source)
+
+    expect(result.status).toBe("updated")
+    expect(result.source).toContain("\n  CI: true\n  TURBO_TOKEN:")
+    expect(result.source).toContain(`\n  TURBO_TEAM: ${team}\n`)
+    expect(result.source).not.toContain("\n    TURBO_TOKEN:")
+  })
+
+  test("does not edit an env sequence", () => {
+    const source = "env:\n  - TURBO_TOKEN\n\njobs: {}\n"
+    const result = wireRemoteCacheEnv(source)
+
+    expect(result.status).toBe("manual")
+    expect(result.source).toBe(source)
+  })
 })
 
 describe("repository workflows", () => {
@@ -180,7 +237,5 @@ describe("repository workflows", () => {
     }
 
     expect(turboWorkflows).toContain("tests.yml")
-    const pullfrog = await Bun.file(".github/workflows/pullfrog.yml").text()
-    expect(workflowRunsTurbo(pullfrog, names)).toBe(false)
   })
 })

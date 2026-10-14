@@ -142,32 +142,85 @@ function expressionMatches(value: string, expression: string) {
   return normalized === expression
 }
 
-function findAssignment(
-  lines: readonly string[],
-  start: number,
-  end: number,
-  assignment: Assignment
-): AssignmentFinding {
-  const pattern = new RegExp(`^\\s*${assignment.name}:\\s*(.*)$`, "u")
-  const line = lines.slice(start, end).find((candidate) => pattern.test(candidate))
-  if (line === undefined) {
-    return { expression: assignment.expression, kind: "absent", name: assignment.name }
-  }
-
-  const value = pattern.exec(line)?.[1] ?? ""
-  return {
-    expression: assignment.expression,
-    kind: expressionMatches(value, assignment.expression) ? "match" : "conflict",
-    name: assignment.name,
-  }
+function isBlockScalar(value: string) {
+  return /^[|>][+-]?\d*(?:\s+#.*)?$/u.test(value.trim())
 }
 
-function blockIndent(lines: readonly string[], start: number, end: number) {
+function parseMappingEntry(line: string) {
+  const match = /^( *)(?:"([^"]*)"|'([^']*)'|([A-Za-z_][\w.-]*))\s*:(.*)$/u.exec(line)
+  const name = match?.[2] ?? match?.[3] ?? match?.[4]
+  if (!match || !name) return null
+
+  return { indent: match[1] ?? "", name, value: match[5] ?? "" }
+}
+
+function readEnvMapping(lines: readonly string[], start: number, end: number) {
+  const entries: Array<{ name: string; value: string }> = []
+  let mappingIndent: string | undefined
+  let scalarIndent: number | undefined
+
   for (const line of lines.slice(start, end)) {
-    const indent = /^(\s+)\S/u.exec(line)?.[1]
-    if (indent) return indent
+    if (line.trim() === "") continue
+
+    const indent = /^( *)/u.exec(line)?.[1] ?? ""
+    if (scalarIndent !== undefined && indent.length > scalarIndent) continue
+    scalarIndent = undefined
+
+    if (line.trim().startsWith("#")) continue
+    if (/^\t|^\s*\t/u.test(line)) {
+      return {
+        detail:
+          "uses tabs in env. Add TURBO_TOKEN from secrets.TURBO_TOKEN and TURBO_TEAM from vars.TURBO_TEAM by hand.",
+      }
+    }
+
+    const entry = parseMappingEntry(line)
+    if (!entry) {
+      const nested = mappingIndent !== undefined && indent.length > mappingIndent.length
+      if (nested) continue
+      return {
+        detail:
+          "env is not a flat mapping. Add TURBO_TOKEN from secrets.TURBO_TOKEN and TURBO_TEAM from vars.TURBO_TEAM by hand.",
+      }
+    }
+
+    if (mappingIndent === undefined) {
+      mappingIndent = entry.indent
+    } else if (entry.indent.length > mappingIndent.length) {
+      continue
+    } else if (entry.indent !== mappingIndent) {
+      return {
+        detail:
+          "env entries use mixed indentation. Add TURBO_TOKEN from secrets.TURBO_TOKEN and TURBO_TEAM from vars.TURBO_TEAM by hand.",
+      }
+    }
+
+    entries.push({ name: entry.name, value: entry.value })
+    if (isBlockScalar(entry.value)) scalarIndent = entry.indent.length
   }
-  return "  "
+
+  return { entries, indent: mappingIndent ?? "  " }
+}
+
+function findingFor(
+  entries: ReadonlyArray<{ name: string; value: string }>,
+  assignment: Assignment
+) {
+  const matches = entries.filter((entry) => entry.name === assignment.name)
+  const entry = matches[0]
+  if (matches.length > 1 || !entry) {
+    return {
+      expression: assignment.expression,
+      kind: matches.length > 1 ? "conflict" : "absent",
+      name: assignment.name,
+    } as const
+  }
+
+  return {
+    expression: assignment.expression,
+    kind: expressionMatches(entry.value, assignment.expression) ? "match" : "conflict",
+    name: assignment.name,
+  } as const
 }
 
 function withBlankLineBefore(lines: readonly string[], index: number) {
@@ -233,9 +286,12 @@ export function wireRemoteCacheEnv(source: string) {
   }
 
   const end = keys.find((key) => key.line > env.line)?.line ?? lines.length
-  const findings = REMOTE_CACHE_ENV.map((assignment) =>
-    findAssignment(lines, env.line + 1, end, assignment)
-  )
+  const mapping = readEnvMapping(lines, env.line + 1, end)
+  if ("detail" in mapping) {
+    return { detail: mapping.detail, source, status: "manual" }
+  }
+
+  const findings = REMOTE_CACHE_ENV.map((assignment) => findingFor(mapping.entries, assignment))
 
   if (findings.some((finding) => finding.kind === "conflict")) {
     return {
@@ -254,7 +310,7 @@ export function wireRemoteCacheEnv(source: string) {
     }
   }
 
-  const additions = envAssignments(blockIndent(lines, env.line + 1, end), findings)
+  const additions = envAssignments(mapping.indent, findings)
   const inserted = insertLines(lines, bodyEnd(lines, env.line + 1, end), additions)
   return {
     detail: `added ${missing.map((finding) => finding.name).join(" and ")} for Vercel Remote Cache`,
