@@ -221,7 +221,7 @@ describe("repository workflows", () => {
     expect(names.has("test")).toBe(false)
   })
 
-  test("keeps the remote cache environment on workflows that run Turbo", async () => {
+  test("adds the remote cache environment to workflows that run Turbo", async () => {
     const names = await readTurboScriptNames()
     const turboWorkflows: string[] = []
 
@@ -230,12 +230,16 @@ describe("repository workflows", () => {
       if (!workflowRunsTurbo(source, names)) continue
 
       turboWorkflows.push(name)
-      expect(wireRemoteCacheEnv(source).status).toBe("skipped")
-      expect(source).toContain(`TURBO_TOKEN: ${token}`)
-      expect(source).toContain(`TURBO_TEAM: ${team}`)
-      expect(source).not.toContain("metaideas")
+      expect(source).not.toContain("TURBO_TOKEN")
+      expect(source).not.toContain("TURBO_TEAM")
+
+      const result = wireRemoteCacheEnv(source)
+      expect(result.status).toBe("added")
+      expect(result.source).toContain(`TURBO_TOKEN: ${token}`)
+      expect(result.source).toContain(`TURBO_TEAM: ${team}`)
+      expect(result.source).not.toContain("metaideas")
     }
 
-    expect(turboWorkflows).toContain("tests.yml")
+    expect(turboWorkflows.toSorted()).toEqual(["adamantite.yml", "boundaries.yml", "tests.yml"])
   })
 })
