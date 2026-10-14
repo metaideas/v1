@@ -71,3 +71,11 @@ This project uses Adamantite for its managed formatting, linting, type checking,
 - Use `adamantite doctor` to inspect managed setup and `adamantite doctor --fix` for safe local fixes.
 
 <!-- ADAMANTITE:END -->
+
+<!-- PACKREF:START -->
+
+## Packref
+
+Use Packref when you need to inspect a dependency's exact source implementation or compare referenced versions; read the local `packref` skill, or install it with `npx -y skills add https://github.com/adelrodriguez/packref/tree/v0.3.5 --skill packref --yes`.
+Run `remove`, `prune`, `clean`, or `clean --global` only when the user requests that removal scope, because these commands delete state.
+<!-- PACKREF:END -->

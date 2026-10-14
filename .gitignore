@@ -107,3 +107,5 @@ dist-ssr
 
 # inlang
 **/project.inlang/cache
+.packref/packages/
+.packref/.packref-lock-*.tmp
