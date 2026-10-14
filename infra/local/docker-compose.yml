@@ -43,8 +43,13 @@ services:
     volumes:
       - ./.data/minio:/data
     command: server /data --console-address ":9001"
+    # Current MinIO images do not ship curl. Accept curl when it exists, otherwise a local TCP check.
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:9000/minio/health/live"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail --silent http://127.0.0.1:9000/minio/health/live || bash -c 'echo >/dev/tcp/127.0.0.1/9000'",
+        ]
       interval: 5s
       timeout: 3s
       retries: 10
