@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   pullfrog:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, pullfrog]
     permissions:
       id-token: write
       contents: read
