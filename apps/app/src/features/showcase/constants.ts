@@ -117,6 +117,8 @@ export const SHOWCASE_GROUPS = [
       { id: "attachment", title: "Attachment" },
       { id: "message-scroller", title: "Message Scroller" },
       { id: "questionnaire", title: "Questionnaire" },
+      { id: "trace", title: "Trace" },
+      { id: "code-block", title: "Code Block" },
     ],
     title: "Conversation",
   },
@@ -312,6 +314,20 @@ export const CONVERSATION = [
     text: "Let me know if you want a second pair of eyes on anything.",
     time: "9:48",
   },
+] as const
+
+export const CODE_SAMPLE = `import { Button } from "@v1/ui/components/button"
+
+export function Save() {
+  return <Button type="submit">Save</Button>
+}
+`
+
+export const CODE_DIFF = [
+  { text: "export function Save() {", variant: "default" },
+  { text: "  return <Button>Save</Button>", variant: "removed" },
+  { text: '  return <Button type="submit">Save</Button>', variant: "added" },
+  { text: "}", variant: "default" },
 ] as const
 
 export const QUESTIONNAIRE_ROLES = [
