@@ -1,3 +1,6 @@
 {
-  "extends": "@tooling/tsconfig/dom-package.json"
+  "extends": "@tooling/tsconfig/dom-package.json",
+  "compilerOptions": {
+    "types": ["bun"]
+  }
 }

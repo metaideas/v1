@@ -50,7 +50,7 @@ export function useHighlightedCode(value: string, language: string) {
 
   const end = code.lastIndexOf("\n") + 1
 
-  if (highlighter && end > next.text.length) {
+  if (highlighter?.incremental && end > next.text.length) {
     const result = highlighter.highlight(code.slice(next.text.length, end - 1), next.state)
 
     next = {
@@ -71,6 +71,10 @@ export function useHighlightedCode(value: string, language: string) {
   return React.useMemo(() => {
     if (!highlighter) {
       return code.split("\n")
+    }
+
+    if (!highlighter.incremental) {
+      return highlighter.highlight(code).lines
     }
 
     return [...next.lines, highlighter.highlight(tail, next.state).lines[0]]
