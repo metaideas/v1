@@ -13,6 +13,7 @@ import {
   LuCircle,
   LuCircleAlert,
   LuCircleCheck,
+  LuCopy,
   LuEllipsis,
   LuGripVertical,
   LuHouse,
@@ -87,6 +88,7 @@ export const Icon = {
   ChevronUp: LuChevronUp,
   Circle: LuCircle,
   CircleCheck: LuCircleCheck,
+  Copy: LuCopy,
   DotsHorizontal: LuEllipsis,
   GitHub: (props: SVGIconProps) => (
     <svg

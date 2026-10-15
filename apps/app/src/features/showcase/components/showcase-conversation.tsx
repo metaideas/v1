@@ -11,6 +11,15 @@ import {
 } from "@v1/ui/components/attachment"
 import { Avatar, AvatarFallback } from "@v1/ui/components/avatar"
 import { Bubble, BubbleContent, BubbleGroup, BubbleReactions } from "@v1/ui/components/bubble"
+import {
+  CodeBlock,
+  CodeBlockActions,
+  CodeBlockContent,
+  CodeBlockCopyButton,
+  CodeBlockHeader,
+  CodeBlockLine,
+  CodeBlockTitle,
+} from "@v1/ui/components/code-block"
 import { Icon } from "@v1/ui/components/icon"
 import {
   Message,
@@ -47,6 +56,17 @@ import {
 } from "@v1/ui/components/questionnaire"
 import { Spinner } from "@v1/ui/components/spinner"
 import { toast } from "@v1/ui/components/toast"
+import {
+  Trace,
+  TraceCollapsible,
+  TraceCollapsibleContent,
+  TraceCollapsibleTrigger,
+  TraceDescription,
+  TraceIcon,
+  TraceLine,
+  TraceTitle,
+} from "@v1/ui/components/trace"
+import { useHighlightedCode } from "@v1/ui/hooks/use-highlighted-code"
 import ShowcaseDemo from "#features/showcase/components/showcase-demo.tsx"
 import ShowcaseSection from "#features/showcase/components/showcase-section.tsx"
 import {
@@ -55,6 +75,8 @@ import {
   ATTACHMENT_STATES,
   AVATAR_IMAGE_SRC,
   BUBBLE_VARIANTS,
+  CODE_DIFF,
+  CODE_SAMPLE,
   CONVERSATION,
   QUESTIONNAIRE_ITEMS,
   QUESTIONNAIRE_ROLES,
@@ -74,6 +96,8 @@ function AttachmentIcon({ state }: Readonly<{ state: (typeof ATTACHMENT_STATES)[
 }
 
 export default function ShowcaseConversation() {
+  const highlightedLines = useHighlightedCode(CODE_SAMPLE, "tsx")
+
   return (
     <>
       <ShowcaseSection id="message">
@@ -295,6 +319,89 @@ export default function ShowcaseConversation() {
             <QuestionnaireSubmit />
           </QuestionnaireActions>
         </Questionnaire>
+      </ShowcaseSection>
+
+      <ShowcaseSection id="trace">
+        <ShowcaseDemo label="Statuses">
+          <Trace className="max-w-xl">
+            <TraceLine>
+              <TraceIcon>
+                <Icon.CircleCheck />
+              </TraceIcon>
+              <TraceTitle>Read package.json</TraceTitle>
+            </TraceLine>
+            <TraceLine status="running">
+              <TraceIcon>
+                <Icon.Loader className="animate-spin" />
+              </TraceIcon>
+              <TraceTitle>Running the tests</TraceTitle>
+            </TraceLine>
+            <TraceLine status="error">
+              <TraceIcon>
+                <Icon.AlertCircle />
+              </TraceIcon>
+              <TraceTitle>Build failed</TraceTitle>
+            </TraceLine>
+            <TraceLine status="pending">
+              <TraceIcon>
+                <Icon.Circle />
+              </TraceIcon>
+              <TraceTitle>Deploy the preview</TraceTitle>
+            </TraceLine>
+          </Trace>
+        </ShowcaseDemo>
+        <ShowcaseDemo label="Collapsible with code">
+          <Trace className="max-w-xl">
+            <TraceCollapsible defaultOpen>
+              <TraceCollapsibleTrigger>
+                <TraceLine>
+                  <TraceIcon>
+                    <Icon.CircleCheck />
+                  </TraceIcon>
+                  <TraceTitle>Edited save.tsx</TraceTitle>
+                  <TraceDescription>+1 −1</TraceDescription>
+                </TraceLine>
+              </TraceCollapsibleTrigger>
+              <TraceCollapsibleContent>
+                <CodeBlock size="sm">
+                  <CodeBlockContent>
+                    {CODE_DIFF.map((line) => (
+                      <CodeBlockLine key={`${line.variant}-${line.text}`} variant={line.variant}>
+                        {line.text}
+                      </CodeBlockLine>
+                    ))}
+                  </CodeBlockContent>
+                </CodeBlock>
+              </TraceCollapsibleContent>
+            </TraceCollapsible>
+          </Trace>
+        </ShowcaseDemo>
+      </ShowcaseSection>
+
+      <ShowcaseSection id="code-block">
+        <ShowcaseDemo className="max-w-xl" label="Highlighted, with line numbers">
+          <CodeBlock>
+            <CodeBlockHeader>
+              <CodeBlockTitle>save.tsx</CodeBlockTitle>
+              <CodeBlockActions>
+                <CodeBlockCopyButton value={CODE_SAMPLE} />
+              </CodeBlockActions>
+            </CodeBlockHeader>
+            <CodeBlockContent lineNumbers>
+              {highlightedLines.map((line, index) => (
+                // oxlint-disable-next-line react/no-array-index-key -- Lines of code have no identity apart from their position.
+                <CodeBlockLine key={index}>{line}</CodeBlockLine>
+              ))}
+            </CodeBlockContent>
+          </CodeBlock>
+        </ShowcaseDemo>
+        <ShowcaseDemo className="max-w-xl" label="Destructive">
+          <CodeBlock variant="destructive">
+            <CodeBlockContent>
+              Error: Cannot find module &quot;#shared/env.generated.ts&quot;
+            </CodeBlockContent>
+          </CodeBlock>
+        </ShowcaseDemo>
       </ShowcaseSection>
     </>
   )
