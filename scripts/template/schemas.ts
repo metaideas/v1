@@ -23,10 +23,16 @@ export const TemplateStampSchema = z.object({
 
 export const GitHubCommitSchema = z.object({ sha: z.string() })
 
+// The default export of `knip.config.ts`.
+export const KnipConfigModuleSchema = z.object({
+  default: z.looseObject({ workspaces: z.record(z.string(), z.unknown()).optional() }),
+})
+
 export const TurboJsonSchema = z.object({
   tasks: z.record(z.string(), z.looseObject({ env: z.array(z.string()).optional() })),
 })
 
+export type KnipConfig = z.infer<typeof KnipConfigModuleSchema>["default"]
 export type PackageJson = z.infer<typeof PackageJsonSchema>
 export type TemplateCleanup = z.infer<typeof TemplateCleanupSchema>
 export type TemplateStamp = z.infer<typeof TemplateStampSchema>

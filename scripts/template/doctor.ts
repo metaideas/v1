@@ -3,10 +3,16 @@ import { defineCommand } from "citty"
 import { parseJSONC } from "confbox"
 import consola from "consola"
 
-import { type TemplateStamp, TemplateCleanupSchema, TurboJsonSchema } from "./schemas"
+import {
+  KnipConfigModuleSchema,
+  type TemplateStamp,
+  TemplateCleanupSchema,
+  TurboJsonSchema,
+} from "./schemas"
 import {
   checkIsRemovedByCleanup,
   findTextReferences,
+  findUnknownKnipWorkspaces,
   getProjectScope,
   getScopePrefix,
   getWorkspaceGraph,
@@ -228,13 +234,14 @@ const checks: Check[] = [
   {
     name: "Knip workspaces exist",
     run: async ({ rootDir, workspaces }) => {
-      const config = await Bun.file(join(rootDir, "knip.config.ts")).text()
+      const { default: config } = KnipConfigModuleSchema.parse(
+        await import(join(rootDir, "knip.config.ts"))
+      )
       const paths = new Set(workspaces.map((workspace) => getWorkspacePath(workspace)))
 
-      return [...config.matchAll(/^\s+"((?:apps|packages)\/[^*"]+)":/gm)]
-        .map((match) => match[1])
-        .filter((path): path is string => path !== undefined && !paths.has(path))
-        .map((path) => `knip.config.ts configures ${path}, which does not exist`)
+      return findUnknownKnipWorkspaces(config, paths).map(
+        (path) => `knip.config.ts configures ${path}, which does not exist`
+      )
     },
   },
   {

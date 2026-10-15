@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 
-import { checkIsRemovedByCleanup } from "../shared"
+import { checkIsRemovedByCleanup, findUnknownKnipWorkspaces } from "../shared"
 
 const ROOT_DIR = "/project"
 
@@ -26,5 +26,30 @@ describe("checkIsRemovedByCleanup", () => {
     expect(
       checkIsRemovedByCleanup(ROOT_DIR, "docs/coding-standards.md", ["docs/coding", "doc"])
     ).toBe(false)
+  })
+})
+
+describe("findUnknownKnipWorkspaces", () => {
+  const workspacePaths = new Set(["apps/api", "apps/mobile", "packages/database"])
+
+  test("lists a configured workspace that does not exist", () => {
+    expect(
+      findUnknownKnipWorkspaces(
+        { workspaces: { "apps/mobile": {}, "packages/jobs": {} } },
+        workspacePaths
+      )
+    ).toEqual(["packages/jobs"])
+  })
+
+  test("ignores globs, tooling workspaces, and paths outside the workspaces block", () => {
+    expect(
+      findUnknownKnipWorkspaces(
+        {
+          ignoreIssues: { "apps/api/src/shared/context.ts": ["exports"] },
+          workspaces: { ".": {}, "apps/*": {}, "packages/database": {}, "tooling/linting": {} },
+        },
+        workspacePaths
+      )
+    ).toEqual([])
   })
 })
