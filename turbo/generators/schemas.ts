@@ -22,6 +22,10 @@ export const PostHogAnswersSchema = z.object({
   app: z.enum(["api", "app", "mobile"]),
 })
 
+export const RealtimeAnswersSchema = z.object({
+  app: z.enum(["app", "mobile"]),
+})
+
 export const SentryAnswersSchema = z.object({
   app: z.enum(["api", "app", "mobile"]),
 })

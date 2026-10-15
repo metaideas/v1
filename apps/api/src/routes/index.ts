@@ -9,10 +9,11 @@ import { secureHeaders } from "hono/secure-headers"
 import { seconds } from "humanspan"
 import filesRoutes from "#routes/files.ts"
 import healthRoutes from "#routes/health.ts"
+import realtimeRoutes from "#routes/realtime.ts"
 import trpcRoutes from "#routes/trpc.ts"
 import v1Routes from "#routes/v1/index.ts"
 import { withLanguageDetection } from "#shared/middleware.ts"
-import { auth, database, dispatcher, kv, storage, workflows } from "#shared/services.ts"
+import { auth, database, dispatcher, kv, realtime, storage, workflows } from "#shared/services.ts"
 import { allowedOrigins, factory, toContentfulStatusCode } from "#shared/utils.ts"
 
 const app = factory.createApp()
@@ -41,6 +42,7 @@ app.use(async (c, next) => {
   c.set("db", database)
   c.set("dispatcher", dispatcher)
   c.set("kv", kv)
+  c.set("realtime", realtime)
   c.set("storage", storage)
   c.set("workflows", workflows)
   await next()
@@ -92,6 +94,7 @@ export const router = app
   )
   .route("/health", healthRoutes)
   .route("/files", filesRoutes)
+  .route("/realtime", realtimeRoutes)
   .route("/trpc", trpcRoutes)
   .route("/v1", v1Routes)
 

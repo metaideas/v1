@@ -35,6 +35,7 @@ root
   │   ├── email                 # Email templates and delivery through Resend or SMTP
   │   ├── jobs                  # Fire-and-forget background jobs on Redis using BullMQ
   │   ├── payments              # Payment processing utilities using Stripe
+  │   ├── realtime              # Typed realtime channels on Redis, streamed over server-sent events
   │   ├── storage               # File storage gateway and React client using Files SDK
   │   ├── ui                    # Reusable UI components and design system using Shadcn/UI
   │   ├── utils                 # Shared helpers and constants for packages and apps

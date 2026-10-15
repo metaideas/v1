@@ -1,0 +1,33 @@
+import { createRealtimeClient } from "@v1/realtime/react"
+import { fetch } from "expo/fetch"
+import { AppState } from "react-native"
+import { auth } from "#shared/auth.ts"
+import { log } from "#shared/logger.ts"
+import { buildApiUrl } from "#shared/utils.ts"
+
+async function getToken() {
+  const { data, error } = await auth.token()
+  if (!data) throw new Error("Realtime needs a signed-in session", { cause: error })
+
+  return data.token
+}
+
+// A phone drops its connection in the background, so reconnect as soon as the app is active again.
+function onResume(resume: () => void) {
+  const subscription = AppState.addEventListener("change", (state) => {
+    if (state === "active") resume()
+  })
+
+  return () => {
+    subscription.remove()
+  }
+}
+
+export const { useRealtime } = createRealtimeClient({
+  endpoint: buildApiUrl("/realtime"),
+  // The fetch of React Native cannot stream a response body, and the Expo one can.
+  fetch,
+  getToken,
+  logger: log,
+  onResume,
+})

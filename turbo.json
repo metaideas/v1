@@ -45,6 +45,7 @@
         "JOBS_REDIS_URL",
         "PORT",
         "PUBLIC_*",
+        "REALTIME_REDIS_URL",
         "REDIS_URL",
         "RESEND_API_KEY",
         "RUN_PRODUCTION_MIGRATIONS",

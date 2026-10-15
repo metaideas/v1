@@ -72,3 +72,30 @@ bun run generate remote-cache
 ```
 
 The template command sets a workflow `env` block. `TURBO_TOKEN` reads the `TURBO_TOKEN` Actions secret. `TURBO_TEAM` reads the `TURBO_TEAM` Actions variable, which is the Vercel team slug. The command writes those references only. It never writes a token or a team slug into the repository. Create the secret and the variable in the GitHub repository before the workflows run. A repeat run leaves a workflow alone when both entries already point at that secret and that variable. When a workflow sets either name to something else, the command prints the edit to finish by hand and does not replace it.
+
+## Add a realtime client
+
+`realtime` adds the `@v1/realtime` client to `apps/app` or `apps/mobile`, so the app can subscribe to realtime channels. See [Realtime](./packages.md#realtime) for the channels and the server.
+
+```bash
+bun run generate realtime
+```
+
+The client streams from the realtime route of `apps/api` and authenticates with an access token from the session, so connect the app to `apps/api` first with the `connect-backend` skill: `apps/app` with `PUBLIC_API_URL` set, and `apps/mobile` with auth. The template command stops with that step when the app is not connected. It adds the package as a workspace dependency and creates `src/shared/realtime.ts`, which exports `useRealtime`. In `apps/mobile`, the client streams with `fetch` from `expo/fetch` and reconnects when the app returns to the foreground. `apps/desktop` and `apps/extension` have no session with `apps/api`, so the template command does not offer them.
+
+Subscribe once a session loads, and test the connection with `POST /v1/demo/realtime` on the API, which sends a `greeted` event to the signed-in user's `demo` channel:
+
+```tsx
+import { useRealtime } from "#shared/realtime.ts"
+
+const { status } = useRealtime({
+  channel: "demo",
+  enabled: session !== null,
+  onData: ({ data }) => {
+    toast.add({ title: data.message })
+  },
+  params: { userId: session?.user.id ?? "" },
+})
+```
+
+A repeat run reports skips without replacing `src/shared/realtime.ts`.

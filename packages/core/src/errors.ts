@@ -4,6 +4,7 @@ import { AuthFault } from "#domains/auth/errors.ts"
 import { EmailFault } from "#services/email/errors.ts"
 import { JobsFault } from "#services/jobs/errors.ts"
 import { PaymentsFault } from "#services/payments/errors.ts"
+import { RealtimeFault } from "#services/realtime/errors.ts"
 import { StorageFault } from "#services/storage/errors.ts"
 
 export const AppFault = Faultier.merge(
@@ -11,6 +12,7 @@ export const AppFault = Faultier.merge(
   EmailFault,
   JobsFault,
   PaymentsFault,
+  RealtimeFault,
   StorageFault,
   AssertFault
 )
@@ -20,6 +22,7 @@ export * from "#domains/auth/errors.ts"
 export * from "#services/email/errors.ts"
 export * from "#services/jobs/errors.ts"
 export * from "#services/payments/errors.ts"
+export * from "#services/realtime/errors.ts"
 export * from "#services/storage/errors.ts"
 
 export { matchTag, matchTags, Fault, isFault } from "faultier"

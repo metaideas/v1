@@ -1,0 +1,160 @@
+import { beforeEach, describe, expect, test } from "bun:test"
+import { PublishEventError, RealtimePayloadError } from "@v1/core/errors"
+import { mockRedis, readEvents } from "#__tests__/fakes.ts"
+
+const redis = await mockRedis()
+
+const { createRealtime, createRealtimeHandler } = await import("#server.ts")
+
+const KEY = 'demo:{"userId":"user_1"}'
+const REDIS_KEY = `realtime:${KEY}`
+
+function setup({ isAllowed = true } = {}) {
+  const realtime = createRealtime({ url: "redis://localhost:6379" })
+  const handler = createRealtimeHandler({ authorize: { demo: () => isAllowed }, realtime })
+
+  async function subscribe(subscriptions: unknown[]) {
+    const controller = new AbortController()
+    const response = await handler.handle(
+      new Request("http://localhost/realtime", {
+        body: JSON.stringify({ subscriptions }),
+        method: "POST",
+        signal: controller.signal,
+      })
+    )
+
+    return { controller, response, ...readEvents(response.body) }
+  }
+
+  return { channel: realtime.channel("demo", { userId: "user_1" }), realtime, subscribe }
+}
+
+function greeting(message: string) {
+  return JSON.stringify({ message })
+}
+
+beforeEach(() => {
+  redis.reset()
+})
+
+describe("createRealtime", () => {
+  test("returns a payload error without publishing invalid data", async () => {
+    const { channel } = setup()
+
+    // @ts-expect-error The data breaks the event's schema on purpose.
+    const result = await channel.emit("greeted", { message: 1 })
+
+    expect(result).toBeInstanceOf(RealtimePayloadError)
+    expect(redis.server.streams.size).toBe(0)
+  })
+
+  test("returns a publish error when Redis rejects the event", async () => {
+    const { channel } = setup()
+    redis.server.emitError = new Error("Connection is closed")
+
+    const result = await channel.emit("greeted", { message: "Hello" })
+
+    expect(result).toBeInstanceOf(PublishEventError)
+  })
+})
+
+describe("createRealtimeHandler", () => {
+  test("replays the events after the cursor, then streams new ones", async () => {
+    const { channel, subscribe } = setup()
+    const first = redis.append(REDIS_KEY, "greeted", greeting("one"))
+    const second = redis.append(REDIS_KEY, "greeted", greeting("two"))
+
+    const stream = await subscribe([
+      { channel: "demo", cursor: first, params: { userId: "user_1" } },
+    ])
+    await stream.waitFor(2)
+    await channel.emit("greeted", { message: "three" })
+
+    expect(await stream.waitFor(3)).toEqual([
+      {
+        data: { cursor: second, data: { message: "two" }, event: "greeted", key: KEY },
+        type: "message",
+      },
+      { data: { cursor: second, key: KEY }, type: "ready" },
+      {
+        data: {
+          cursor: expect.any(String),
+          data: { message: "three" },
+          event: "greeted",
+          key: KEY,
+        },
+        type: "message",
+      },
+    ])
+  })
+
+  test("delivers an event published during the replay once", async () => {
+    const { subscribe } = setup()
+    const first = redis.append(REDIS_KEY, "greeted", greeting("one"))
+    redis.server.beforeRead = () => {
+      redis.server.beforeRead = undefined
+      redis.append(REDIS_KEY, "greeted", greeting("during"))
+    }
+
+    const stream = await subscribe([
+      { channel: "demo", cursor: first, params: { userId: "user_1" } },
+    ])
+    await stream.waitFor(2)
+    await Bun.sleep(20)
+
+    expect(stream.events.map(({ type }) => type)).toEqual(["message", "ready"])
+  })
+
+  test("resets a cursor that Redis no longer holds", async () => {
+    const { subscribe } = setup()
+    redis.append(REDIS_KEY, "greeted", greeting("one"))
+    const latest = redis.append(REDIS_KEY, "greeted", greeting("two"))
+
+    const stream = await subscribe([
+      { channel: "demo", cursor: "0-1", params: { userId: "user_1" } },
+    ])
+
+    expect(await stream.waitFor(1)).toEqual([{ data: { cursor: latest, key: KEY }, type: "reset" }])
+  })
+
+  test("starts a subscription without a cursor after the latest event", async () => {
+    const { subscribe } = setup()
+    const latest = redis.append(REDIS_KEY, "greeted", greeting("old"))
+
+    const stream = await subscribe([{ channel: "demo", params: { userId: "user_1" } }])
+
+    expect(await stream.waitFor(1)).toEqual([{ data: { cursor: latest, key: KEY }, type: "ready" }])
+  })
+
+  test("denies a subscription without closing the stream", async () => {
+    const { subscribe } = setup({ isAllowed: false })
+
+    const stream = await subscribe([{ channel: "demo", params: { userId: "user_1" } }])
+
+    expect(stream.response.status).toBe(200)
+    expect(await stream.waitFor(1)).toEqual([{ data: { key: KEY }, type: "denied" }])
+  })
+
+  test("rejects a subscription to an unknown channel or with invalid params", async () => {
+    const { subscribe } = setup()
+
+    const unknown = await subscribe([{ channel: "missing", params: {} }])
+    const invalid = await subscribe([{ channel: "demo", params: { userId: 1 } }])
+
+    expect([unknown.response.status, invalid.response.status]).toEqual([400, 400])
+  })
+
+  test("closes open streams when the subscriber reconnects, so clients replay what they missed", async () => {
+    const { subscribe } = setup()
+    const stream = await subscribe([{ channel: "demo", params: { userId: "user_1" } }])
+    await stream.waitFor(1)
+    const [subscriber] = redis.server.subscribers
+
+    subscriber?.emit("ready")
+    subscriber?.emit("ready")
+
+    await stream.closed
+
+    expect(subscriber?.channels.size).toBe(0)
+  })
+})

@@ -28,6 +28,7 @@
     "@v1/database": "workspace:*",
     "@v1/email": "workspace:*",
     "@v1/jobs": "workspace:*",
+    "@v1/realtime": "workspace:*",
     "@v1/storage": "workspace:*",
     "@v1/utils": "workspace:*",
     "@v1/workflows": "workspace:*",
