@@ -1,6 +1,7 @@
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
 import { parseJSON, stringifyJSON } from "confbox"
 import {
+  type KnipConfig,
   type PackageJson,
   PackageJsonSchema,
   type TemplateStamp,
@@ -247,6 +248,16 @@ export function checkIsRemovedByCleanup(
     const cleanupTarget = resolve(rootDir, cleanupPath)
     return path === cleanupTarget || checkIsPathWithinRoot(cleanupTarget, path)
   })
+}
+
+/**
+ * Lists the application and package workspaces that a knip config configures by path but the
+ * project does not have. Globs such as `apps/*` always resolve.
+ */
+export function findUnknownKnipWorkspaces(config: KnipConfig, workspacePaths: ReadonlySet<string>) {
+  return Object.keys(config.workspaces ?? {}).filter(
+    (path) => /^(?:apps|packages)\/[^*]+$/.test(path) && !workspacePaths.has(path)
+  )
 }
 
 function joinAroundRemovedSection(before: string, after: string) {
