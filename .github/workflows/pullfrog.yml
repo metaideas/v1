@@ -31,6 +31,8 @@ jobs:
           node-version-file: package.json
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          no-cache: true
       - name: Run agent
         # TODO: adelrodriguez -- Temporarily pinned: the v0 tag resolves to v0.1.58,
         # which runs `npx pullfrog@^0.1.58`, but 0.1.58 was never published to npm
