@@ -22,8 +22,8 @@ type S3AdapterOptions = {
   accessKeyId: string
   bucket: string
   /**
-   * S3-compatible endpoint, such as MinIO from Docker Compose. With it, the adapter uses path-style
-   * URLs. Without it, the adapter addresses AWS S3 with virtual-hosted-style URLs.
+   * S3-compatible endpoint, such as SeaweedFS from Docker Compose. With it, the adapter uses
+   * path-style URLs. Without it, the adapter addresses AWS S3 with virtual-hosted-style URLs.
    */
   endpoint?: string
   region: string

@@ -32,19 +32,26 @@ services:
       timeout: 3s
       retries: 10
 
-  minio:
-    image: minio/minio:latest
+  # `mini` runs master, volume, filer, and the S3 gateway in one process.
+  # The AWS keys become the admin identity when no s3 config file is mounted.
+  # `-bucket` creates `uploads` after S3 is listening. `/status` answers before
+  # that directory exists, so the healthcheck waits for the bucket too.
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.48
     ports:
-      - "8002:9000"
-      - "8003:9001"
+      - "8002:8333"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      AWS_ACCESS_KEY_ID: seaweedfs
+      AWS_SECRET_ACCESS_KEY: seaweedfs
     volumes:
-      - ./.data/minio:/data
-    command: server /data --console-address ":9001"
+      - ./.data/seaweedfs:/data
+    command: ["mini", "-dir=/data", "-bucket=uploads"]
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:9000/minio/health/live"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail --silent --output /dev/null http://127.0.0.1:8333/status && curl --fail --silent --output /dev/null http://127.0.0.1:8888/buckets/uploads/",
+        ]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -66,15 +73,3 @@ services:
     ports:
       - "8006:8288"
       - "8007:8289"
-
-  minio-init:
-    image: minio/mc:latest
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint:
-      - /bin/sh
-      - -c
-      - >
-        mc alias set local http://minio:9000 minioadmin minioadmin &&
-        mc mb --ignore-existing local/uploads
