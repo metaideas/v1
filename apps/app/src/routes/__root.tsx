@@ -62,7 +62,23 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
   component: RootComponent,
   head: () => ({
-    links: [{ href: globals, rel: "stylesheet" }],
+    links: [
+      { href: globals, rel: "stylesheet" },
+      { href: "/favicon.ico", rel: "icon", sizes: "32x32" },
+      {
+        href: "/favicon-light.svg",
+        media: "(prefers-color-scheme: light)",
+        rel: "icon",
+        type: "image/svg+xml",
+      },
+      {
+        href: "/favicon-dark.svg",
+        media: "(prefers-color-scheme: dark)",
+        rel: "icon",
+        type: "image/svg+xml",
+      },
+      { href: "/apple-touch-icon.png", rel: "apple-touch-icon" },
+    ],
     meta: [
       { charSet: "utf8" },
       { content: "width=device-width, initial-scale=1", name: "viewport" },

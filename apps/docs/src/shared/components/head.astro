@@ -1,8 +1,5 @@
 ---
 import DefaultHead from "@astrojs/starlight/components/Head.astro"
-
-const route = Astro.locals.starlightRoute
-route.head = route.head.filter(({ attrs }) => attrs?.rel !== "shortcut icon")
 ---
 
 <DefaultHead {...Astro.props} />

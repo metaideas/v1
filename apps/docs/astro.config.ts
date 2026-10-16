@@ -18,6 +18,28 @@ export default defineConfig({
       defaultLocale: "root",
       description: DOCS_DESCRIPTION,
       disable404Route: true,
+      favicon: "/favicon.ico",
+      head: [
+        {
+          attrs: {
+            href: "/favicon-light.svg",
+            media: "(prefers-color-scheme: light)",
+            rel: "icon",
+            type: "image/svg+xml",
+          },
+          tag: "link",
+        },
+        {
+          attrs: {
+            href: "/favicon-dark.svg",
+            media: "(prefers-color-scheme: dark)",
+            rel: "icon",
+            type: "image/svg+xml",
+          },
+          tag: "link",
+        },
+        { attrs: { href: "/apple-touch-icon.png", rel: "apple-touch-icon" }, tag: "link" },
+      ],
       lastUpdated: true,
       locales: {
         es: {

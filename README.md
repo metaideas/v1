@@ -1,5 +1,8 @@
 <div align="center">
-  <h1 align="center">▶️ <code>v1</code></h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./.github/assets/v1-logo-dark.svg">
+    <img src="./.github/assets/v1-logo-light.svg" alt="v1" width="160">
+  </picture>
 
   <p align="center">
     <em><strong>Start once. Ship everywhere.</strong></em>
