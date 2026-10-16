@@ -33,7 +33,6 @@
       "dependsOn": ["codegen"],
       "env": [
         "ALLOWED_API_ORIGINS",
-        "ARCJET_KEY",
         "AUTH_*",
         "BASE_URL",
         "DATABASE_URL",
