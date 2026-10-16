@@ -40,6 +40,10 @@ function invalid(message: string) {
   return Response.json({ message }, { status: 400 })
 }
 
+function unavailable() {
+  return Response.json({ message: "The realtime handler is shutting down" }, { status: 503 })
+}
+
 /**
  * Streams events to clients over server-sent events. A request lists the channels it subscribes to
  * and the cursor each one reached. The handler replays the events after each cursor that Redis
@@ -50,6 +54,7 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
   const { connection, hub, logger } = getInternals(realtime)
   // The streams this handler serves, so `close` ends them without closing the service.
   const served = new Set<() => void>()
+  let isClosing = false
 
   // Whether Redis still holds every event after the cursor.
   async function isCursorKept(channel: ChannelName, cursor: string, history: StreamEntry[]) {
@@ -86,6 +91,10 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
           })
         )
       )
+      // A request that arrives after close, or was still parsing or authorizing when it ran, must not
+      // open a stream, which would hold the server open after `close` ended the others.
+      if (isClosing) return unavailable()
+
       const encoder = new TextEncoder()
       let stop: ((isCancelled: boolean) => void) | undefined
 
@@ -209,10 +218,11 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
     },
 
     /**
-     * Ends every stream the handler serves, which never finish on their own. Call it once the
-     * server stops taking requests, so the server can finish the rest.
+     * Ends every stream the handler serves, which never finish on their own, and refuses new ones.
+     * Call it once the server stops taking requests, so the server can finish the rest.
      */
     close() {
+      isClosing = true
       for (const close of served) close()
     },
   }

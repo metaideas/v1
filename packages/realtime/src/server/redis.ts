@@ -54,6 +54,9 @@ export async function readTime(connection: Redis) {
  * ms>`, which comes before every event and records when it was found empty.
  */
 export async function readTail(connection: Redis, redisKey: string) {
+  // Reading the time first keeps the checkpoint no later than the read that found the channel
+  // empty, so an event emitted between the two commands never expires before the checkpoint does.
+  const time = await readTime(connection)
   const [last] = await connection.xrevrange(redisKey, "+", "-", "COUNT", 1)
-  return last?.[0] ?? `0-${await readTime(connection)}`
+  return last?.[0] ?? `0-${time}`
 }

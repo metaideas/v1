@@ -16,6 +16,10 @@ type FakeServer = {
    */
   now?: number
   /**
+   * Runs before each time read, such as to emit an event while a subscription starts.
+   */
+  beforeTime?: () => void
+  /**
    * Runs before each history read, such as to publish an event while a subscription catches up.
    */
   beforeRead?: () => void
@@ -79,6 +83,7 @@ function createClient() {
     quit: () => Promise.resolve("OK"),
 
     time() {
+      server.beforeTime?.()
       const now = server.now ?? Date.now()
       return Promise.resolve([String(Math.floor(now / 1000)), String((now % 1000) * 1000)])
     },
@@ -119,6 +124,7 @@ export async function mockRedis() {
       server.beforeRead = undefined
       server.emitError = undefined
       server.now = undefined
+      server.beforeTime = undefined
       server.streams.clear()
       server.subscribers.clear()
     },

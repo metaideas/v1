@@ -182,6 +182,33 @@ describe("createRealtimeHandler", () => {
     expect(expiredEvents.map(({ type }) => type)).toEqual(["reset"])
   })
 
+  test("resets a cursor from a channel that received an event while it was found empty", async () => {
+    const { subscribe } = setup()
+    const startedAt = Date.now()
+    redis.server.now = startedAt
+    redis.server.beforeTime = () => {
+      redis.server.beforeTime = undefined
+      redis.append(REDIS_KEY, "greeted", greeting("between"))
+      redis.server.now = startedAt + 100
+    }
+    const first = await subscribe([{ channel: "demo", params: { userId: "user_1" } }])
+    const [ready] = await first.waitFor(1)
+    first.controller.abort()
+
+    redis.server.streams.clear()
+    redis.server.now = startedAt + ms("1d") + 50
+    const stream = await subscribe([
+      {
+        channel: "demo",
+        cursor: z.parse(CursorData, ready?.data).cursor,
+        params: { userId: "user_1" },
+      },
+    ])
+    const events = await stream.waitFor(1)
+
+    expect(events.map(({ type }) => type)).toEqual(["reset"])
+  })
+
   test("denies a subscription without closing the stream", async () => {
     const { subscribe } = setup({ isAllowed: false })
 
@@ -230,5 +257,28 @@ describe("createRealtimeHandler", () => {
     await stream.closed
 
     expect(await channel.emit("greeted", { message: "Hi" })).toEqual({ cursor: expect.any(String) })
+  })
+
+  test("refuses a stream whose authorization finishes after close", async () => {
+    const realtime = createRealtime({ url: "redis://localhost:6379" })
+    const authorization = Promise.withResolvers<boolean>()
+    const handler = createRealtimeHandler({
+      authorize: { demo: () => authorization.promise },
+      realtime,
+    })
+    const server = Bun.serve({ fetch: (request) => handler.handle(request), port: 0 })
+    const pending = fetch(server.url, {
+      body: JSON.stringify({ subscriptions: [{ channel: "demo", params: { userId: "user_1" } }] }),
+      method: "POST",
+    })
+    await Bun.sleep(20)
+
+    const stopped = server.stop()
+    handler.close()
+    authorization.resolve(true)
+    const response = await pending
+    await stopped
+
+    expect(response.status).toBe(503)
   })
 })
