@@ -130,4 +130,31 @@ describe("createConnection", () => {
     expect(received).toEqual(["3-0"])
     expect(server.requests).toHaveLength(1)
   })
+
+  test("opens no stream when the last subscriber leaves while the token is pending", async () => {
+    const server = createServer()
+    const token = Promise.withResolvers<string>()
+    let tokenRequests = 0
+    const connection = createConnection({
+      endpoint: "http://localhost/realtime",
+      fetch: server.fetch,
+      getToken: () => {
+        tokenRequests += 1
+        return token.promise
+      },
+    })
+
+    const unsubscribe = connection.subscribe(
+      "demo",
+      { userId: "user_1" },
+      { onMessage: (message) => message }
+    )
+    await waitUntil(() => tokenRequests === 1)
+    unsubscribe()
+    await Bun.sleep(50)
+    token.resolve("token")
+    await Bun.sleep(20)
+
+    expect(server.requests).toHaveLength(0)
+  })
 })

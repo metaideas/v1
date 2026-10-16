@@ -208,11 +208,15 @@ export function createConnection({
         params,
       })),
     }
+    const token = await getToken()
+    // A connection that ended while it waited for the token must not open a stream, because no
+    // transport is required to reject a signal that aborted before the request.
+    controller.signal.throwIfAborted()
     const response = await fetch(endpoint, {
       body: JSON.stringify(body),
       headers: {
         accept: "text/event-stream",
-        authorization: `Bearer ${await getToken()}`,
+        authorization: `Bearer ${token}`,
         "content-type": "application/json",
       },
       method: "POST",
