@@ -24,7 +24,7 @@ async function hasExport(path: string, name: string) {
   const file = Bun.file(path)
   return (
     (await file.exists())
-    && new RegExp(`^export (?:const|function) ${name}\\b`, "m").test(await file.text())
+    && new RegExp(`^export (?:async )?(?:const|function) ${name}\\b`, "m").test(await file.text())
   )
 }
 
@@ -40,6 +40,31 @@ const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
       return "Realtime streams from apps/api, and apps/app signs in against its own backend until PUBLIC_API_URL points at the API. Connect apps/app to apps/api with the connect-backend skill first."
     },
     templateFile: "templates/realtime/app-realtime.ts.hbs",
+  },
+  desktop: {
+    check: async (appPath) => {
+      const isConnected =
+        (await hasExport(`${appPath}/src/shared/auth.ts`, "authContract"))
+        && (await hasExport(`${appPath}/src/shared/api-proxy.ts`, "shellFetch"))
+        && (await hasExport(`${appPath}/src/shared/utils.ts`, "buildApiUrl"))
+
+      if (isConnected) return
+
+      return "Realtime streams from apps/api through the shell's API proxy and needs a session. Connect apps/desktop to apps/api with auth using the connect-backend skill first."
+    },
+    templateFile: "templates/realtime/desktop-realtime.ts.hbs",
+  },
+  extension: {
+    check: async (appPath) => {
+      const isConnected =
+        (await hasExport(`${appPath}/src/shared/auth.ts`, "auth"))
+        && (await hasExport(`${appPath}/src/shared/utils.ts`, "buildApiUrl"))
+
+      if (isConnected) return
+
+      return "Realtime streams from apps/api and needs a session. Connect apps/extension to apps/api with auth using the connect-backend skill first."
+    },
+    templateFile: "templates/realtime/extension-realtime.ts.hbs",
   },
   mobile: {
     check: async (appPath) => {
@@ -105,7 +130,8 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
         },
         () =>
           "Subscribe with `useRealtime` from #shared/realtime.ts, passing `enabled` only once a session loads. `POST /v1/demo/realtime` on the API sends a `greeted` event to the signed-in user's `demo` channel.",
-        () => "Run `bun run fix`, then `bun template doctor`.",
+        () =>
+          "Run `bun run fix`, then `bun template doctor` once a component calls `useRealtime`; until then, the doctor reports it as unused.",
       ]
     },
     description: "Add the realtime client to an application workspace",
@@ -114,7 +140,7 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
         choices:
           apps.length > 0
             ? apps.map((app) => ({ name: app, value: app }))
-            : [{ name: "No supported apps found (app, mobile)", value: "" }],
+            : [{ name: "No supported apps found (app, desktop, extension, mobile)", value: "" }],
         message: "Which app should subscribe to realtime channels?",
         name: "app",
         type: "list",

@@ -247,7 +247,7 @@ export default factory
 
 The handler takes a web `Request` and returns a `Response`, so it runs on Bun and Node. An open stream never finishes on its own, so on shutdown `apps/api` calls `realtimeHandler.close()` after the server stops taking requests, and the server can finish the rest. A denied subscription gets a `denied` message, and the rest of the stream continues. Each API process shares one Redis subscriber across its open streams, and Redis delivers each event to every API process, so the API scales out without sticky sessions.
 
-Clients subscribe with `useRealtime`. Add the client to `apps/app` or `apps/mobile` with the `realtime` template recipe, which creates `src/shared/realtime.ts`. See [Project generators](./generators.md#add-a-realtime-client). Every hook in the app shares one stream:
+Clients subscribe with `useRealtime`. Add the client to `apps/app`, `apps/desktop`, `apps/extension`, or `apps/mobile` with the `realtime` template recipe, which creates `src/shared/realtime.ts`. See [Project generators](./generators.md#add-a-realtime-client). Every hook in the app shares one stream:
 
 ```tsx
 import { useRealtime } from "#shared/realtime.ts"

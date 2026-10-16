@@ -23,7 +23,7 @@ export const PostHogAnswersSchema = z.object({
 })
 
 export const RealtimeAnswersSchema = z.object({
-  app: z.enum(["app", "mobile"]),
+  app: z.enum(["app", "desktop", "extension", "mobile"]),
 })
 
 export const SentryAnswersSchema = z.object({
