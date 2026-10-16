@@ -1,9 +1,16 @@
 import type { TRPCRouter } from "{{apiPackage}}/client"
-import { useQueryClient } from "@tanstack/react-query"
-import { createTRPCClient, httpBatchStreamLink, loggerLink } from "@trpc/client"
-import { createTRPCContext } from "@trpc/tanstack-react-query"
 import type { PropsWithChildren } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import {
+  createTRPCClient,
+  httpBatchLink,
+  httpBatchStreamLink,
+  loggerLink,
+  splitLink,
+} from "@trpc/client"
+import { createTRPCContext } from "@trpc/tanstack-react-query"
 import superjson from "superjson"
+import { shellFetch } from "#shared/api-proxy.ts"
 import { buildApiUrl } from "#shared/utils.ts"
 
 export const {
@@ -12,20 +19,20 @@ export const {
   TRPCProvider: TRPCProviderBase,
 } = createTRPCContext<TRPCRouter>()
 
+const linkOptions = { fetch: shellFetch, transformer: superjson, url: buildApiUrl("/trpc") }
+
 export const trpcClient = createTRPCClient<TRPCRouter>({
   links: [
     loggerLink({
       colorMode: "ansi",
       enabled: () => import.meta.env.DEV,
     }),
-    httpBatchStreamLink({
-      fetch: (requestUrl, options) =>
-        fetch(requestUrl, {
-          ...options,
-          credentials: "include",
-        }),
-      transformer: superjson,
-      url: buildApiUrl("/trpc"),
+    // Batches calls into one response by default. A call streams each result as it resolves when
+    // it opts in with `trpc: { context: { stream: true } }`.
+    splitLink({
+      condition: (operation) => operation.context.stream === true,
+      false: httpBatchLink(linkOptions),
+      true: httpBatchStreamLink(linkOptions),
     }),
   ],
 })

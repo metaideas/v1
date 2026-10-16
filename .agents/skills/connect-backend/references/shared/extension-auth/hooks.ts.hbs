@@ -1,0 +1,24 @@
+import * as z from "{{utilsPackage}}/schema/mini"
+import { useState } from "react"
+import { SignInSchema } from "#features/auth/schemas.ts"
+import { auth, useSession } from "#shared/auth.ts"
+
+export function useEmailSignIn() {
+  const [error, setError] = useState<string>()
+
+  async function submit(form: FormData) {
+    setError(undefined)
+    const result = await auth.signIn.email(z.parse(SignInSchema, Object.fromEntries(form)))
+    if (result.error) setError(result.error.message)
+  }
+
+  return { error, submit }
+}
+
+function signOut() {
+  void auth.signOut()
+}
+
+export function useAccount() {
+  return { session: useSession(), signOut }
+}

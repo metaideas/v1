@@ -1,0 +1,54 @@
+import type { TRPCRouter } from "{{apiPackage}}/client"
+import type { PropsWithChildren } from "react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import {
+  createTRPCClient,
+  httpBatchLink,
+  httpBatchStreamLink,
+  loggerLink,
+  splitLink,
+} from "@trpc/client"
+import { createTRPCContext } from "@trpc/tanstack-react-query"
+import superjson from "superjson"
+import { buildApiUrl } from "#shared/utils.ts"
+
+export const {
+  useTRPC,
+  useTRPCClient,
+  TRPCProvider: TRPCProviderBase,
+} = createTRPCContext<TRPCRouter>()
+
+const linkOptions = {
+  // The extension has permission to reach the API, so the browser sends the session cookie.
+  fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+    fetch(input, { ...init, credentials: "include" }),
+  transformer: superjson,
+  url: buildApiUrl("/trpc"),
+}
+
+export const trpcClient = createTRPCClient<TRPCRouter>({
+  links: [
+    loggerLink({
+      enabled: () => import.meta.env.DEV,
+    }),
+    // Batches calls into one response by default. A call streams each result as it resolves when
+    // it opts in with `trpc: { context: { stream: true } }`.
+    splitLink({
+      condition: (operation) => operation.context.stream === true,
+      false: httpBatchLink(linkOptions),
+      true: httpBatchStreamLink(linkOptions),
+    }),
+  ],
+})
+
+const queryClient = new QueryClient()
+
+export function TRPCProvider({ children }: PropsWithChildren) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TRPCProviderBase queryClient={queryClient} trpcClient={trpcClient}>
+        {children}
+      </TRPCProviderBase>
+    </QueryClientProvider>
+  )
+}

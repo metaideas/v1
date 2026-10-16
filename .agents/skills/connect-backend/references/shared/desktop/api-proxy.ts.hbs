@@ -1,0 +1,102 @@
+import { channel, createClient, defineContract } from "typedport"
+import * as z from "zod"
+import { STREAM_CHANNEL_PREFIX, transport } from "#shared/bridge.ts"
+
+// A response to these statuses cannot have a body.
+const NULL_BODY_STATUSES = new Set([101, 204, 205, 304])
+
+/**
+ * The shell sends each response body to the renderer as these messages, on a channel named after
+ * the request.
+ */
+export const StreamMessageSchema = z.discriminatedUnion("type", [
+  z.object({ chunk: z.instanceof(Uint8Array<ArrayBufferLike>), type: z.literal("chunk") }),
+  z.object({ type: z.literal("end") }),
+  z.object({ message: z.string(), type: z.literal("error") }),
+])
+
+export type StreamMessage = z.infer<typeof StreamMessageSchema>
+
+export const apiProxyContract = defineContract({
+  api: {
+    abort: channel({ input: z.object({ id: z.string() }), output: z.void() }),
+    fetch: channel({
+      input: z.object({
+        body: z.string().optional(),
+        headers: z.record(z.string(), z.string()),
+        id: z.string(),
+        method: z.string(),
+        url: z.string(),
+      }),
+      output: z.object({
+        headers: z.array(z.tuple([z.string(), z.string()])),
+        status: z.number(),
+        statusText: z.string(),
+      }),
+    }),
+  },
+})
+
+export function getStreamChannel(id: string) {
+  return `${STREAM_CHANNEL_PREFIX}${id}`
+}
+
+const shell = createClient(apiProxyContract, transport)
+
+/**
+ * A `fetch` that sends API requests through the shell, which adds the session and streams the
+ * response back. Pass it to API clients in the renderer, which cannot read the session itself.
+ * Request bodies travel as text.
+ */
+export async function shellFetch(input: RequestInfo | URL, init?: RequestInit) {
+  const request = new Request(input, init)
+  const id = crypto.randomUUID()
+  let stream: ReadableStreamDefaultController<Uint8Array> | undefined
+
+  function handleAbort() {
+    void shell.api.abort({ id })
+  }
+
+  // Listening before the request starts keeps the first chunks from arriving with no listener.
+  const stopListening = globalThis.bridge.listen(getStreamChannel(id), (message) => {
+    const parsed = StreamMessageSchema.safeParse(message)
+    if (!parsed.success) return
+
+    if (parsed.data.type === "chunk") {
+      stream?.enqueue(parsed.data.chunk)
+      return
+    }
+
+    stopListening()
+    request.signal.removeEventListener("abort", handleAbort)
+    if (parsed.data.type === "end") stream?.close()
+    else stream?.error(new Error(parsed.data.message))
+  })
+
+  const body = new ReadableStream<Uint8Array>({
+    cancel() {
+      stopListening()
+      handleAbort()
+    },
+    start(controller) {
+      stream = controller
+    },
+  })
+
+  request.signal.addEventListener("abort", handleAbort)
+
+  try {
+    const head = await shell.api.fetch({
+      body: request.body ? await request.text() : undefined,
+      headers: Object.fromEntries(request.headers),
+      id,
+      method: request.method,
+      url: request.url,
+    })
+
+    return new Response(NULL_BODY_STATUSES.has(head.status) ? null : body, head)
+  } catch (error) {
+    stopListening()
+    throw error
+  }
+}

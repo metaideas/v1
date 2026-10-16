@@ -1,0 +1,8 @@
+import { createUrlBuilder } from "{{utilsPackage}}/url"
+import { ENV } from "#shared/env.generated.ts"
+
+function getProtocol(url: string) {
+  return new URL(url).protocol === "http:" ? "http" : "https"
+}
+
+export const buildApiUrl = createUrlBuilder(ENV.PUBLIC_API_URL, getProtocol(ENV.PUBLIC_API_URL))

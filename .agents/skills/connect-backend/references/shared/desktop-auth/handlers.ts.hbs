@@ -1,0 +1,28 @@
+import { AuthFault } from "#features/auth/errors.ts"
+import { SessionUserSchema, authContract } from "#features/auth/schemas.ts"
+import { createShellRouter } from "#shared/bridge.ts"
+import { auth } from "#shared/shell/auth.ts"
+
+export const authRouter = createShellRouter(authContract, {
+  "auth.session": async () => {
+    const { data } = await auth.getSession()
+    return data ? SessionUserSchema.parse(data.user) : null
+  },
+  "auth.signIn": async (input) => {
+    const { data, error } = await auth.signIn.email(input)
+    if (!data) {
+      throw AuthFault.create("SignInError").withMessage(error.message ?? "Could not sign in")
+    }
+
+    return SessionUserSchema.parse(data.user)
+  },
+  "auth.signOut": async () => {
+    await auth.signOut()
+  },
+  "auth.token": async () => {
+    const { data } = await auth.token()
+    if (!data) throw AuthFault.create("SignedOutError").withMessage("Sign in first")
+
+    return data.token
+  },
+})

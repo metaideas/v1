@@ -1,0 +1,5 @@
+import { createClient } from "{{apiPackage}}/client"
+import { shellFetch } from "#shared/api-proxy.ts"
+import { buildApiUrl } from "#shared/utils.ts"
+
+export const api = createClient(buildApiUrl("/"), { fetch: shellFetch })
