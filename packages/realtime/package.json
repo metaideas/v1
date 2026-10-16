@@ -1,0 +1,35 @@
+{
+  "name": "@v1/realtime",
+  "private": true,
+  "description": "Typed realtime channels on Redis, streamed to clients over server-sent events",
+  "license": "MIT",
+  "type": "module",
+  "imports": {
+    "#*": "./src/*"
+  },
+  "exports": {
+    "./react": "./src/react.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "bump:deps": "bun update --interactive",
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
+  },
+  "dependencies": {
+    "@v1/core": "workspace:*",
+    "@v1/utils": "workspace:*",
+    "eventsource-parser": "4.1.2",
+    "humanspan": "0.3.0",
+    "ioredis": "6.0.0",
+    "tryharder": "0.4.0"
+  },
+  "devDependencies": {
+    "@tooling/tsconfig": "workspace:*",
+    "@types/bun": "1.4.2",
+    "@types/react": "19.2.4",
+    "typescript": "7.0.2"
+  },
+  "peerDependencies": {
+    "react": "*"
+  }
+}

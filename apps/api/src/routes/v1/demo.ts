@@ -23,3 +23,14 @@ export default factory
 
     return c.json({ id: result.id }, 202)
   })
+  .post("/realtime", requireSession, async (c) => {
+    const result = await c.var.realtime
+      .channel("demo", { userId: c.var.session.user.id })
+      .emit("greeted", { message: `Hello, ${c.var.session.user.name}` })
+
+    if (result instanceof Error) {
+      throw new HTTPException(503, { message: "The event could not be published" })
+    }
+
+    return c.json({ cursor: result.cursor }, 202)
+  })

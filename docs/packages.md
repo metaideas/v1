@@ -1,6 +1,6 @@
 ---
 title: Package Guidance
-description: Understand the shared package workspaces, hosted backend package, key-value storage, job, and workflow conventions in v1.
+description: Understand the shared package workspaces, hosted backend package, key-value storage, job, realtime, and workflow conventions in v1.
 ---
 
 Shared libraries and hosted backends are in `packages/`. Application workspaces consume them through workspace dependencies. Package names use the configured scope of the project.
@@ -192,6 +192,84 @@ Run the worker under a supervisor that restarts it when it exits, such as a cont
 To inspect, retry, and remove jobs from a browser, add the `bull-board` template recipe. See [Project generators](./generators.md#add-a-jobs-dashboard).
 
 Jobs need Redis with `maxmemory-policy noeviction`, so Redis never drops a queued job to free memory. `JOBS_REDIS_URL` is separate from `REDIS_URL` so a project can point key-value storage at a cache that evicts keys. Locally, both point at Redis from Docker Compose, which runs with `noeviction`.
+
+## Realtime
+
+`packages/realtime` pushes typed events from the server to clients as they happen, such as a new notification or a finished upload. Any server process emits an event to a channel, and every client subscribed to that channel receives it. It runs on Redis and streams to clients over server-sent events, so it works on the web, in Electron, in extensions, and in Expo apps. Convex projects already get live queries from Convex and do not need it.
+
+Each channel lives in its own file under `src/channels/`. It declares the params that address one instance of it and the schema of each event it carries. An event's name is its key in `events`. `history` sets how many recent events Redis keeps for clients that reconnect, and defaults to 100 events for a day:
+
+```ts
+// src/channels/notifications.ts
+export const notifications = defineChannel({
+  params: z.object({ userId: z.string() }),
+  events: {
+    created: z.object({ id: z.string(), title: z.string() }),
+    read: z.object({ id: z.string() }),
+  },
+  history: { expireAfter: "1d", maxLength: 100 },
+})
+```
+
+Write channel schemas with `@v1/utils/schema/mini`, because clients import them to decode events. An event schema can be a codec, such as an ISO string that decodes to a `Date`: the server encodes the data before it publishes it, and each client decodes it. `src/channels/catalog.ts` lists every channel, and a channel's name is its key there:
+
+```ts
+export const channels = { demo, notifications }
+```
+
+Any server-side application workspace can emit. Create one realtime service in its composition root and close it on shutdown:
+
+```ts
+import { createRealtime } from "@v1/realtime/server"
+
+export const realtime = createRealtime({ logger: log, url: ENV.REALTIME_REDIS_URL })
+
+await c.var.realtime.channel("notifications", { userId }).emit("created", { id, title })
+```
+
+`emit` type-checks the channel, its params, the event name, and its data, and validates them before they reach Redis. It appends the event to the channel's Redis stream and publishes it in one atomic step, so subscribers receive events in the order they were emitted. A failed emit comes back as a `RealtimePayloadError` or `PublishEventError` value instead of throwing. A process that only emits, such as `apps/worker`, never opens a subscriber connection.
+
+`apps/api` streams events to clients from `POST /realtime`. The handler takes an authorization rule for every channel, so adding a channel fails type checking until the handler decides who can subscribe:
+
+```ts
+export const realtimeHandler = createRealtimeHandler({
+  authorize: {
+    demo: ({ params }) => params.userId === context<AccessTokenAppContext>().var.userId,
+    notifications: ({ params }) => params.userId === context<AccessTokenAppContext>().var.userId,
+  },
+  realtime,
+})
+
+export default factory
+  .createApp()
+  .post("/", requireAccessToken, (c) => realtimeHandler.handle(c.req.raw))
+```
+
+The handler takes a web `Request` and returns a `Response`, so it runs on Bun and Node. An open stream never finishes on its own, so on shutdown `apps/api` calls `realtimeHandler.close()` after the server stops taking requests, and the server can finish the rest. A denied subscription gets a `denied` message, and the rest of the stream continues. Each API process shares one Redis subscriber across its open streams, and Redis delivers each event to every API process, so the API scales out without sticky sessions.
+
+Clients subscribe with `useRealtime`. Add the client to `apps/app` or `apps/mobile` with the `realtime` template recipe, which creates `src/shared/realtime.ts`. See [Project generators](./generators.md#add-a-realtime-client). Every hook in the app shares one stream:
+
+```tsx
+import { useRealtime } from "#shared/realtime.ts"
+
+const { status } = useRealtime({
+  channel: "notifications",
+  params: { userId },
+  events: ["created"],
+  onData: ({ data }) => {
+    toast.add({ title: data.title })
+  },
+  onReset: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+})
+```
+
+`events` accepts only the channel's event names and defaults to all of them. `onData` receives only the listed events, with `data` narrowed by `event`. `status` is `connecting`, `connected`, `disconnected`, or `denied`. Pass `enabled: false` to subscribe later, such as once the user signs in.
+
+The client remembers the last event it received on each channel. After a dropped connection, it reconnects with backoff, and the server replays the events it missed from the channel's history, so each event arrives once and in order. When the history no longer holds those events, `onReset` runs so the app can refetch. The client reconnects at once when the browser goes back online, the tab becomes visible, or a mobile app returns to the foreground. On mobile, it streams with `fetch` from `expo/fetch`, because the `fetch` of React Native cannot stream a response.
+
+Inside the package, imports flow one way: `channels/` declares what can be sent, `protocol/` how it travels, and `server/` and `client/` each build on both without importing each other. The `server` and `react` entry points compose them. Lint rules in `oxlint.config.ts` reject an import against that direction.
+
+Realtime has its own `REALTIME_REDIS_URL`, so a project can move channel history to a separate Redis. Locally, it points at Redis from Docker Compose.
 
 ## Workflows
 

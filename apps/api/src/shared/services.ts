@@ -4,6 +4,7 @@ import { createDatabase } from "@v1/database/client"
 import { createMailer } from "@v1/email/mailer"
 import { selectTransport } from "@v1/email/transports"
 import { createDispatcher } from "@v1/jobs/dispatcher"
+import { createRealtime } from "@v1/realtime/server"
 import { createUploadStorage, createS3Adapter } from "@v1/storage/server"
 import { createWorkflows } from "@v1/workflows/client"
 import { createStorage } from "unstorage"
@@ -18,6 +19,8 @@ export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 export const kv = createStorage({ driver: redisDriver({ url: ENV.REDIS_URL }) })
 
 export const dispatcher = createDispatcher({ logger: log, url: ENV.JOBS_REDIS_URL })
+
+export const realtime = createRealtime({ logger: log, url: ENV.REALTIME_REDIS_URL })
 
 export const mailer = createMailer({
   from: ENV.EMAIL_FROM,

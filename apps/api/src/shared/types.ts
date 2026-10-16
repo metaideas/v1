@@ -1,5 +1,6 @@
 import type { Database } from "@v1/database/client"
 import type { Dispatcher } from "@v1/jobs/dispatcher"
+import type { Realtime } from "@v1/realtime/server"
 import type { UploadStorage } from "@v1/storage/server"
 import type { DeepMerge } from "@v1/utils/type"
 import type { Workflows } from "@v1/workflows/client"
@@ -17,6 +18,7 @@ export type AppContext = DeepMerge<
       dispatcher: Dispatcher
       kv: Storage
       language: Locale
+      realtime: Realtime
       storage: UploadStorage
       workflows: Workflows
     }

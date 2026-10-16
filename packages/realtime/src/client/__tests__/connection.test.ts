@@ -1,0 +1,179 @@
+import { describe, expect, test } from "bun:test"
+import * as z from "@v1/utils/schema/mini"
+import { waitUntil } from "#__tests__/wait-until.ts"
+import { createConnection } from "#client/connection.ts"
+import { type SubscribeRequest, SubscribeRequestSchema } from "#protocol/messages.ts"
+
+type Request = {
+  body: SubscribeRequest
+  close: () => void
+  send: (type: string, data: Record<string, unknown>) => void
+}
+
+function createServer() {
+  const requests: Request[] = []
+  const encoder = new TextEncoder()
+
+  function fetch(_url: string, init: { body: string; signal: AbortSignal }) {
+    let stream: ReadableStreamDefaultController<Uint8Array> | undefined
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        stream = controller
+      },
+    })
+    init.signal.addEventListener("abort", () => stream?.error(init.signal.reason))
+    requests.push({
+      body: z.parse(SubscribeRequestSchema, JSON.parse(init.body)),
+      close: () => stream?.close(),
+      send: (type, data) => {
+        stream?.enqueue(encoder.encode(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`))
+      },
+    })
+
+    return Promise.resolve({ body, ok: true, status: 200 })
+  }
+
+  return { fetch, requests }
+}
+
+const KEY = 'demo:{"userId":"user_1"}'
+
+describe("createConnection", () => {
+  test("reconnects from the cursor its channel reached, skipping events it already delivered", async () => {
+    const server = createServer()
+    const connection = createConnection({
+      endpoint: "http://localhost/realtime",
+      fetch: server.fetch,
+      getToken: () => Promise.resolve("token"),
+    })
+    const received: string[] = []
+
+    connection.subscribe(
+      "demo",
+      { userId: "user_1" },
+      {
+        onMessage: ({ cursor }) => received.push(cursor),
+      }
+    )
+    await waitUntil(() => server.requests.length === 1)
+    server.requests[0]?.send("message", {
+      cursor: "3-0",
+      data: { message: "Hi" },
+      event: "greeted",
+      key: KEY,
+    })
+    server.requests[0]?.close()
+    await waitUntil(() => server.requests.length === 2)
+    server.requests[1]?.send("message", {
+      cursor: "3-0",
+      data: { message: "Hi" },
+      event: "greeted",
+      key: KEY,
+    })
+    server.requests[1]?.send("message", {
+      cursor: "4-0",
+      data: { message: "Hey" },
+      event: "greeted",
+      key: KEY,
+    })
+    await waitUntil(() => received.length === 2)
+
+    expect(server.requests.map(({ body }) => body.subscriptions[0]?.cursor)).toEqual([
+      undefined,
+      "3-0",
+    ])
+    expect(received).toEqual(["3-0", "4-0"])
+  })
+
+  test("delivers events and resets to every listener when another listener throws", async () => {
+    const server = createServer()
+    const connection = createConnection({
+      endpoint: "http://localhost/realtime",
+      fetch: server.fetch,
+      getToken: () => Promise.resolve("token"),
+    })
+    const received: string[] = []
+    let resets = 0
+
+    connection.subscribe(
+      "demo",
+      { userId: "user_1" },
+      {
+        onMessage: () => {
+          throw new Error("The application failed")
+        },
+        onReset: () => {
+          throw new Error("The application failed")
+        },
+      }
+    )
+    connection.subscribe(
+      "demo",
+      { userId: "user_1" },
+      {
+        onMessage: ({ cursor }) => received.push(cursor),
+        onReset: () => {
+          resets += 1
+        },
+      }
+    )
+    await waitUntil(() => server.requests.length === 1)
+    server.requests[0]?.send("message", {
+      cursor: "3-0",
+      data: { message: "Hi" },
+      event: "greeted",
+      key: KEY,
+    })
+    server.requests[0]?.send("reset", { cursor: "5-0", key: KEY })
+    await waitUntil(() => resets === 1)
+
+    expect(received).toEqual(["3-0"])
+    expect(server.requests).toHaveLength(1)
+  })
+
+  test("opens no stream when the last subscriber leaves while the token is pending", async () => {
+    const server = createServer()
+    const token = Promise.withResolvers<string>()
+    let tokenRequests = 0
+    const connection = createConnection({
+      endpoint: "http://localhost/realtime",
+      fetch: server.fetch,
+      getToken: () => {
+        tokenRequests += 1
+        return token.promise
+      },
+    })
+
+    const unsubscribe = connection.subscribe(
+      "demo",
+      { userId: "user_1" },
+      { onMessage: (message) => message }
+    )
+    await waitUntil(() => tokenRequests === 1)
+    unsubscribe()
+    await Bun.sleep(50)
+    token.resolve("token")
+    await Bun.sleep(20)
+
+    expect(server.requests).toHaveLength(0)
+  })
+
+  test("connects with an AbortSignal that lacks throwIfAborted, as React Native's does", async () => {
+    const server = createServer()
+    const descriptor = Object.getOwnPropertyDescriptor(AbortSignal.prototype, "throwIfAborted")
+    Reflect.deleteProperty(AbortSignal.prototype, "throwIfAborted")
+
+    try {
+      const connection = createConnection({
+        endpoint: "http://localhost/realtime",
+        fetch: server.fetch,
+        getToken: () => Promise.resolve("token"),
+      })
+      connection.subscribe("demo", { userId: "user_1" }, { onMessage: (message) => message })
+
+      await waitUntil(() => server.requests.length === 1)
+    } finally {
+      if (descriptor) Object.defineProperty(AbortSignal.prototype, "throwIfAborted", descriptor)
+    }
+  })
+})
