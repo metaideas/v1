@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - main
 
@@ -14,31 +15,124 @@ concurrency:
 
 jobs:
   environment:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      # The job always reports a result. A paths filter on this workflow would leave the required unit check pending.
+      - name: Detect client, env, and build changes
+        id: scan
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "Running the client build scan for a push to main."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "${BASE_REF}" ]; then
+            echo "Missing pull request base ref. Refusing to skip the scan." >&2
+            exit 1
+          fi
+
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          files="$(git diff --name-only --no-renames "origin/${BASE_REF}" HEAD)"
+
+          # Fail closed: unknown paths still scan. Skip only files that cannot change a client bundle or env contract.
+          is_ignorable() {
+            case "$1" in
+              .github/* | .agents/* | .claude/* | .zed/*)
+                return 0
+                ;;
+              docs/* | scripts/* | infra/* | turbo/generators/* | tooling/linting/*)
+                return 0
+                ;;
+              *.md)
+                case "$1" in
+                  apps/web/src/* | apps/docs/src/*) return 1 ;;
+                  *) return 0 ;;
+                esac
+                ;;
+              .gitignore | */.gitignore | .gitattributes | .editorconfig | oxlint.config.ts | oxfmt.config.ts | knip.config.ts)
+                return 0
+                ;;
+              apps/api/* | apps/worker/*)
+                case "$1" in
+                  */.env | */.env.* | .env | .env.* | */env/* | env/*) return 1 ;;
+                  *) return 0 ;;
+                esac
+                ;;
+              *)
+                return 1
+                ;;
+            esac
+          }
+
+          echo "Changed files:"
+          printf '%s\n' "$files"
+
+          relevant=false
+          while IFS= read -r file; do
+            if [ -z "$file" ]; then
+              continue
+            fi
+            if ! is_ignorable "$file"; then
+              echo "Running the client build scan because ${file} changed."
+              relevant=true
+              break
+            fi
+          done <<< "$files"
+
+          if [ "$relevant" = true ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No client app, env, or build changes. Skipping the client build scan."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup Node.js
+        if: ${{ steps.scan.outputs.run == 'true' }}
         uses: actions/setup-node@v7
         with:
           node-version-file: ".node-version"
 
       - name: Setup Bun
+        if: ${{ steps.scan.outputs.run == 'true' }}
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.2"
 
+      - name: Cache dependencies
+        if: ${{ steps.scan.outputs.run == 'true' }}
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
       - name: Install dependencies
+        if: ${{ steps.scan.outputs.run == 'true' }}
         run: bun install --frozen-lockfile
 
       - name: Scan client artifacts for sensitive values
+        if: ${{ steps.scan.outputs.run == 'true' }}
         run: bun run env:scan
         env:
           VARLOCK_ENV: development
 
   unit:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
 
     steps:
@@ -54,6 +148,16 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.2"
+
+      - name: Cache dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
