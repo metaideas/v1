@@ -1,7 +1,12 @@
 import { useEffect, useEffectEvent, useSyncExternalStore } from "react"
-import type { ChannelName, ChannelParamsInput, EventName, RealtimeMessage } from "#catalog.ts"
-import type { Connection } from "#connection.ts"
-import { addressChannel } from "#protocol.ts"
+import type {
+  ChannelName,
+  ChannelParamsInput,
+  EventName,
+  RealtimeMessage,
+} from "#channels/catalog.ts"
+import type { Connection } from "#client/connection.ts"
+import { addressChannel } from "#protocol/address.ts"
 
 export type UseRealtimeOptions<Channel extends ChannelName, Event extends EventName<Channel>> = {
   channel: Channel

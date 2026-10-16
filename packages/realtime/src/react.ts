@@ -1,6 +1,9 @@
-import type { ChannelName, EventName } from "#catalog.ts"
-import { type RealtimeClientOptions, createConnection } from "#connection.ts"
-import { type UseRealtimeOptions, useRealtime as useConnectedRealtime } from "#use-realtime.ts"
+import type { ChannelName, EventName } from "#channels/catalog.ts"
+import { type RealtimeClientOptions, createConnection } from "#client/connection.ts"
+import {
+  type UseRealtimeOptions,
+  useRealtime as useConnectedRealtime,
+} from "#client/use-realtime.ts"
 
 /**
  * Builds the realtime hook for an app. An application calls it once in a `shared` module and
@@ -23,5 +26,5 @@ export function createRealtimeClient(options: RealtimeClientOptions) {
   return { useRealtime }
 }
 
-export type { ChannelName, EventName, RealtimeMessage } from "#catalog.ts"
-export type { ConnectionStatus } from "#connection.ts"
+export type { ChannelName, EventName, RealtimeMessage } from "#channels/catalog.ts"
+export type { ConnectionStatus } from "#client/connection.ts"

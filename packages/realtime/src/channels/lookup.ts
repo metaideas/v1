@@ -8,7 +8,7 @@ import {
   type EventData,
   type EventName,
   channels,
-} from "#catalog.ts"
+} from "#channels/catalog.ts"
 
 // Indexing this mapped view with generic names keeps a schema's types tied to its channel and
 // event, which indexing `channels` directly does not.
@@ -25,12 +25,21 @@ const catalog: {
   }
 } = channels
 
+const DEFAULT_HISTORY = { expireAfter: "1d", maxLength: 100 } as const
+
 export function isChannelName(name: string): name is ChannelName {
   return Object.hasOwn(channels, name)
 }
 
 export function getChannel<Channel extends ChannelName>(channel: Channel) {
   return catalog[channel]
+}
+
+/**
+ * How much of the channel Redis keeps, which the channel's definition can override.
+ */
+export function getHistory(channel: ChannelName) {
+  return catalog[channel].history ?? DEFAULT_HISTORY
 }
 
 export function getEvent<Channel extends ChannelName, Event extends EventName<Channel>>(

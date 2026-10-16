@@ -211,7 +211,7 @@ export const notifications = defineChannel({
 })
 ```
 
-Write channel schemas with `@v1/utils/schema/mini`, because clients import them to decode events. An event schema can be a codec, such as an ISO string that decodes to a `Date`: the server encodes the data before it publishes it, and each client decodes it. `src/catalog.ts` lists every channel, and a channel's name is its key there:
+Write channel schemas with `@v1/utils/schema/mini`, because clients import them to decode events. An event schema can be a codec, such as an ISO string that decodes to a `Date`: the server encodes the data before it publishes it, and each client decodes it. `src/channels/catalog.ts` lists every channel, and a channel's name is its key there:
 
 ```ts
 export const channels = { demo, notifications }
@@ -266,6 +266,8 @@ const { status } = useRealtime({
 `events` accepts only the channel's event names and defaults to all of them. `onData` receives only the listed events, with `data` narrowed by `event`. `status` is `connecting`, `connected`, `disconnected`, or `denied`. Pass `enabled: false` to subscribe later, such as once the user signs in.
 
 The client remembers the last event it received on each channel. After a dropped connection, it reconnects with backoff, and the server replays the events it missed from the channel's history, so each event arrives once and in order. When the history no longer holds those events, `onReset` runs so the app can refetch. The client reconnects at once when the browser goes back online, the tab becomes visible, or a mobile app returns to the foreground. On mobile, it streams with `fetch` from `expo/fetch`, because the `fetch` of React Native cannot stream a response.
+
+Inside the package, imports flow one way: `channels/` declares what can be sent, `protocol/` how it travels, and `server/` and `client/` each build on both without importing each other. The `server` and `react` entry points compose them. Lint rules in `oxlint.config.ts` reject an import against that direction.
 
 Realtime has its own `REALTIME_REDIS_URL`, so a project can move channel history to a separate Redis. Locally, it points at Redis from Docker Compose.
 

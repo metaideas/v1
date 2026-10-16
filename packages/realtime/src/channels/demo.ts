@@ -1,5 +1,5 @@
 import * as z from "@v1/utils/schema/mini"
-import { defineChannel } from "#define.ts"
+import { defineChannel } from "#channels/define.ts"
 
 export const demo = defineChannel({
   events: {

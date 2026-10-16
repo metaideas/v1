@@ -2,15 +2,14 @@ import type { Logger } from "@v1/core/services/logging"
 import * as z from "@v1/utils/schema/mini"
 import { type EventSourceMessage, createParser } from "eventsource-parser"
 import { ms } from "humanspan"
-import type { ChannelName, ChannelParamsInput, RealtimeMessage } from "#catalog.ts"
-import { getEvent, isEventName } from "#lookup.ts"
+import type { ChannelName, ChannelParamsInput, RealtimeMessage } from "#channels/catalog.ts"
+import { getEvent, isEventName } from "#channels/lookup.ts"
+import { addressChannel, compareCursors } from "#protocol/address.ts"
 import {
   HEARTBEAT_INTERVAL_MS,
   type SubscribeRequest,
   ServerMessageSchemas,
-  addressChannel,
-  compareCursors,
-} from "#protocol.ts"
+} from "#protocol/messages.ts"
 
 // Mounting several hooks at once opens one stream instead of one per hook.
 const CONNECT_DEBOUNCE_MS = 25

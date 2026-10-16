@@ -1,6 +1,7 @@
 import { mock } from "bun:test"
 import { createParser } from "eventsource-parser"
-import { compareCursors } from "#protocol.ts"
+import { waitUntil } from "#__tests__/wait-until.ts"
+import { compareCursors } from "#protocol/address.ts"
 
 type Handler = (...args: string[]) => void
 
@@ -123,21 +124,6 @@ export async function mockRedis() {
     },
     server,
   }
-}
-
-export function waitUntil(condition: () => boolean) {
-  return new Promise<void>((resolve, reject) => {
-    const started = Date.now()
-    const timer = setInterval(() => {
-      if (condition()) {
-        clearInterval(timer)
-        resolve()
-      } else if (Date.now() - started > 2000) {
-        clearInterval(timer)
-        reject(new Error("The condition never became true"))
-      }
-    }, 5)
-  })
 }
 
 /**

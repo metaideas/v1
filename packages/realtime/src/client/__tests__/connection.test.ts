@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test"
 import * as z from "@v1/utils/schema/mini"
-import { waitUntil } from "#__tests__/fakes.ts"
-import { createConnection } from "#connection.ts"
-import { type SubscribeRequest, SubscribeRequestSchema } from "#protocol.ts"
+import { waitUntil } from "#__tests__/wait-until.ts"
+import { createConnection } from "#client/connection.ts"
+import { type SubscribeRequest, SubscribeRequestSchema } from "#protocol/messages.ts"
 
 type Request = {
   body: SubscribeRequest
