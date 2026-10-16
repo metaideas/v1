@@ -1,0 +1,17 @@
+import { createRealtimeClient } from "@v1/realtime/react"
+import { createClient } from "typedport"
+import { shellFetch } from "#shared/api-proxy.ts"
+import { authContract } from "#shared/auth.ts"
+import { transport } from "#shared/bridge.ts"
+import { log } from "#shared/logger.ts"
+import { buildApiUrl } from "#shared/utils.ts"
+
+const shell = createClient(authContract, transport)
+
+export const { useRealtime } = createRealtimeClient({
+  endpoint: buildApiUrl("/realtime"),
+  // Streams through the shell like every other API request, so the renderer needs no CORS access.
+  fetch: shellFetch,
+  getToken: () => shell.auth.token(),
+  logger: log,
+})

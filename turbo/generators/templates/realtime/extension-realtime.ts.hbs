@@ -1,0 +1,17 @@
+import { createRealtimeClient } from "@v1/realtime/react"
+import { auth } from "#shared/auth.ts"
+import { log } from "#shared/logger.ts"
+import { buildApiUrl } from "#shared/utils.ts"
+
+async function getToken() {
+  const { data, error } = await auth.token()
+  if (!data) throw new Error("Realtime needs a signed-in session", { cause: error })
+
+  return data.token
+}
+
+export const { useRealtime } = createRealtimeClient({
+  endpoint: buildApiUrl("/realtime"),
+  getToken,
+  logger: log,
+})
