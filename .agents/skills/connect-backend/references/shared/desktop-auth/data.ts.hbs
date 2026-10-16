@@ -1,6 +1,6 @@
 import { mutationOptions, queryOptions } from "@tanstack/react-query"
 import { createClient } from "typedport"
-import { type SignIn, authContract } from "#features/auth/schemas.ts"
+import { type SignIn, authContract } from "#shared/auth.ts"
 import { transport } from "#shared/bridge.ts"
 
 const shell = createClient(authContract, transport)

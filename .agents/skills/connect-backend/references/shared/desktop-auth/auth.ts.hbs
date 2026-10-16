@@ -1,20 +1,25 @@
-import { createAuthClient } from "{{authPackage}}/client"
-import { AUTH_API_COOKIE_PREFIX } from "{{authPackage}}/constants"
-import { electronClient } from "{{authPackage}}/electron"
-import { buildApiUrl } from "#shared/utils.ts"
+import { channel, defineContract } from "typedport"
+import * as z from "zod"
 
-/**
- * The app's identifier, from `packagerConfig.appBundleId` in forge.config.ts. The API trusts
- * requests from the main process through it, as `com.desktop.app:/` in `ALLOWED_API_ORIGINS`.
- */
-const PROTOCOL = "com.desktop.app"
+export const SessionUserSchema = z.object({
+  email: z.string(),
+  id: z.string(),
+  image: z.string().nullable(),
+  name: z.string(),
+})
 
-export const auth = createAuthClient(buildApiUrl("/auth"), [
-  electronClient({
-    cookiePrefix: AUTH_API_COOKIE_PREFIX,
-    protocol: PROTOCOL,
-    // Better Auth opens this page for social sign-in in the system browser, which the app does not
-    // use yet. Email and password sign in from the main process.
-    signInURL: buildApiUrl("/"),
-  }),
-])
+export const SignInSchema = z.object({ email: z.email(), password: z.string().min(1) })
+
+export type SignIn = z.infer<typeof SignInSchema>
+
+export const authContract = defineContract({
+  auth: {
+    session: channel({ input: z.void(), output: SessionUserSchema.nullable() }),
+    signIn: channel({ input: SignInSchema, output: SessionUserSchema }),
+    signOut: channel({ input: z.void(), output: z.void() }),
+    /**
+     * A short-lived access token for services on another origin, such as realtime.
+     */
+    token: channel({ input: z.void(), output: z.string() }),
+  },
+})

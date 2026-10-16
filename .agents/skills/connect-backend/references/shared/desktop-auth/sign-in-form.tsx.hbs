@@ -3,7 +3,7 @@ import { Button } from "{{uiPackage}}/components/button"
 import { Field, FieldError, FieldGroup, FieldLabel } from "{{uiPackage}}/components/field"
 import { Input } from "{{uiPackage}}/components/input"
 import { useSignIn } from "#features/auth/hooks.ts"
-import { SignInSchema } from "#features/auth/schemas.ts"
+import { SignInSchema } from "#shared/auth.ts"
 
 export default function SignInForm() {
   const signIn = useSignIn()
