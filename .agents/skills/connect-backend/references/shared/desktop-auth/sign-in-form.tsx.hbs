@@ -1,0 +1,40 @@
+import type { FormEvent } from "react"
+import { Button } from "{{uiPackage}}/components/button"
+import { Field, FieldError, FieldGroup, FieldLabel } from "{{uiPackage}}/components/field"
+import { Input } from "{{uiPackage}}/components/input"
+import { useSignIn } from "#features/auth/hooks.ts"
+import { SignInSchema } from "#shared/auth.ts"
+
+export default function SignInForm() {
+  const signIn = useSignIn()
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    signIn.mutate(SignInSchema.parse(Object.fromEntries(new FormData(event.currentTarget))))
+  }
+
+  return (
+    <form className="w-full max-w-sm" onSubmit={handleSubmit}>
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input autoComplete="email" id="email" name="email" required type="email" />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <Input
+            autoComplete="current-password"
+            id="password"
+            name="password"
+            required
+            type="password"
+          />
+        </Field>
+        {signIn.error ? <FieldError>{signIn.error.message}</FieldError> : null}
+        <Button disabled={signIn.isPending} type="submit">
+          Sign in
+        </Button>
+      </FieldGroup>
+    </form>
+  )
+}

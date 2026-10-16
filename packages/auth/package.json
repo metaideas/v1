@@ -9,6 +9,7 @@
   "exports": {
     "./client": "./src/client.ts",
     "./constants": "./src/constants.ts",
+    "./electron": "./src/electron.ts",
     "./expo": "./src/expo.ts",
     "./server": "./src/server.ts",
     "./start": "./src/start.ts"
@@ -20,9 +21,11 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.6.30",
+    "@better-auth/electron": "1.6.30",
     "@better-auth/expo": "1.6.30",
     "@v1/core": "workspace:*",
     "better-auth": "1.6.30",
+    "conf": "15.1.0",
     "drizzle-orm": "0.45.3",
     "humanspan": "0.3.0"
   },

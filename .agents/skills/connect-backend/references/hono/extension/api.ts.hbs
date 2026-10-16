@@ -1,0 +1,8 @@
+import { createClient } from "{{apiPackage}}/client"
+import { buildApiUrl } from "#shared/utils.ts"
+
+// The extension has permission to reach the API, so the browser sends the session cookie.
+export const api = createClient(buildApiUrl("/"), {
+  fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+    fetch(input, { ...init, credentials: "include" }),
+})

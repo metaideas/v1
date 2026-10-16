@@ -1,0 +1,31 @@
+import { useQuery } from "@tanstack/react-query"
+import { Button } from "{{uiPackage}}/components/button"
+import SignInForm from "#features/auth/components/sign-in-form.tsx"
+import { sessionOptions } from "#features/auth/data.ts"
+import { useSignOut } from "#features/auth/hooks.ts"
+
+export default function AccountPanel() {
+  const session = useQuery(sessionOptions)
+  const signOut = useSignOut()
+
+  if (session.isPending) return null
+
+  if (session.data) {
+    return (
+      <div className="flex flex-col items-center gap-3">
+        <p>Signed in as {session.data.email}</p>
+        <Button
+          disabled={signOut.isPending}
+          onClick={() => {
+            signOut.mutate()
+          }}
+          variant="outline"
+        >
+          Sign out
+        </Button>
+      </div>
+    )
+  }
+
+  return <SignInForm />
+}

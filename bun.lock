@@ -297,9 +297,11 @@
       "name": "@v1/auth",
       "dependencies": {
         "@better-auth/drizzle-adapter": "1.6.30",
+        "@better-auth/electron": "1.6.30",
         "@better-auth/expo": "1.6.30",
         "@v1/core": "workspace:*",
         "better-auth": "1.6.30",
+        "conf": "15.1.0",
         "drizzle-orm": "0.45.3",
         "humanspan": "0.3.0",
       },
@@ -811,6 +813,8 @@
     "@better-auth/core": ["@better-auth/core@1.6.30", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.39.0", "@standard-schema/spec": "^1.1.0", "zod": "^4.3.6" }, "peerDependencies": { "@better-auth/utils": "0.4.2", "@better-fetch/fetch": "1.3.1", "@cloudflare/workers-types": ">=4", "@opentelemetry/api": "^1.9.0", "better-call": "1.4.0", "jose": "^6.1.0", "kysely": "^0.28.5 || ^0.29.0", "nanostores": "^1.0.1" }, "optionalPeers": ["@cloudflare/workers-types", "@opentelemetry/api"] }, "sha512-Xhe7D7Zdms8FaVbdT1brYqo8biZiMEF1GIzrelhXYP4skth52RjHrW5X9HyuwIm51rOd0dmXN9IL27UMIazpkg=="],
 
     "@better-auth/drizzle-adapter": ["@better-auth/drizzle-adapter@1.6.30", "", { "peerDependencies": { "@better-auth/core": "^1.6.30", "@better-auth/utils": "0.4.2", "drizzle-orm": "^0.45.2" }, "optionalPeers": ["drizzle-orm"] }, "sha512-k8cRfUViD++xzK51MmzvtcTZCurss8Oq4iheak6sqlMbqgRgmaeD85M+HXitOlZAb27uLz6gsMh9fcQwW0E8aA=="],
+
+    "@better-auth/electron": ["@better-auth/electron@1.6.30", "", { "dependencies": { "zod": "^4.3.6" }, "peerDependencies": { "@better-auth/core": "^1.6.30", "@better-auth/utils": "0.4.2", "@better-fetch/fetch": "1.3.1", "better-auth": "^1.6.30", "better-call": "1.4.0", "conf": "^15.0.2", "electron": ">=36.0.0" }, "optionalPeers": ["conf", "electron"] }, "sha512-yC3vUFC4bo+pvYeY4bA/Z/2cX+0NTp6porx67HEaqy4QoYISFJkBWZhe0Kt7i3k3lhtIPxu9zPAT0uX31QiXmA=="],
 
     "@better-auth/expo": ["@better-auth/expo@1.6.30", "", { "dependencies": { "@better-fetch/fetch": "1.3.1", "better-call": "1.4.0", "zod": "^4.3.6" }, "peerDependencies": { "@better-auth/core": "^1.6.30", "better-auth": "^1.6.30", "expo-constants": ">=17.0.0", "expo-linking": ">=7.0.0", "expo-network": ">=8.0.7", "expo-web-browser": ">=14.0.0" }, "optionalPeers": ["expo-constants", "expo-linking", "expo-network", "expo-web-browser"] }, "sha512-Einir9DQ1jo2W+ec3MXLFqYUzyAcOPkeV5QA9RVhehAq+3cv87UtBGODm2pQtPGrW+OI9EYL8NOgataD4PxFGA=="],
 

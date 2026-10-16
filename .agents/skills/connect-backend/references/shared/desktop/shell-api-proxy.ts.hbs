@@ -1,0 +1,124 @@
+import type { WebContents } from "electron"
+import * as Faultier from "faultier"
+import { type StreamMessage, apiProxyContract, getStreamChannel } from "#shared/api-proxy.ts"
+import { createShellRouter } from "#shared/bridge.ts"
+import { buildApiUrl } from "#shared/utils.ts"
+
+/**
+ * The renderer asked the shell to send a request somewhere other than the API.
+ */
+export class ForbiddenUrlError extends Faultier.Tagged("ForbiddenUrlError")<{ url: string }>() {}
+
+const ApiProxyFault = Faultier.registry({ ForbiddenUrlError })
+
+// The renderer never receives the session cookie, even when the API refreshes it.
+const HIDDEN_RESPONSE_HEADERS = new Set(["set-cookie"])
+
+const API_URL = new URL(buildApiUrl("/"))
+const AUTH_PATH = new URL(buildApiUrl("/auth")).pathname.toLowerCase()
+
+// Forwards requests to the API, except its auth routes. With the session cookie, those return
+// credentials, such as a code that Better Auth's Electron plugin exchanges for a new session. The
+// renderer signs in through the auth handlers, which never return one.
+function isForwarded(url: string) {
+  const parsed = URL.parse(url)
+  if (parsed?.origin !== API_URL.origin) return false
+
+  try {
+    // Normalizing first refuses a path that still reaches auth, such as `/%61uth` or `//auth`.
+    const decoded = new URL(`${API_URL.origin}${decodeURIComponent(parsed.pathname)}`)
+    const path = decoded.pathname.replaceAll(/\/+/g, "/").toLowerCase()
+    return (
+      path.startsWith(API_URL.pathname.toLowerCase()) &&
+      path !== AUTH_PATH &&
+      !path.startsWith(`${AUTH_PATH}/`)
+    )
+  } catch {
+    return false
+  }
+}
+
+function send(sender: WebContents, id: string, message: StreamMessage) {
+  if (!sender.isDestroyed()) sender.send(getStreamChannel(id), message)
+}
+
+async function forward(
+  body: ReadableStream<Uint8Array> | null,
+  sender: WebContents,
+  id: string,
+  controller: AbortController
+) {
+  const reader = body?.getReader()
+
+  try {
+    for (;;) {
+      // oxlint-disable-next-line no-await-in-loop -- A stream yields its chunks in order, one read at a time.
+      const chunk = await reader?.read()
+      if (!chunk || chunk.done) break
+      if (sender.isDestroyed()) {
+        controller.abort()
+        return
+      }
+
+      send(sender, id, { chunk: chunk.value, type: "chunk" })
+    }
+
+    send(sender, id, { type: "end" })
+  } catch (error) {
+    send(sender, id, {
+      message: Faultier.isFault(error) ? error.message : "The API stream failed",
+      type: "error",
+    })
+  }
+}
+
+/**
+ * Forwards renderer requests to the API from the main process, adding `getHeaders`, such as the
+ * session cookie. It refuses any URL outside the API, so the renderer cannot send the session
+ * elsewhere, and the API's auth routes, so the renderer cannot turn the session into a credential.
+ */
+export function createApiProxyRouter(getHeaders: () => Record<string, string> = () => ({})) {
+  const requests = new Map<string, AbortController>()
+
+  return createShellRouter(apiProxyContract, {
+    "api.abort": ({ id }) => {
+      requests.get(id)?.abort()
+      requests.delete(id)
+    },
+    // Reading `request.method` instead of destructuring it works around
+    // https://github.com/oxc-project/oxc/issues/27772.
+    "api.fetch": async (request, { context }) => {
+      const { id, url } = request
+      if (!isForwarded(url)) {
+        throw ApiProxyFault.create("ForbiddenUrlError", { url }).withMessage(
+          "The shell only forwards requests to the API outside its auth routes"
+        )
+      }
+
+      const controller = new AbortController()
+      requests.set(id, controller)
+
+      try {
+        const response = await fetch(url, {
+          body: request.body,
+          headers: { ...request.headers, ...getHeaders() },
+          method: request.method,
+          signal: controller.signal,
+        })
+
+        void forward(response.body, context.sender, id, controller).finally(() => {
+          requests.delete(id)
+        })
+
+        return {
+          headers: [...response.headers].filter(([name]) => !HIDDEN_RESPONSE_HEADERS.has(name)),
+          status: response.status,
+          statusText: response.statusText,
+        }
+      } catch (error) {
+        requests.delete(id)
+        throw error
+      }
+    },
+  })
+}

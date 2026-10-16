@@ -16,6 +16,7 @@ export {
   type BetterAuthOptions as AuthOptions,
   betterAuth as createAuth,
 } from "better-auth/minimal"
+export { electron } from "@better-auth/electron"
 export { expo } from "@better-auth/expo"
 
 type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = {

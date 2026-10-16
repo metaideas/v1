@@ -1,0 +1,49 @@
+import type { FormEvent } from "react"
+import { Button } from "{{uiPackage}}/components/button"
+import { Field, FieldError, FieldGroup, FieldLabel } from "{{uiPackage}}/components/field"
+import { Input } from "{{uiPackage}}/components/input"
+import { useAccount, useEmailSignIn } from "#features/auth/hooks.ts"
+
+export default function AccountPanel() {
+  const { session, signOut } = useAccount()
+  const signIn = useEmailSignIn()
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    void signIn.submit(new FormData(event.currentTarget))
+  }
+
+  if (session.data) {
+    return (
+      <div className="flex h-[420px] w-[420px] flex-col items-center justify-center gap-3 p-8">
+        <p>Signed in as {session.data.user.email}</p>
+        <Button onClick={signOut} variant="outline">
+          Sign out
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <form className="flex h-[420px] w-[420px] flex-col justify-center p-8" onSubmit={handleSubmit}>
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input autoComplete="email" id="email" name="email" required type="email" />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <Input
+            autoComplete="current-password"
+            id="password"
+            name="password"
+            required
+            type="password"
+          />
+        </Field>
+        {signIn.error ? <FieldError>{signIn.error}</FieldError> : null}
+        <Button type="submit">Sign in</Button>
+      </FieldGroup>
+    </form>
+  )
+}

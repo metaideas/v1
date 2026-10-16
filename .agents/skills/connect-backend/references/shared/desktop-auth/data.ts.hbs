@@ -1,0 +1,21 @@
+import { mutationOptions, queryOptions } from "@tanstack/react-query"
+import { createClient } from "typedport"
+import { type SignIn, authContract } from "#shared/auth.ts"
+import { transport } from "#shared/bridge.ts"
+
+const shell = createClient(authContract, transport)
+
+export const sessionOptions = queryOptions({
+  queryFn: () => shell.auth.session(),
+  queryKey: ["auth", "session"],
+})
+
+export const signInOptions = mutationOptions({
+  mutationFn: (input: SignIn) => shell.auth.signIn(input),
+  mutationKey: ["auth", "sign-in"],
+})
+
+export const signOutOptions = mutationOptions({
+  mutationFn: () => shell.auth.signOut(),
+  mutationKey: ["auth", "sign-out"],
+})

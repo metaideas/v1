@@ -1,0 +1,6 @@
+import { createAuthClient } from "{{authPackage}}/client"
+import { buildApiUrl } from "#shared/utils.ts"
+
+export const auth = createAuthClient(buildApiUrl("/auth"))
+
+export const { useSession } = auth

@@ -1,0 +1,25 @@
+import { channel, defineContract } from "typedport"
+import * as z from "zod"
+
+export const SessionUserSchema = z.object({
+  email: z.string(),
+  id: z.string(),
+  image: z.string().nullable(),
+  name: z.string(),
+})
+
+export const SignInSchema = z.object({ email: z.email(), password: z.string().min(1) })
+
+export type SignIn = z.infer<typeof SignInSchema>
+
+export const authContract = defineContract({
+  auth: {
+    session: channel({ input: z.void(), output: SessionUserSchema.nullable() }),
+    signIn: channel({ input: SignInSchema, output: SessionUserSchema }),
+    signOut: channel({ input: z.void(), output: z.void() }),
+    /**
+     * A short-lived access token for services on another origin, such as realtime.
+     */
+    token: channel({ input: z.void(), output: z.string() }),
+  },
+})

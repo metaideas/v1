@@ -1,0 +1,18 @@
+import { createFileRoute, Link } from "@tanstack/react-router"
+import AccountPanel from "#features/auth/components/account-panel.tsx"
+
+function AccountRoute() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
+      <Link className="text-sm underline underline-offset-4" to="/">
+        Home
+      </Link>
+      <h1 className="text-2xl font-semibold">Account</h1>
+      <AccountPanel />
+    </main>
+  )
+}
+
+export const Route = createFileRoute("/account")({
+  component: AccountRoute,
+})
