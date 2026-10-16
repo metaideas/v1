@@ -69,6 +69,15 @@ Each app reaches the API in its own way, because each runs on an origin that can
 
      - `shell/bridge.ts`: add the proxy to the routers, importing `createApiProxyRouter` from `#shared/shell/api-proxy.ts`: `mergeRouters(localFilesRouter, createApiProxyRouter())`.
      - `vite.main.config.ts`: add `plugins: [varlock()]`, importing `varlockVitePlugin as varlock` from `@varlock/vite-integration`, so the main process reads `ENV.PUBLIC_API_URL`.
+   - **extension** (hono or trpc): in `wxt.config.ts`, add the manifest, so the extension can call the API without the API listing its origin in CORS:
+
+     ```ts
+     manifest: {
+       // Lets the extension call the API, and with auth, send its session cookie.
+       host_permissions: [`${new URL(ENV.PUBLIC_API_URL).origin}/*`],
+     },
+     ```
+
    - **convex**: `references/convex/<app>/convex-provider.tsx.hbs` to `shared/components/convex-provider.tsx`.
      - `mobile` also takes `references/convex/mobile/auth.ts.hbs` to `shared/auth.ts`.
      - `app` also takes `references/convex/app/convex.ts.hbs` to `shared/convex.ts`.
@@ -80,15 +89,11 @@ Each app reaches the API in its own way, because each runs on an origin that can
      bun --eval 'const { createHash, generateKeyPairSync } = await import("node:crypto"); const { publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048, privateKeyEncoding: { format: "pem", type: "pkcs8" }, publicKeyEncoding: { format: "der", type: "spki" } }); const id = createHash("sha256").update(publicKey).digest("hex").slice(0, 32).replace(/./g, (digit) => String.fromCharCode(97 + Number.parseInt(digit, 16))); console.log(`EXTENSION_KEY=${publicKey.toString("base64")}\nchrome-extension://${id}`)'
      ```
 
-     Set `EXTENSION_KEY` in the extension's `.env.development`. For a published extension, use the public key from the Chrome Web Store instead, so the development and published IDs match. In `wxt.config.ts`, add the manifest:
+     Set `EXTENSION_KEY` in the extension's `.env.development`. For a published extension, use the public key from the Chrome Web Store instead, so the development and published IDs match. In `wxt.config.ts`, add the key to the manifest:
 
      ```ts
-     manifest: {
-       // Lets the extension call the API and send its session cookie.
-       host_permissions: [`${new URL(ENV.PUBLIC_API_URL).origin}/*`],
-       // Fixes the extension's ID, and with it the origin the API trusts.
-       key: ENV.EXTENSION_KEY,
-     },
+     // Fixes the extension's ID, and with it the origin the API trusts.
+     key: ENV.EXTENSION_KEY,
      ```
 
      In `apps/api`, add the printed `chrome-extension://` origin to `ALLOWED_API_ORIGINS` in its `.env.development` and in each deployment.

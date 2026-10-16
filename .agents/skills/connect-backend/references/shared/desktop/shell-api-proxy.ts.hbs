@@ -14,6 +14,30 @@ const ApiProxyFault = Faultier.registry({ ForbiddenUrlError })
 // The renderer never receives the session cookie, even when the API refreshes it.
 const HIDDEN_RESPONSE_HEADERS = new Set(["set-cookie"])
 
+const API_URL = new URL(buildApiUrl("/"))
+const AUTH_PATH = new URL(buildApiUrl("/auth")).pathname.toLowerCase()
+
+// Forwards requests to the API, except its auth routes. With the session cookie, those return
+// credentials, such as a code that Better Auth's Electron plugin exchanges for a new session. The
+// renderer signs in through the auth handlers, which never return one.
+function isForwarded(url: string) {
+  const parsed = URL.parse(url)
+  if (parsed?.origin !== API_URL.origin) return false
+
+  try {
+    // Normalizing first refuses a path that still reaches auth, such as `/%61uth` or `//auth`.
+    const decoded = new URL(`${API_URL.origin}${decodeURIComponent(parsed.pathname)}`)
+    const path = decoded.pathname.replaceAll(/\/+/g, "/").toLowerCase()
+    return (
+      path.startsWith(API_URL.pathname.toLowerCase()) &&
+      path !== AUTH_PATH &&
+      !path.startsWith(`${AUTH_PATH}/`)
+    )
+  } catch {
+    return false
+  }
+}
+
 function send(sender: WebContents, id: string, message: StreamMessage) {
   if (!sender.isDestroyed()) sender.send(getStreamChannel(id), message)
 }
@@ -51,7 +75,7 @@ async function forward(
 /**
  * Forwards renderer requests to the API from the main process, adding `getHeaders`, such as the
  * session cookie. It refuses any URL outside the API, so the renderer cannot send the session
- * elsewhere.
+ * elsewhere, and the API's auth routes, so the renderer cannot turn the session into a credential.
  */
 export function createApiProxyRouter(getHeaders: () => Record<string, string> = () => ({})) {
   const requests = new Map<string, AbortController>()
@@ -65,9 +89,9 @@ export function createApiProxyRouter(getHeaders: () => Record<string, string> = 
     // https://github.com/oxc-project/oxc/issues/27772.
     "api.fetch": async (request, { context }) => {
       const { id, url } = request
-      if (!url.startsWith(buildApiUrl("/"))) {
+      if (!isForwarded(url)) {
         throw ApiProxyFault.create("ForbiddenUrlError", { url }).withMessage(
-          "The shell only forwards requests to the API"
+          "The shell only forwards requests to the API outside its auth routes"
         )
       }
 

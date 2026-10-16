@@ -83,11 +83,14 @@ export async function shellFetch(input: RequestInfo | URL, init?: RequestInit) {
     },
   })
 
-  request.signal.addEventListener("abort", handleAbort)
-
   try {
+    const text = request.body ? await request.text() : undefined
+    // The shell only cancels a request it has started, so an abort before it starts never sends it.
+    request.signal.throwIfAborted()
+    request.signal.addEventListener("abort", handleAbort)
+
     const head = await shell.api.fetch({
-      body: request.body ? await request.text() : undefined,
+      body: text,
       headers: Object.fromEntries(request.headers),
       id,
       method: request.method,
@@ -97,6 +100,7 @@ export async function shellFetch(input: RequestInfo | URL, init?: RequestInit) {
     return new Response(NULL_BODY_STATUSES.has(head.status) ? null : body, head)
   } catch (error) {
     stopListening()
+    request.signal.removeEventListener("abort", handleAbort)
     throw error
   }
 }
