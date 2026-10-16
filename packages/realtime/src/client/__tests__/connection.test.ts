@@ -157,4 +157,23 @@ describe("createConnection", () => {
 
     expect(server.requests).toHaveLength(0)
   })
+
+  test("connects with an AbortSignal that lacks throwIfAborted, as React Native's does", async () => {
+    const server = createServer()
+    const descriptor = Object.getOwnPropertyDescriptor(AbortSignal.prototype, "throwIfAborted")
+    Reflect.deleteProperty(AbortSignal.prototype, "throwIfAborted")
+
+    try {
+      const connection = createConnection({
+        endpoint: "http://localhost/realtime",
+        fetch: server.fetch,
+        getToken: () => Promise.resolve("token"),
+      })
+      connection.subscribe("demo", { userId: "user_1" }, { onMessage: (message) => message })
+
+      await waitUntil(() => server.requests.length === 1)
+    } finally {
+      if (descriptor) Object.defineProperty(AbortSignal.prototype, "throwIfAborted", descriptor)
+    }
+  })
 })

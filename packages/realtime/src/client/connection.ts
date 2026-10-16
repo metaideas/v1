@@ -209,8 +209,9 @@ export function createConnection({
     }
     const token = await getToken()
     // A connection that ended while it waited for the token must not open a stream, because no
-    // transport is required to reject a signal that aborted before the request.
-    controller.signal.throwIfAborted()
+    // transport is required to reject a signal that aborted before the request. React Native's
+    // `AbortSignal` has no `throwIfAborted`.
+    if (controller.signal.aborted) return
     const response = await fetch(endpoint, {
       body: JSON.stringify(body),
       headers: {
