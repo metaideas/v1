@@ -128,6 +128,18 @@ export function createConnection({
     notify()
   }
 
+  // An error in one application callback must not stop the others from receiving the event, or
+  // turn into a reconnect, so each callback runs on its own and its error goes to the logger.
+  function notifyListeners(subscription: Subscription, call: (listener: Listener) => void) {
+    for (const listener of subscription.listeners) {
+      try {
+        call(listener)
+      } catch (error) {
+        logger?.error({ error, message: "Realtime callback failed", scope: "realtime" })
+      }
+    }
+  }
+
   function scheduleConnect(delay: number) {
     clearTimeout(connectTimer)
     connectTimer = setTimeout(() => {
@@ -148,7 +160,9 @@ export function createConnection({
     if (subscription.cursor && compareCursors(cursor, subscription.cursor) <= 0) return
 
     subscription.cursor = cursor
-    for (const listener of subscription.listeners) listener.deliver({ cursor, data, event })
+    notifyListeners(subscription, (listener) => {
+      listener.deliver({ cursor, data, event })
+    })
   }
 
   function handleEvent({ data, event }: EventSourceMessage) {
@@ -169,7 +183,9 @@ export function createConnection({
 
       subscription.cursor = message.data.cursor
       if (event === "reset") {
-        for (const listener of subscription.listeners) listener.onReset?.()
+        notifyListeners(subscription, (listener) => {
+          listener.onReset?.()
+        })
       }
       return
     }

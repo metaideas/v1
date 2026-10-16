@@ -12,11 +12,6 @@ export const HEARTBEAT_INTERVAL_MS = ms("8s")
 export const MAX_SUBSCRIPTIONS = 50
 
 /**
- * Where a channel starts before it has any events. Every event comes after it.
- */
-export const INITIAL_CURSOR = "0-0"
-
-/**
  * A Redis stream entry ID. Stream IDs only grow, so a cursor orders the events of one channel.
  */
 const CursorSchema = z.string().check(z.regex(/^\d+-\d+$/))

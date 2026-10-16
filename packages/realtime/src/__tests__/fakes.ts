@@ -11,6 +11,10 @@ type FakeServer = {
   subscribers: Set<FakeClient>
   sequence: number
   /**
+   * The server clock in milliseconds. Defaults to the real one.
+   */
+  now?: number
+  /**
    * Runs before each history read, such as to publish an event while a subscription catches up.
    */
   beforeRead?: () => void
@@ -73,6 +77,11 @@ function createClient() {
 
     quit: () => Promise.resolve("OK"),
 
+    time() {
+      const now = server.now ?? Date.now()
+      return Promise.resolve([String(Math.floor(now / 1000)), String((now % 1000) * 1000)])
+    },
+
     subscribe(key: string) {
       channels.add(key)
       return Promise.resolve(channels.size)
@@ -108,6 +117,7 @@ export async function mockRedis() {
     reset() {
       server.beforeRead = undefined
       server.emitError = undefined
+      server.now = undefined
       server.streams.clear()
       server.subscribers.clear()
     },

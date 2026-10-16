@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test"
 import { PublishEventError, RealtimePayloadError } from "@v1/core/errors"
+import * as z from "@v1/utils/schema/mini"
+import { ms } from "humanspan"
 import { mockRedis, readEvents } from "#__tests__/fakes.ts"
 
 const redis = await mockRedis()
@@ -26,8 +28,15 @@ function setup({ isAllowed = true } = {}) {
     return { controller, response, ...readEvents(response.body) }
   }
 
-  return { channel: realtime.channel("demo", { userId: "user_1" }), realtime, subscribe }
+  return {
+    channel: realtime.channel("demo", { userId: "user_1" }),
+    handler,
+    realtime,
+    subscribe,
+  }
 }
+
+const CursorData = z.object({ cursor: z.string() })
 
 function greeting(message: string) {
   return JSON.stringify({ message })
@@ -126,6 +135,52 @@ describe("createRealtimeHandler", () => {
     expect(await stream.waitFor(1)).toEqual([{ data: { cursor: latest, key: KEY }, type: "ready" }])
   })
 
+  test("replays every event after a cursor from an empty channel", async () => {
+    const { subscribe } = setup()
+    const empty = await subscribe([{ channel: "demo", params: { userId: "user_1" } }])
+    const [ready] = await empty.waitFor(1)
+    empty.controller.abort()
+    const first = redis.append(REDIS_KEY, "greeted", greeting("one"))
+    const second = redis.append(REDIS_KEY, "greeted", greeting("two"))
+
+    const stream = await subscribe([
+      {
+        channel: "demo",
+        cursor: z.parse(CursorData, ready?.data).cursor,
+        params: { userId: "user_1" },
+      },
+    ])
+
+    const events = await stream.waitFor(3)
+
+    expect(events.map(({ data, type }) => [type, z.parse(CursorData, data).cursor])).toEqual([
+      ["message", first],
+      ["message", second],
+      ["ready", second],
+    ])
+  })
+
+  test("resets a cursor from an empty channel once Redis may have trimmed or expired events", async () => {
+    const { subscribe } = setup()
+    redis.server.now = Date.now()
+    const empty = await subscribe([{ channel: "demo", params: { userId: "user_1" } }])
+    const [ready] = await empty.waitFor(1)
+    empty.controller.abort()
+    const cursor = z.parse(CursorData, ready?.data).cursor
+
+    for (let index = 0; index < 100; index += 1) redis.append(REDIS_KEY, "greeted", greeting("hi"))
+    const trimmed = await subscribe([{ channel: "demo", cursor, params: { userId: "user_1" } }])
+    redis.server.streams.clear()
+    redis.server.now += ms("1d")
+    const expired = await subscribe([{ channel: "demo", cursor, params: { userId: "user_1" } }])
+
+    const trimmedEvents = await trimmed.waitFor(1)
+    const expiredEvents = await expired.waitFor(1)
+
+    expect(trimmedEvents.map(({ type }) => type)).toEqual(["reset"])
+    expect(expiredEvents.map(({ type }) => type)).toEqual(["reset"])
+  })
+
   test("denies a subscription without closing the stream", async () => {
     const { subscribe } = setup({ isAllowed: false })
 
@@ -156,5 +211,23 @@ describe("createRealtimeHandler", () => {
     await stream.closed
 
     expect(subscriber?.channels.size).toBe(0)
+  })
+
+  test("ends open streams on close, so the server can stop", async () => {
+    const { channel, handler } = setup()
+    const server = Bun.serve({ fetch: (request) => handler.handle(request), port: 0 })
+    const response = await fetch(server.url, {
+      body: JSON.stringify({ subscriptions: [{ channel: "demo", params: { userId: "user_1" } }] }),
+      method: "POST",
+    })
+    const stream = readEvents(response.body)
+    await stream.waitFor(1)
+
+    const stopped = server.stop()
+    handler.close()
+    await stopped
+    await stream.closed
+
+    expect(await channel.emit("greeted", { message: "Hi" })).toEqual({ cursor: expect.any(String) })
   })
 })

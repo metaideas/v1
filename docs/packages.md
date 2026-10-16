@@ -232,7 +232,7 @@ await c.var.realtime.channel("notifications", { userId }).emit("created", { id, 
 `apps/api` streams events to clients from `POST /realtime`. The handler takes an authorization rule for every channel, so adding a channel fails type checking until the handler decides who can subscribe:
 
 ```ts
-const handler = createRealtimeHandler({
+export const realtimeHandler = createRealtimeHandler({
   authorize: {
     demo: ({ params }) => params.userId === context<AccessTokenAppContext>().var.userId,
     notifications: ({ params }) => params.userId === context<AccessTokenAppContext>().var.userId,
@@ -240,10 +240,12 @@ const handler = createRealtimeHandler({
   realtime,
 })
 
-export default factory.createApp().post("/", requireAccessToken, (c) => handler.handle(c.req.raw))
+export default factory
+  .createApp()
+  .post("/", requireAccessToken, (c) => realtimeHandler.handle(c.req.raw))
 ```
 
-The handler takes a web `Request` and returns a `Response`, so it runs on Bun and Node. A denied subscription gets a `denied` message, and the rest of the stream continues. Each API process shares one Redis subscriber across its open streams, and Redis delivers each event to every API process, so the API scales out without sticky sessions.
+The handler takes a web `Request` and returns a `Response`, so it runs on Bun and Node. An open stream never finishes on its own, so on shutdown `apps/api` calls `realtimeHandler.close()` after the server stops taking requests, and the server can finish the rest. A denied subscription gets a `denied` message, and the rest of the stream continues. Each API process shares one Redis subscriber across its open streams, and Redis delivers each event to every API process, so the API scales out without sticky sessions.
 
 Clients subscribe with `useRealtime`. Add the client to `apps/app` or `apps/mobile` with the `realtime` template recipe, which creates `src/shared/realtime.ts`. See [Project generators](./generators.md#add-a-realtime-client). Every hook in the app shares one stream:
 

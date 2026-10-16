@@ -84,4 +84,50 @@ describe("createConnection", () => {
     ])
     expect(received).toEqual(["3-0", "4-0"])
   })
+
+  test("delivers events and resets to every listener when another listener throws", async () => {
+    const server = createServer()
+    const connection = createConnection({
+      endpoint: "http://localhost/realtime",
+      fetch: server.fetch,
+      getToken: () => Promise.resolve("token"),
+    })
+    const received: string[] = []
+    let resets = 0
+
+    connection.subscribe(
+      "demo",
+      { userId: "user_1" },
+      {
+        onMessage: () => {
+          throw new Error("The application failed")
+        },
+        onReset: () => {
+          throw new Error("The application failed")
+        },
+      }
+    )
+    connection.subscribe(
+      "demo",
+      { userId: "user_1" },
+      {
+        onMessage: ({ cursor }) => received.push(cursor),
+        onReset: () => {
+          resets += 1
+        },
+      }
+    )
+    await waitUntil(() => server.requests.length === 1)
+    server.requests[0]?.send("message", {
+      cursor: "3-0",
+      data: { message: "Hi" },
+      event: "greeted",
+      key: KEY,
+    })
+    server.requests[0]?.send("reset", { cursor: "5-0", key: KEY })
+    await waitUntil(() => resets === 1)
+
+    expect(received).toEqual(["3-0"])
+    expect(server.requests).toHaveLength(1)
+  })
 })

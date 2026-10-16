@@ -14,7 +14,6 @@ import type {
 import { getChannel, getEvent, isChannelName } from "#lookup.ts"
 import {
   HEARTBEAT_INTERVAL_MS,
-  INITIAL_CURSOR,
   type ServerMessageType,
   SubscribeRequestSchema,
   addressChannel,
@@ -269,10 +268,31 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
   if (!runtime) throw new Error("createRealtimeHandler needs a service from createRealtime")
 
   const { connection, join, leave, logger, streams } = runtime
+  // The streams this handler serves, so `close` ends them without closing the service.
+  const served = new Set<() => void>()
 
+  async function now() {
+    const [seconds, microseconds] = await connection.time()
+    return Number(seconds) * 1000 + Math.floor(Number(microseconds) / 1000)
+  }
+
+  // A channel without events starts at `0-<Redis time in ms>`. It comes before every event, and it
+  // records when the client found the channel empty.
   async function tail(redisKey: string) {
     const [last] = await connection.xrevrange(redisKey, "+", "-", "COUNT", 1)
-    return last?.[0] ?? INITIAL_CURSOR
+    return last?.[0] ?? `0-${await now()}`
+  }
+
+  // Whether Redis still holds every event after the cursor.
+  async function isCursorKept(channel: ChannelName, cursor: string, history: StreamEntry[]) {
+    const [time, emptySince = 0] = cursor.split("-").map(Number)
+    if (time !== 0) return history[0]?.cursor === cursor
+
+    // The channel was empty at the cursor, so the history holds every event since, unless Redis
+    // trimmed or expired some. Trimming never leaves fewer than `maxLength` events, and the stream
+    // expires `expireAfter` after its last event, which came after the cursor.
+    const { expireAfter, maxLength } = getChannel(channel).history ?? DEFAULT_HISTORY
+    return history.length < maxLength && (await now()) - emptySince < ms(expireAfter)
   }
 
   return {
@@ -294,7 +314,7 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
         await Promise.all(
           addresses.map(async ({ channel, cursor, key, params }) => {
             const isAllowed = await getAuthorize(authorize, channel)({ params, request })
-            return [key, { cursor, isAllowed, key }] as const
+            return [key, { channel, cursor, isAllowed, key }] as const
           })
         )
       )
@@ -323,6 +343,7 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
 
             clearInterval(heartbeat)
             streams.delete(handleInterruption)
+            served.delete(handleInterruption)
             request.signal.removeEventListener("abort", handleAbort)
             for (const [key, listener] of joined) leave(key, listener)
             if (!isCancelled) controller.close()
@@ -336,7 +357,15 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
             close(true)
           }
 
-          async function follow({ cursor, key }: { cursor?: string; key: string }) {
+          async function follow({
+            channel,
+            cursor,
+            key,
+          }: {
+            channel: ChannelName
+            cursor?: string
+            key: string
+          }) {
             const redisKey = toRedisKey(key)
             const buffered: StreamEntry[] = []
             let last: string | undefined
@@ -363,9 +392,7 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
             } else {
               const stored = await connection.xrange(redisKey, cursor, "+")
               const history = stored.map((entry) => parseStored(entry))
-              const isCursorKept = cursor === INITIAL_CURSOR || history[0]?.cursor === cursor
-
-              if (isCursorKept) {
+              if (await isCursorKept(channel, cursor, history)) {
                 last = cursor
                 for (const entry of history) deliver(entry)
                 send("ready", { cursor: last, key })
@@ -384,6 +411,7 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
 
           stop = close
           streams.add(handleInterruption)
+          served.add(handleInterruption)
           request.signal.addEventListener("abort", handleAbort)
           write(": connected\n\n")
 
@@ -410,6 +438,14 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
           "x-accel-buffering": "no",
         },
       })
+    },
+
+    /**
+     * Ends every stream the handler serves, which never finish on their own. Call it once the
+     * server stops taking requests, so the server can finish the rest.
+     */
+    close() {
+      for (const close of served) close()
     },
   }
 }
