@@ -1,0 +1,5 @@
+import { factory } from "#shared/utils.ts"
+
+export const with{{pascalCase name}} = factory.createMiddleware(async (_c, next) => {
+  await next()
+})

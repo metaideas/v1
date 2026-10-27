@@ -1,5 +1,5 @@
 const FEATURE_PATH = /\/apps\/[^/]+\/src\/features\/[^/]+\/(?<entry>.+)$/u
-const ROLES = ["constants", "data", "errors", "handlers", "hooks", "schemas"] as const
+const ROLES = ["constants", "data", "errors", "handlers", "hooks", "middleware", "schemas"] as const
 const OPEN_FOLDERS = new Set(["assets", "components"])
 const TEST_FOLDER = "__tests__"
 

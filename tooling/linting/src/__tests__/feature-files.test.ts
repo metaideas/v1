@@ -7,6 +7,7 @@ describe("isAllowedFeatureFile", () => {
   test("allows role files at the feature root", () => {
     expect(isAllowedFeatureFile(`${feature}/handlers.ts`)).toBe(true)
     expect(isAllowedFeatureFile(`${feature}/hooks.tsx`)).toBe(true)
+    expect(isAllowedFeatureFile(`${feature}/middleware.ts`)).toBe(true)
     expect(isAllowedFeatureFile(`${feature}/schemas.ts`)).toBe(true)
   })
 

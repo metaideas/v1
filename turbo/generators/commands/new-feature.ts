@@ -36,6 +36,11 @@ const FEATURE_ROLES: ReadonlyArray<{
     value: "handlers",
   },
   { apps: REACT_APPS, name: "hooks.ts - React hooks for local and derived state", value: "hooks" },
+  {
+    apps: ["api"],
+    name: "middleware.ts - Middleware that the feature's routes use",
+    value: "middleware",
+  },
   { isChecked: true, name: "schemas.ts - Schemas for forms and local models", value: "schemas" },
 ]
 
