@@ -108,7 +108,7 @@ jobs:
         if: ${{ steps.scan.outputs.run == 'true' }}
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.4.2"
+          bun-version: "1.4.4"
 
       - name: Cache dependencies
         if: ${{ steps.scan.outputs.run == 'true' }}
@@ -147,7 +147,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.4.2"
+          bun-version: "1.4.4"
 
       - name: Cache dependencies
         uses: actions/cache@v6
