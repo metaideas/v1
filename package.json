@@ -78,7 +78,9 @@
   ],
   "v1": {
     "cleanupPaths": [
-      ".github/workflows/pullfrog.yml"
+      ".github/workflows/pullfrog.yml",
+      "apps/docs/vercel.json",
+      "apps/web/vercel.json"
     ],
     "cleanupSections": [
       "AGENTS.md"
