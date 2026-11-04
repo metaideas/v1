@@ -63,6 +63,37 @@ The template command installs bull-board and the BullMQ version that `packages/j
 
 The dashboard copies the shadcn theme from `packages/ui/src/styles/globals.css` into bull-board's `uiConfig.theme`, so it uses the same colours, radius, and fonts as the other application workspaces in light and dark mode. The job status colours and the chart colours stay bull-board's, because they carry the meaning of each status. The theme is copied once, when the template recipe runs, so regenerate it or edit `uiConfig.theme` after you change `packages/ui`. Without `packages/ui`, the dashboard keeps bull-board's own theme.
 
+## Add EmDash
+
+`emdash` adds the [EmDash](https://docs.emdashcms.com/) CMS to `apps/web`, so editors can write and publish content from an admin panel:
+
+```bash
+bun run generate emdash
+```
+
+The template command follows the EmDash guide for [existing projects](https://docs.emdashcms.com/existing-project/). It installs EmDash and the Astro Node adapter, adds the `emdash()` integration to `astro.config.ts` with a SQLite database in `data.db` and media in `uploads/`, and creates `src/live.config.ts`, which loads EmDash content as an Astro live collection. It also adds a `start` script that runs the built server, declares `EMDASH_ENCRYPTION_KEY` in `.env.schema` as optional, and ignores the database, the uploads, and the migration manifest that EmDash writes on every build.
+
+The site keeps `output: "static"`, so the existing pages stay prerendered. The Node adapter serves the admin at `/_emdash/admin/` and the EmDash API on demand. Run `bun run --filter web dev`, open the admin, and finish the setup wizard. The dev server writes `emdash-env.d.ts` from the content model. Commit it, because `bun run codegen` cannot regenerate it without the database. Query content from a page that renders on demand:
+
+```astro
+---
+import { getEmDashCollection } from "emdash"
+
+export const prerender = false
+
+const { entries: posts, error } = await getEmDashCollection("posts")
+if (error) {
+  throw error
+}
+---
+
+<ul>{posts.map((post) => <li>{post.data.title}</li>)}</ul>
+```
+
+EmDash needs `EMDASH_ENCRYPTION_KEY` only when a plugin stores a secret setting. Generate a key with `bunx emdash secrets generate` and back it up, because EmDash cannot read those settings without it. SQLite and local media need a server with a persistent disk, so deploy with `bun run --filter web build` and `bun run --filter web start`, and remove `apps/web/vercel.json` if you no longer deploy to Vercel. For Postgres, S3 storage, or Cloudflare, change the adapters in `astro.config.ts` following the EmDash [configuration reference](https://docs.emdashcms.com/reference/configuration/).
+
+Where an edit does not apply, the template command prints the step to finish by hand. A repeat run reports skips without replacing generated application code.
+
 ## Add the Turbo remote cache
 
 Remote cache is opt-in. `remote-cache` wires [Vercel Remote Cache](https://turborepo.com/docs/core-concepts/remote-caching) into every GitHub Actions workflow that runs Turbo, including a workflow that only reaches Turbo through a root script such as `bun run codegen` or `bun run boundaries`:
