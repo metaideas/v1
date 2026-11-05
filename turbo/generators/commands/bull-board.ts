@@ -220,15 +220,17 @@ export function registerBullBoardGenerator(plop: PlopTypes.NodePlopAPI) {
             return `[SKIPPED] ${API_PATH} already contains bull-board`
           }
 
-          // The dashboard opens its own queues, so it must use the BullMQ version the jobs package uses.
+          // The dashboard opens its own queues, so it must use the BullMQ and node-redis versions the
+          // jobs package uses.
           const jobs = await readPackageJson(`${JOBS_PATH}/package.json`)
           const bullmq = jobs.dependencies?.bullmq
+          const redis = jobs.dependencies?.redis
 
-          if (!bullmq) {
-            throw new Error(`${JOBS_PATH} does not declare a version of bullmq.`)
+          if (!bullmq || !redis) {
+            throw new Error(`${JOBS_PATH} does not declare a version of bullmq and redis.`)
           }
 
-          await Bun.$`cd ${API_PATH} && bun add --exact @bull-board/api @bull-board/hono bullmq@${bullmq}`
+          await Bun.$`cd ${API_PATH} && bun add --exact @bull-board/api @bull-board/hono bullmq@${bullmq} redis@${redis}`
           return `${API_PATH}: installed bull-board`
         },
         async () => {

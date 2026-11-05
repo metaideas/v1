@@ -6,15 +6,33 @@ import { Queue } from "bullmq"
 import { basicAuth } from "hono/basic-auth"
 import { serveStatic } from "hono/bun"
 import { csrf } from "hono/csrf"
+import { createClient } from "redis"
 import { ENV } from "#shared/env.generated.ts"
+import { log } from "#shared/logger.ts"
 import { factory } from "#shared/utils.ts"
 
 const JOBS_DASHBOARD_PATH = "/jobs"
 
 function createJobsDashboard(credentials: { password: string; username: string }) {
-  const queues = queueNames.map(
-    (name) => new Queue(name, { connection: { url: ENV.JOBS_REDIS_URL } })
-  )
+  const connection = createClient({ url: ENV.JOBS_REDIS_URL })
+  connection.on("error", (error) => {
+    log.error({ error, message: "Jobs dashboard connection error", scope: "jobs" })
+  })
+  // The client reconnects on its own, so connecting rejects only once it stops reconnecting.
+  connection.connect().catch((error: unknown) => {
+    log.error({ error, message: "Jobs dashboard connection closed", scope: "jobs" })
+  })
+
+  const queues = queueNames.map((name) => {
+    const queue = new Queue(name, { connection })
+    // The queue re-emits its connection's errors, which the connection already logs. Without a
+    // listener, BullMQ prints each one to the console.
+    queue.on("error", (error) => {
+      log.debug({ error, message: "Jobs dashboard queue error", queue: name, scope: "jobs" })
+    })
+
+    return queue
+  })
   const serverAdapter = new HonoAdapter(serveStatic).setBasePath(JOBS_DASHBOARD_PATH)
 
   createBullBoard({
@@ -29,6 +47,12 @@ function createJobsDashboard(credentials: { password: string; username: string }
   return {
     async close() {
       await Promise.all(queues.map((queue) => queue.close()))
+
+      if (connection.isReady) {
+        await connection.close()
+      } else if (connection.isOpen) {
+        connection.destroy()
+      }
     },
     path: JOBS_DASHBOARD_PATH,
     // Browsers resend cached Basic Auth credentials on cross-site form posts, so reject mutations
