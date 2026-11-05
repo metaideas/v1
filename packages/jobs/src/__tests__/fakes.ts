@@ -30,7 +30,8 @@ export async function mockQueues() {
     on: () => worker,
     run: () => Promise.resolve(),
   }
-  const Queue = mock(() => ({ add, close: () => Promise.resolve() }))
+  const queue = { add, close: () => Promise.resolve(), on: mock() }
+  const Queue = mock(() => queue)
 
   await mock.module("redis", () => ({ createClient: mock(() => redis) }))
   await mock.module("bullmq", () => ({
@@ -43,5 +44,5 @@ export async function mockQueues() {
     }),
   }))
 
-  return { Queue, add, processors, redis, worker }
+  return { Queue, add, processors, queue, redis, worker }
 }

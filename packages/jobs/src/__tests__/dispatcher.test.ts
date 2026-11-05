@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { DispatchJobError, JobPayloadError } from "@v1/core/errors"
 import { mockQueues } from "#__tests__/fakes.ts"
 
-const { add, Queue } = await mockQueues()
+const { add, Queue, queue } = await mockQueues()
 
 const { createDispatcher } = await import("#dispatcher.ts")
 
@@ -65,5 +65,14 @@ describe("createDispatcher", () => {
     expect(failed).toBeInstanceOf(DispatchJobError)
     expect(recovered).toEqual({ id: "1" })
     expect(Queue).toHaveBeenCalledTimes(2)
+  })
+
+  test("listens for queue errors, so BullMQ does not print them to the console", async () => {
+    const dispatcher = createDispatcher({ url: "redis://localhost:6379" })
+    queue.on.mockClear()
+
+    await dispatcher.dispatch("default", "greet-user", { userId: "user_1" })
+
+    expect(queue.on).toHaveBeenCalledWith("error", expect.any(Function))
   })
 })
