@@ -18,12 +18,10 @@ export async function mockQueues() {
   )
   const processors = new Map<string, Processor>()
   const redis = {
-    close: mock(() => Promise.resolve()),
-    connect: mock(() => Promise.resolve()),
-    destroy: mock(),
-    isOpen: true,
-    isReady: true,
+    disconnect: mock(),
     on: mock(),
+    quit: mock(() => Promise.resolve("OK")),
+    status: "ready",
   }
   const worker = {
     close: mock((_force?: boolean) => Promise.resolve()),
@@ -33,7 +31,7 @@ export async function mockQueues() {
   const queue = { add, close: () => Promise.resolve(), on: mock() }
   const Queue = mock(() => queue)
 
-  await mock.module("redis", () => ({ createClient: mock(() => redis) }))
+  await mock.module("redis", () => ({ createClient: mock(() => ({})) }))
   await mock.module("bullmq", () => ({
     Queue,
     UnrecoverableError,
@@ -42,6 +40,7 @@ export async function mockQueues() {
 
       return worker
     }),
+    createNodeRedisClient: mock(() => redis),
   }))
 
   return { Queue, add, processors, queue, redis, worker }

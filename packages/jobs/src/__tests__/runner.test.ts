@@ -49,20 +49,20 @@ describe("createJobsRunner", () => {
   })
 
   test("waits for running jobs when it closes while connected", async () => {
-    redis.isReady = true
+    redis.status = "ready"
 
     await jobRunner.close()
 
     expect(worker.close).toHaveBeenLastCalledWith(false)
-    expect(redis.close).toHaveBeenCalled()
+    expect(redis.quit).toHaveBeenCalled()
   })
 
   test("closes at once while Redis is unreachable", async () => {
-    redis.isReady = false
+    redis.status = "reconnecting"
 
     await jobRunner.close()
 
     expect(worker.close).toHaveBeenLastCalledWith(true)
-    expect(redis.destroy).toHaveBeenCalled()
+    expect(redis.disconnect).toHaveBeenCalled()
   })
 })
