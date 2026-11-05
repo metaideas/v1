@@ -166,7 +166,7 @@ export const dispatcher = createDispatcher({ logger: log, url: ENV.JOBS_REDIS_UR
 await c.var.dispatcher.dispatch("default", "greet-user", { userId }, { id: `greet-${userId}` })
 ```
 
-`dispatch` type-checks the queue, the job name on that queue, and its payload, and validates the payload before it reaches Redis. Dispatches with the same `id` add one job while BullMQ keeps it. Pass `delayMs` to run a job later. A failed dispatch comes back as a `DispatchJobError` or `JobPayloadError` value instead of throwing. While Redis is unreachable, a dispatch fails after one reconnect attempt instead of holding the request open.
+`dispatch` type-checks the queue, the job name on that queue, and its payload, and validates the payload before it reaches Redis. Dispatches with the same `id` add one job while BullMQ keeps it. Pass `delayMs` to run a job later. A failed dispatch comes back as a `DispatchJobError` or `JobPayloadError` value instead of throwing. While Redis is unreachable, a dispatch fails after 5 seconds instead of holding the request open.
 
 `apps/worker` consumes queues with a jobs runner. A runner takes handlers by queue and job, and consumes every queue it lists. It must handle every job on those queues, so adding a job to a queue fails type checking in each runner that consumes it until a handler exists:
 

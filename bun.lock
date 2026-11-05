@@ -388,7 +388,7 @@
         "@v1/utils": "workspace:*",
         "bullmq": "6.3.11",
         "humanspan": "0.3.0",
-        "ioredis": "6.0.0",
+        "redis": "6.2.1",
         "tryharder": "0.4.0",
       },
       "devDependencies": {

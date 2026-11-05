@@ -2,7 +2,7 @@ import type { Logger } from "@v1/core/services/logging"
 import { DispatchJobError, type JobPayloadError, JobsFault } from "@v1/core/errors"
 import { Queue } from "bullmq"
 import { ms, seconds } from "humanspan"
-import { Redis } from "ioredis"
+import { createClient } from "redis"
 import * as try$ from "tryharder"
 import type { JobInput, JobName, QueueName } from "#catalog.ts"
 import { getJob } from "#lookup.ts"
@@ -17,11 +17,15 @@ const DEFAULT_JOB_OPTIONS = {
 } as const
 
 export function createDispatcher({ logger, url }: DispatcherOptions) {
-  // A dispatch waits while the connection opens, but fails after one reconnect attempt while Redis
-  // is unreachable instead of holding the request open until Redis returns.
-  const connection = new Redis(url, { maxRetriesPerRequest: 1 })
+  // A dispatch waits while the connection opens or reconnects, but fails after the timeout while
+  // Redis is unreachable instead of holding the request open until Redis returns.
+  const connection = createClient({ commandOptions: { timeout: ms("5s") }, url })
   connection.on("error", (error) => {
     logger?.error({ error, message: "Job queue connection error", scope: "jobs" })
+  })
+  // The client reconnects on its own, so connecting rejects only once it stops reconnecting.
+  connection.connect().catch((error: unknown) => {
+    logger?.error({ error, message: "Job queue connection closed", scope: "jobs" })
   })
   const opened = new Map<QueueName, Queue>()
 
@@ -109,10 +113,10 @@ export function createDispatcher({ logger, url }: DispatcherOptions) {
     async close() {
       await Promise.allSettled([...opened.values()].map((queue) => queue.close()))
 
-      if (connection.status === "ready") {
-        await connection.quit()
-      } else {
-        connection.disconnect()
+      if (connection.isReady) {
+        await connection.close()
+      } else if (connection.isOpen) {
+        connection.destroy()
       }
     },
   }

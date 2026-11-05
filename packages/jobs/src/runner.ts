@@ -1,7 +1,7 @@
 import type { Logger } from "@v1/core/services/logging"
 import * as z from "@v1/utils/schema"
 import { type Job, UnrecoverableError, Worker } from "bullmq"
-import { Redis } from "ioredis"
+import { createClient } from "redis"
 import { type JobName, type JobPayload, type QueueName, queues } from "#catalog.ts"
 import { getJob } from "#lookup.ts"
 
@@ -10,11 +10,15 @@ export function createJobsRunner<Subscribed extends QueueName>({
   logger,
   url,
 }: JobsRunnerOptions<Subscribed>) {
-  // BullMQ blocks on this connection while it waits for jobs, so commands must wait out a
-  // reconnect instead of failing after a fixed number of retries.
-  const connection = new Redis(url, { maxRetriesPerRequest: null })
+  // BullMQ blocks on this connection while it waits for jobs, so commands have no timeout and wait
+  // out a reconnect.
+  const connection = createClient({ url })
   connection.on("error", (error) => {
     logger?.error({ error, message: "Job queue connection error", scope: "jobs" })
+  })
+  // The client reconnects on its own, so connecting rejects only once it stops reconnecting.
+  connection.connect().catch((error: unknown) => {
+    logger?.error({ error, message: "Job queue connection closed", scope: "jobs" })
   })
 
   function subscribe<Queue extends Subscribed>(queue: Queue, queueHandlers: QueueHandlers<Queue>) {
@@ -80,14 +84,14 @@ export function createJobsRunner<Subscribed extends QueueName>({
      * it as stalled once Redis returns.
      */
     async close() {
-      const isConnected = connection.status === "ready"
+      const isConnected = connection.isReady
 
       await Promise.all(workers.map((worker) => worker.close(!isConnected)))
 
       if (isConnected) {
-        await connection.quit()
-      } else {
-        connection.disconnect()
+        await connection.close()
+      } else if (connection.isOpen) {
+        connection.destroy()
       }
     },
   }
