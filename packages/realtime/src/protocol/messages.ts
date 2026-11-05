@@ -12,7 +12,7 @@ export const MAX_SUBSCRIPTIONS = 50
 /**
  * A Redis stream entry ID. Stream IDs only grow, so a cursor orders the events of one channel.
  */
-const CursorSchema = z.string().check(z.regex(/^\d+-\d+$/))
+export const CursorSchema = z.string().check(z.regex(/^\d+-\d+$/))
 
 export const SubscribeRequestSchema = z.object({
   subscriptions: z

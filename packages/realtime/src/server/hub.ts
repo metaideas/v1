@@ -1,5 +1,5 @@
 import type { Logger } from "@v1/core/services/logging"
-import type { Redis } from "ioredis"
+import type { RedisClientType } from "redis"
 import { type StreamEntry, parsePublished } from "#server/redis.ts"
 
 export type Listener = (entry: StreamEntry) => void
@@ -8,13 +8,19 @@ export type Listener = (entry: StreamEntry) => void
  * Shares one Redis subscriber connection between every stream in the process, subscribing to a
  * channel while at least one stream listens to it.
  */
-export function createHub({ connection, logger }: { connection: Redis; logger?: Logger }) {
+export function createHub({
+  connection,
+  logger,
+}: {
+  connection: RedisClientType
+  logger?: Logger
+}) {
   const subscriptions = new Map<
     string,
     { listeners: Set<Listener>; subscribed: Promise<unknown> }
   >()
   const streams = new Set<() => void>()
-  let subscriber: Redis | undefined
+  let subscriber: RedisClientType | undefined
 
   // Opens on the first subscription, so a process that only emits, such as a worker, never holds a
   // subscriber connection.
@@ -22,7 +28,8 @@ export function createHub({ connection, logger }: { connection: Redis; logger?: 
     if (subscriber) return subscriber
 
     let hasConnected = false
-    subscriber = connection.duplicate({ maxRetriesPerRequest: null })
+    // Subscriptions have no command timeout, so a subscribe waits out a reconnect.
+    subscriber = connection.duplicate()
     subscriber.on("error", (error) => {
       logger?.error({ error, message: "Realtime subscriber error", scope: "realtime" })
     })
@@ -34,14 +41,19 @@ export function createHub({ connection, logger }: { connection: Redis; logger?: 
       }
       hasConnected = true
     })
-    subscriber.on("message", (key: string, message: string) => {
-      const entry = parsePublished(message)
-      if (!entry) return
-
-      for (const listener of subscriptions.get(key)?.listeners ?? []) listener(entry)
+    // The client reconnects on its own, so connecting rejects only once it stops reconnecting.
+    subscriber.connect().catch((error: unknown) => {
+      logger?.error({ error, message: "Realtime subscriber closed", scope: "realtime" })
     })
 
     return subscriber
+  }
+
+  function deliver(key: string, message: string) {
+    const entry = parsePublished(message)
+    if (!entry) return
+
+    for (const listener of subscriptions.get(key)?.listeners ?? []) listener(entry)
   }
 
   return {
@@ -56,7 +68,9 @@ export function createHub({ connection, logger }: { connection: Redis; logger?: 
         return existing.subscribed
       }
 
-      const subscribed = openSubscriber().subscribe(key)
+      const subscribed = openSubscriber().subscribe(key, (message) => {
+        deliver(key, message)
+      })
       subscriptions.set(key, { listeners: new Set([listener]), subscribed })
 
       return subscribed
@@ -89,8 +103,8 @@ export function createHub({ connection, logger }: { connection: Redis; logger?: 
     async close() {
       for (const close of streams) close()
 
-      if (subscriber?.status === "ready") await subscriber.quit()
-      else subscriber?.disconnect()
+      if (subscriber?.isReady) await subscriber.close()
+      else if (subscriber?.isOpen) subscriber.destroy()
     },
   }
 }
