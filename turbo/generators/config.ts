@@ -1,5 +1,6 @@
 import type { PlopTypes } from "@turbo/gen"
 import { registerBullBoardGenerator } from "./commands/bull-board"
+import { registerEmDashGenerator } from "./commands/emdash"
 import { registerNewFeatureGenerator } from "./commands/new-feature"
 import { registerNewPackageGenerator } from "./commands/new-package"
 import { registerPostHogGenerator } from "./commands/posthog"
@@ -15,4 +16,5 @@ export default function generator(plop: PlopTypes.NodePlopAPI) {
   registerBullBoardGenerator(plop)
   registerRemoteCacheGenerator(plop)
   registerRealtimeGenerator(plop)
+  registerEmDashGenerator(plop)
 }

@@ -18,6 +18,7 @@ export default defineConfig({
     "**/.generated/**",
     "**/src/shared/internationalization/**",
     "**/uniwind-types.d.ts",
+    "**/emdash-env.d.ts",
   ],
   insertFinalNewline: true,
   jsxSingleQuote: false,

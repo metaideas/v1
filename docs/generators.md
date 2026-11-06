@@ -63,6 +63,40 @@ The template command installs bull-board and the BullMQ version that `packages/j
 
 The dashboard copies the shadcn theme from `packages/ui/src/styles/globals.css` into bull-board's `uiConfig.theme`, so it uses the same colours, radius, and fonts as the other application workspaces in light and dark mode. The job status colours and the chart colours stay bull-board's, because they carry the meaning of each status. The theme is copied once, when the template recipe runs, so regenerate it or edit `uiConfig.theme` after you change `packages/ui`. Without `packages/ui`, the dashboard keeps bull-board's own theme.
 
+## Add EmDash
+
+`emdash` adds the [EmDash](https://docs.emdashcms.com/) CMS to `apps/web`, so editors can write and publish content from an admin panel. EmDash stores its content in the project's Postgres database, in a `blog` schema of its own:
+
+```bash
+bun run generate emdash
+bun run --filter @v1/database migrate
+```
+
+The template command follows the EmDash guide for [existing projects](https://docs.emdashcms.com/existing-project/). It needs `packages/database`. It installs EmDash and the Astro Node adapter, adds the `emdash()` integration to `astro.config.ts`, and creates `src/live.config.ts`, which loads EmDash content as an Astro live collection. It also adds a `start` script that runs the built server and declares `EMDASH_ENCRYPTION_KEY` in `.env.schema` as optional.
+
+`apps/web` imports the database environment fragment and reads `DATABASE_URL`, like `apps/api`. EmDash copies its database config into the server bundle, so the config names `src/shared/emdash-database.ts` instead of holding the URL. That module reads `DATABASE_URL` when the server starts and sets the connection's `search_path` to `blog`, so every EmDash table lands in that schema. The template command adds a custom migration to `packages/database/migrations` that creates the schema, so the deploy that migrates the app's tables creates it too. The schema stays out of `src/schema.ts`, so `drizzle-kit push` and `reset` leave EmDash's tables alone. EmDash creates and migrates its own tables when the server starts.
+
+EmDash ignores Astro's `site`, and production setup fails without a public origin, so the template command passes EmDash the same value: `PUBLIC_SITE_URL`, or the `SITE_URL` constant in `src/shared/constants.ts`. Set it to the deployed origin before you build for production. The site keeps `output: "static"`, so the existing pages stay prerendered. The Node adapter serves the admin at `/_emdash/admin/` and the EmDash API on demand. Run `bun run --filter web dev`, open the admin, and finish the setup wizard. The dev server writes `emdash-env.d.ts` from the content model. Commit it, because `bun run codegen` cannot regenerate it without the database. Query content from a page that renders on demand:
+
+```astro
+---
+import { getEmDashCollection } from "emdash"
+
+export const prerender = false
+
+const { entries: posts, error } = await getEmDashCollection("posts")
+if (error) {
+  throw error
+}
+---
+
+<ul>{posts.map((post) => <li>{post.data.title}</li>)}</ul>
+```
+
+EmDash needs `EMDASH_ENCRYPTION_KEY` only when a plugin stores a secret setting. Generate a key with `bunx emdash secrets generate` and back it up, because EmDash cannot read those settings without it. Uploaded media stay in `apps/web/uploads`, so the server needs a persistent disk. Deploy with `bun run --filter web build` and `bun run --filter web start`, and remove `apps/web/vercel.json` if you no longer deploy to Vercel. To keep media in S3 instead, change the storage adapter in `astro.config.ts` following the EmDash [configuration reference](https://docs.emdashcms.com/reference/configuration/).
+
+Where an edit does not apply, the template command prints the step to finish by hand. A repeat run reports skips without replacing generated application code.
+
 ## Add the Turbo remote cache
 
 Remote cache is opt-in. `remote-cache` wires [Vercel Remote Cache](https://turborepo.com/docs/core-concepts/remote-caching) into every GitHub Actions workflow that runs Turbo, including a workflow that only reaches Turbo through a root script such as `bun run codegen` or `bun run boundaries`:

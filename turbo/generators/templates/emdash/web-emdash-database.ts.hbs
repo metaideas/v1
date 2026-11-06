@@ -1,0 +1,14 @@
+import { createDialect as createPostgresDialect } from "emdash/db/postgres"
+import { ENV } from "#shared/env.generated.ts"
+
+// A packages/database migration creates this schema, so EmDash's tables stay apart from the app's.
+const SCHEMA = "blog"
+
+// EmDash copies the database config into the server bundle, so the connection URL is read when the
+// server starts instead of in astro.config.ts.
+export function createDialect() {
+  const url = new URL(ENV.DATABASE_URL)
+  url.searchParams.set("options", `-c search_path=${SCHEMA}`)
+
+  return createPostgresDialect({ connectionString: url.href })
+}

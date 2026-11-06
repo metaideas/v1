@@ -58,7 +58,9 @@ export default {
       project: "src/**/*.{css,js,jsx,ts,tsx}",
     },
     "apps/web": {
-      entry: "src/shared/env.generated.ts",
+      // Knip's Astro plugin lists src/content.config.ts but not the live collection config that the
+      // emdash template recipe adds. Drop src/live.config.ts once the plugin lists it.
+      entry: ["src/live.config.ts", "src/shared/env.generated.ts"],
       project: "src/**/*.{astro,css,js,jsx,mdx,ts,tsx}",
     },
     "packages/*": {
