@@ -1,8 +1,8 @@
 import type { Logger } from "@v1/core/services/logging"
 import { DispatchJobError, type JobPayloadError, JobsFault } from "@v1/core/errors"
-import { Queue } from "bullmq"
+import { Queue, createNodeRedisClient } from "bullmq"
 import { ms, seconds } from "humanspan"
-import { Redis } from "ioredis"
+import { createClient } from "redis"
 import * as try$ from "tryharder"
 import type { JobInput, JobName, QueueName } from "#catalog.ts"
 import { getJob } from "#lookup.ts"
@@ -17,9 +17,13 @@ const DEFAULT_JOB_OPTIONS = {
 } as const
 
 export function createDispatcher({ logger, url }: DispatcherOptions) {
-  // A dispatch waits while the connection opens, but fails after one reconnect attempt while Redis
-  // is unreachable instead of holding the request open until Redis returns.
-  const connection = new Redis(url, { maxRetriesPerRequest: 1 })
+  // A dispatch waits while the connection opens or reconnects, but fails after the timeout while
+  // Redis is unreachable instead of holding the request open until Redis returns.
+  const client = createClient({ commandOptions: { timeout: ms("5s") }, url })
+  // BullMQ wraps a raw client in a new adapter for each queue, and the adapter of a discarded queue
+  // forwards errors with no listener, which stops the client from reconnecting. Every queue shares
+  // this adapter instead, which connects the client and keeps its listener.
+  const connection = createNodeRedisClient(client)
   connection.on("error", (error) => {
     logger?.error({ error, message: "Job queue connection error", scope: "jobs" })
   })
@@ -33,6 +37,11 @@ export function createDispatcher({ logger, url }: DispatcherOptions) {
       connection,
       defaultJobOptions: DEFAULT_JOB_OPTIONS,
       skipWaitingForReady: true,
+    })
+    // The queue re-emits its connection's errors, which the connection already logs. Without a
+    // listener, BullMQ prints each one to the console.
+    queue.on("error", (error) => {
+      logger?.debug({ error, message: "Job queue error", queue: name, scope: "jobs" })
     })
     opened.set(name, queue)
 

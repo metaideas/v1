@@ -1,7 +1,7 @@
 import type { Logger } from "@v1/core/services/logging"
 import * as z from "@v1/utils/schema"
-import { type Job, UnrecoverableError, Worker } from "bullmq"
-import { Redis } from "ioredis"
+import { type Job, UnrecoverableError, Worker, createNodeRedisClient } from "bullmq"
+import { createClient } from "redis"
 import { type JobName, type JobPayload, type QueueName, queues } from "#catalog.ts"
 import { getJob } from "#lookup.ts"
 
@@ -10,9 +10,13 @@ export function createJobsRunner<Subscribed extends QueueName>({
   logger,
   url,
 }: JobsRunnerOptions<Subscribed>) {
-  // BullMQ blocks on this connection while it waits for jobs, so commands must wait out a
-  // reconnect instead of failing after a fixed number of retries.
-  const connection = new Redis(url, { maxRetriesPerRequest: null })
+  // BullMQ blocks on this connection while it waits for jobs, and a job records its result on it, so
+  // commands wait out a reconnect. node-redis times out commands after 5 seconds by default, which
+  // would fail a job that finished during a longer outage and run it again.
+  const client = createClient({ commandOptions: { timeout: 0 }, url })
+  // Every worker shares one adapter that connects the client and keeps its error listener, so a
+  // closed worker never leaves the client forwarding errors to no listener.
+  const connection = createNodeRedisClient(client)
   connection.on("error", (error) => {
     logger?.error({ error, message: "Job queue connection error", scope: "jobs" })
   })

@@ -3,12 +3,14 @@ import { createParser } from "eventsource-parser"
 import { waitUntil } from "#__tests__/wait-until.ts"
 import { compareCursors } from "#protocol/address.ts"
 
-type Handler = (...args: string[]) => void
+type Handler = () => void
+
+type Listener = (message: string) => void
 
 type FakeClient = ReturnType<typeof createClient>
 
 type FakeServer = {
-  streams: Map<string, Array<[string, string[]]>>
+  streams: Map<string, Array<{ id: string; message: Record<string, string> }>>
   subscribers: Set<FakeClient>
   sequence: number
   /**
@@ -37,12 +39,11 @@ const server: FakeServer = { sequence: 0, streams: new Map(), subscribers: new S
 function append(key: string, event: string, data: string) {
   server.sequence += 1
   const cursor = `${server.sequence}-0`
-  const entry: [string, string[]] = [cursor, ["event", event, "data", data]]
+  const entry = { id: cursor, message: { data, event } }
   server.streams.set(key, [...(server.streams.get(key) ?? []), entry])
 
   for (const subscriber of server.subscribers) {
-    if (subscriber.channels.has(key))
-      subscriber.emit("message", key, `${cursor}\n${event}\n${data}`)
+    subscriber.channels.get(key)?.(`${cursor}\n${event}\n${data}`)
   }
 
   return cursor
@@ -50,12 +51,15 @@ function append(key: string, event: string, data: string) {
 
 function createClient() {
   const handlers = new Map<string, Handler[]>()
-  const channels = new Set<string>()
+  const channels = new Map<string, Listener>()
 
   const client = {
     channels,
-    disconnect: mock(),
-    status: "ready",
+    close: () => Promise.resolve(),
+    connect: () => Promise.resolve(client),
+    destroy: mock(),
+    isOpen: true,
+    isReady: true,
 
     duplicate() {
       const subscriber = createClient()
@@ -63,16 +67,16 @@ function createClient() {
       return subscriber
     },
 
-    emit(event: string, ...args: string[]) {
-      for (const handler of handlers.get(event) ?? []) handler(...args)
+    emit(event: string) {
+      for (const handler of handlers.get(event) ?? []) handler()
     },
 
-    eval(_script: string, _keys: number, key: string, ...args: Array<string | number>) {
+    eval(_script: string, { arguments: args, keys }: { arguments: string[]; keys: string[] }) {
       const error = server.emitError
       server.emitError = undefined
       if (error) return Promise.reject(error)
 
-      return Promise.resolve(append(key, String(args[2]), String(args[3])))
+      return Promise.resolve(append(String(keys[0]), String(args[2]), String(args[3])))
     },
 
     on(event: string, handler: Handler) {
@@ -80,43 +84,41 @@ function createClient() {
       return client
     },
 
-    quit: () => Promise.resolve("OK"),
-
     time() {
       server.beforeTime?.()
       const now = server.now ?? Date.now()
       return Promise.resolve([String(Math.floor(now / 1000)), String((now % 1000) * 1000)])
     },
 
-    subscribe(key: string) {
-      channels.add(key)
-      return Promise.resolve(channels.size)
+    subscribe(key: string, listener: Listener) {
+      channels.set(key, listener)
+      return Promise.resolve()
     },
 
     unsubscribe(key: string) {
       channels.delete(key)
-      return Promise.resolve(channels.size)
+      return Promise.resolve()
     },
 
-    xrange(key: string, start: string) {
+    xRange(key: string, start: string) {
       server.beforeRead?.()
       const stream = server.streams.get(key) ?? []
 
-      return Promise.resolve(stream.filter(([cursor]) => compareCursors(cursor, start) >= 0))
+      return Promise.resolve(stream.filter(({ id }) => compareCursors(id, start) >= 0))
     },
 
-    xrevrange: (key: string) => Promise.resolve((server.streams.get(key) ?? []).slice(-1)),
+    xRevRange: (key: string) => Promise.resolve((server.streams.get(key) ?? []).slice(-1)),
   }
 
   return client
 }
 
 /**
- * Replaces `ioredis` with an in-memory stand-in for the commands the package uses: streams, the
- * emit script, and pub/sub. Bun shares module mocks across test files.
+ * Replaces `redis` with an in-memory stand-in for the commands the package uses: streams, the emit
+ * script, and pub/sub. Bun shares module mocks across test files.
  */
 export async function mockRedis() {
-  await mock.module("ioredis", () => ({ Redis: mock(() => createClient()) }))
+  await mock.module("redis", () => ({ createClient: mock(() => createClient()) }))
 
   return {
     append,

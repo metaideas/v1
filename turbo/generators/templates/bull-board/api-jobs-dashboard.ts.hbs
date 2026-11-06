@@ -2,19 +2,35 @@ import { createBullBoard } from "@bull-board/api"
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter"
 import { HonoAdapter } from "@bull-board/hono"
 import { queueNames } from "@v1/jobs/queue-names"
-import { Queue } from "bullmq"
+import { Queue, createNodeRedisClient } from "bullmq"
 import { basicAuth } from "hono/basic-auth"
 import { serveStatic } from "hono/bun"
 import { csrf } from "hono/csrf"
+import { createClient } from "redis"
 import { ENV } from "#shared/env.generated.ts"
+import { log } from "#shared/logger.ts"
 import { factory } from "#shared/utils.ts"
 
 const JOBS_DASHBOARD_PATH = "/jobs"
 
 function createJobsDashboard(credentials: { password: string; username: string }) {
-  const queues = queueNames.map(
-    (name) => new Queue(name, { connection: { url: ENV.JOBS_REDIS_URL } })
-  )
+  // Every queue shares one adapter that connects the client and keeps its error listener, so a
+  // closed queue never leaves the client forwarding errors to no listener.
+  const connection = createNodeRedisClient(createClient({ url: ENV.JOBS_REDIS_URL }))
+  connection.on("error", (error) => {
+    log.error({ error, message: "Jobs dashboard connection error", scope: "jobs" })
+  })
+
+  const queues = queueNames.map((name) => {
+    const queue = new Queue(name, { connection })
+    // The queue re-emits its connection's errors, which the connection already logs. Without a
+    // listener, BullMQ prints each one to the console.
+    queue.on("error", (error) => {
+      log.debug({ error, message: "Jobs dashboard queue error", queue: name, scope: "jobs" })
+    })
+
+    return queue
+  })
   const serverAdapter = new HonoAdapter(serveStatic).setBasePath(JOBS_DASHBOARD_PATH)
 
   createBullBoard({
@@ -29,6 +45,12 @@ function createJobsDashboard(credentials: { password: string; username: string }
   return {
     async close() {
       await Promise.all(queues.map((queue) => queue.close()))
+
+      if (connection.status === "ready") {
+        await connection.quit()
+      } else {
+        connection.disconnect()
+      }
     },
     path: JOBS_DASHBOARD_PATH,
     // Browsers resend cached Basic Auth credentials on cross-site form posts, so reject mutations

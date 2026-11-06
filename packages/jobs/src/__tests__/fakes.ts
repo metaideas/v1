@@ -28,9 +28,10 @@ export async function mockQueues() {
     on: () => worker,
     run: () => Promise.resolve(),
   }
-  const Queue = mock(() => ({ add, close: () => Promise.resolve() }))
+  const queue = { add, close: () => Promise.resolve(), on: mock() }
+  const Queue = mock(() => queue)
 
-  await mock.module("ioredis", () => ({ Redis: mock(() => redis) }))
+  await mock.module("redis", () => ({ createClient: mock(() => ({})) }))
   await mock.module("bullmq", () => ({
     Queue,
     UnrecoverableError,
@@ -39,7 +40,8 @@ export async function mockQueues() {
 
       return worker
     }),
+    createNodeRedisClient: mock(() => redis),
   }))
 
-  return { Queue, add, processors, redis, worker }
+  return { Queue, add, processors, queue, redis, worker }
 }

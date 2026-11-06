@@ -167,7 +167,7 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
               last = await readTail(connection, redisKey)
               send("ready", { cursor: last, key })
             } else {
-              const stored = await connection.xrange(redisKey, cursor, "+")
+              const stored = await connection.xRange(redisKey, cursor, "+")
               const history = stored.map((entry) => parseStored(entry))
               if (await isCursorKept(channel, cursor, history)) {
                 last = cursor

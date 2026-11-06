@@ -1,4 +1,4 @@
-import type { Redis } from "ioredis"
+import type { RedisClientType } from "redis"
 
 // Appends the event to the channel's stream and publishes it in one atomic step, so subscribers
 // receive events in the order the stream holds them. A published message is the cursor, the event,
@@ -34,17 +34,20 @@ export function parsePublished(message: string): StreamEntry | undefined {
   }
 }
 
-export function parseStored([cursor, fields]: [string, string[]]): StreamEntry {
-  const event = fields[fields.indexOf("event") + 1] ?? ""
-  const data = fields[fields.indexOf("data") + 1] ?? "null"
-
-  return { cursor, data: JSON.parse(data), event }
+export function parseStored({
+  id,
+  message,
+}: {
+  id: string
+  message: Record<string, string | undefined>
+}): StreamEntry {
+  return { cursor: id, data: JSON.parse(message.data ?? "null"), event: message.event ?? "" }
 }
 
 /**
  * Redis's clock in milliseconds, so every API process measures time the same way.
  */
-export async function readTime(connection: Redis) {
+export async function readTime(connection: RedisClientType) {
   const [seconds, microseconds] = await connection.time()
   return Number(seconds) * 1000 + Math.floor(Number(microseconds) / 1000)
 }
@@ -53,10 +56,10 @@ export async function readTime(connection: Redis) {
  * The cursor of the channel's latest event. A channel without events starts at `0-<Redis time in
  * ms>`, which comes before every event and records when it was found empty.
  */
-export async function readTail(connection: Redis, redisKey: string) {
+export async function readTail(connection: RedisClientType, redisKey: string) {
   // Reading the time first keeps the checkpoint no later than the read that found the channel
   // empty, so an event emitted between the two commands never expires before the checkpoint does.
   const time = await readTime(connection)
-  const [last] = await connection.xrevrange(redisKey, "+", "-", "COUNT", 1)
-  return last?.[0] ?? `0-${time}`
+  const [last] = await connection.xRevRange(redisKey, "+", "-", { COUNT: 1 })
+  return last?.id ?? `0-${time}`
 }

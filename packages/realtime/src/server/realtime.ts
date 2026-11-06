@@ -2,15 +2,16 @@ import type { Logger } from "@v1/core/services/logging"
 import { PublishEventError, RealtimeFault, type RealtimePayloadError } from "@v1/core/errors"
 import * as z from "@v1/utils/schema/mini"
 import { ms } from "humanspan"
-import { Redis } from "ioredis"
+import { type RedisClientType, createClient } from "redis"
 import * as try$ from "tryharder"
 import type { ChannelName, ChannelParamsInput, EventData, EventName } from "#channels/catalog.ts"
 import { getEvent, getHistory } from "#channels/lookup.ts"
 import { addressChannel } from "#protocol/address.ts"
+import { CursorSchema } from "#protocol/messages.ts"
 import { type Hub, createHub } from "#server/hub.ts"
 import { EMIT_SCRIPT, toRedisKey } from "#server/redis.ts"
 
-type RealtimeInternals = { connection: Redis; hub: Hub; logger?: Logger }
+type RealtimeInternals = { connection: RedisClientType; hub: Hub; logger?: Logger }
 
 const internals = new WeakMap<object, RealtimeInternals>()
 
@@ -29,11 +30,15 @@ export function getInternals(realtime: Realtime) {
  * passes it to `createRealtimeHandler` to stream events to clients. Close it on shutdown.
  */
 export function createRealtime({ logger, url }: RealtimeOptions) {
-  // An emit waits while the connection opens, but fails after one reconnect attempt while Redis is
-  // unreachable instead of holding the request open until Redis returns.
-  const connection = new Redis(url, { maxRetriesPerRequest: 1 })
+  // An emit waits while the connection opens or reconnects, but fails after the timeout while Redis
+  // is unreachable instead of holding the request open until Redis returns.
+  const connection = createClient({ commandOptions: { timeout: ms("5s") }, url })
   connection.on("error", (error) => {
     logger?.error({ error, message: "Realtime connection error", scope: "realtime" })
+  })
+  // The client reconnects on its own, so connecting rejects only once it stops reconnecting.
+  connection.connect().catch((error: unknown) => {
+    logger?.error({ error, message: "Realtime connection closed", scope: "realtime" })
   })
 
   const hub = createHub({ connection, logger })
@@ -70,16 +75,19 @@ export function createRealtime({ logger, url }: RealtimeOptions) {
           const { expireAfter, maxLength } = getHistory(channel)
           const result = await try$.run({
             catch: (error) => RealtimeFault.wrap(error).as("PublishEventError", { channel, event }),
-            try: () =>
-              connection.eval(
-                EMIT_SCRIPT,
-                1,
-                toRedisKey(address.key),
-                maxLength,
-                ms(expireAfter),
-                event,
-                JSON.stringify(encoded.data)
-              ),
+            try: async () => {
+              const cursor = await connection.eval(EMIT_SCRIPT, {
+                arguments: [
+                  String(maxLength),
+                  String(ms(expireAfter)),
+                  event,
+                  JSON.stringify(encoded.data),
+                ],
+                keys: [toRedisKey(address.key)],
+              })
+
+              return z.parse(CursorSchema, cursor)
+            },
           })
 
           if (result instanceof PublishEventError) {
@@ -94,7 +102,7 @@ export function createRealtime({ logger, url }: RealtimeOptions) {
             return result
           }
 
-          return { cursor: String(result) }
+          return { cursor: result }
         },
       }
     },
@@ -102,8 +110,8 @@ export function createRealtime({ logger, url }: RealtimeOptions) {
     async close() {
       await hub.close()
 
-      if (connection.status === "ready") await connection.quit()
-      else connection.disconnect()
+      if (connection.isReady) await connection.close()
+      else if (connection.isOpen) connection.destroy()
     },
   }
 
