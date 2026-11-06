@@ -32,6 +32,8 @@ const IGNORED_PATHS = ["uploads"] as const
 // existing page prerendered. EmDash copies the database config into the server bundle, so the
 // descriptor names a module that reads DATABASE_URL at runtime instead of holding the URL. It sets no
 // `migrations`, because EmDash migrates at runtime and its migration command would ignore the schema.
+// EmDash ignores Astro's `site`, and production setup fails without a public origin, so both read
+// the same value.
 const EDITS: readonly Edit[] = [
   {
     imports: [
@@ -41,14 +43,19 @@ const EDITS: readonly Edit[] = [
       { from: "emdash/astro", imported: "local" },
     ],
     manual:
-      'Add `adapter: node({ mode: "standalone" })` and the `emdash()` integration with a postgres database descriptor for src/shared/emdash-database.ts and `local()` storage to astro.config.ts.',
+      'Add `adapter: node({ mode: "standalone" })` and the `emdash()` integration with a postgres database descriptor for src/shared/emdash-database.ts, `local()` storage, and `siteUrl` set to the same value as `site` to astro.config.ts.',
     marker: "emdash({",
     path: "astro.config.ts",
     replacements: [
+      [
+        "export default defineConfig({\n",
+        "const site = ENV.PUBLIC_SITE_URL ?? SITE_URL\n\nexport default defineConfig({\n",
+      ],
       ['  output: "static",\n', '  adapter: node({ mode: "standalone" }),\n  output: "static",\n'],
+      ["  site: ENV.PUBLIC_SITE_URL ?? SITE_URL,\n", "  site,\n"],
       [
         "    mdx(),\n",
-        '    mdx(),\n    emdash({\n      database: {\n        config: {},\n        entrypoint: fileURLToPath(new URL("src/shared/emdash-database.ts", import.meta.url)),\n        type: "postgres",\n      },\n      storage: local({ baseUrl: "/_emdash/api/media/file", directory: "./uploads" }),\n    }),\n',
+        '    mdx(),\n    emdash({\n      database: {\n        config: {},\n        entrypoint: fileURLToPath(new URL("src/shared/emdash-database.ts", import.meta.url)),\n        type: "postgres",\n      },\n      siteUrl: site,\n      storage: local({ baseUrl: "/_emdash/api/media/file", directory: "./uploads" }),\n    }),\n',
       ],
     ],
   },
@@ -188,7 +195,11 @@ async function addSchemaMigration() {
     return `[SKIPPED] ${MIGRATIONS_PATH} already creates the blog schema`
   }
 
-  await Bun.$`cd ${DATABASE_PATH} && bun run generate --custom --name=blog-schema`.quiet()
+  // drizzle.config.ts loads DATABASE_URL through Varlock, which reads .env.development only for the
+  // development environment. Generating the file never connects to the database.
+  await Bun.$`cd ${DATABASE_PATH} && bun run generate --custom --name=blog-schema`
+    .env({ ...process.env, VARLOCK_ENV: process.env.VARLOCK_ENV ?? "development" })
+    .quiet()
   const after = await listMigrations()
   const created = after.find((name) => !before.includes(name))
 
