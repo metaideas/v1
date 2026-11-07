@@ -17,7 +17,6 @@ const schemaNames = Object.values(schema)
 
 export default defineConfig({
   breakpoints: true,
-  casing: "snake_case",
   dbCredentials: {
     url: ENV.DATABASE_URL,
   },
@@ -25,6 +24,5 @@ export default defineConfig({
   out: "./migrations",
   schema: ["./src/schema/index.ts", "./src/relations.ts"],
   schemaFilter: ["public", ...schemaNames],
-  strict: true,
   verbose: true,
 })

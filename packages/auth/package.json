@@ -26,7 +26,7 @@
     "@v1/core": "workspace:*",
     "better-auth": "1.7.18",
     "conf": "15.1.0",
-    "drizzle-orm": "0.45.3",
+    "drizzle-orm": "1.0.0-rc.5",
     "humanspan": "0.3.0"
   },
   "devDependencies": {

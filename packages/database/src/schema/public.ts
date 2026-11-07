@@ -3,10 +3,8 @@ import * as pg from "drizzle-orm/pg-core"
 import { id, timestamps } from "#helpers/columns.ts"
 import { type UserId, users } from "#schema/auth.ts"
 
-export const createTable = pg.pgTableCreator((name) => name)
-
 // Insert your tables here
-export const documents = createTable("documents", {
+export const documents = pg.snakeCase.table("documents", {
   ...id(z.branded("DocumentId"), "doc"),
   ...timestamps,
 
@@ -14,14 +12,15 @@ export const documents = createTable("documents", {
   name: pg.text().notNull(),
 })
 
-export const profiles = createTable("profiles", {
+export const profiles = pg.snakeCase.table("profiles", {
   ...id(z.branded("ProfileId"), "prof"),
   ...timestamps,
 
   userId: pg
     .text()
     .notNull()
-    .unique()
+    // Drizzle 0.x named the constraint after the property, and keeping the name avoids a migration.
+    .unique("profiles_userId_unique")
     .references(() => users.id, {
       onDelete: "cascade",
       onUpdate: "cascade",

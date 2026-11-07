@@ -1,6 +1,6 @@
 import type { Logger } from "@v1/core/services/logging"
 import type { BetterAuthPlugin, SocialProviders } from "better-auth"
-import { type DB, drizzleAdapter } from "@better-auth/drizzle-adapter"
+import { type DB, drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2"
 import { betterAuth } from "better-auth/minimal"
 import { jwt } from "better-auth/plugins/jwt"
 import {

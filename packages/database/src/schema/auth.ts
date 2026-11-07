@@ -3,7 +3,7 @@ import * as pg from "drizzle-orm/pg-core"
 import { id, timestamps } from "#helpers/columns.ts"
 import { UserIdSchema } from "#schemas.ts"
 
-export const authSchema = pg.pgSchema("auth")
+export const authSchema = pg.snakeCase.schema("auth")
 
 export const users = authSchema.table(
   "users",

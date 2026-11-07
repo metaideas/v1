@@ -19,7 +19,6 @@ export {
   type Verification,
 } from "#schema/auth.ts"
 export {
-  createTable,
   documents,
   profiles,
   type NewProfile,

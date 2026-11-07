@@ -1,39 +1,23 @@
-import { relations } from "drizzle-orm/relations"
-import { accounts, sessions, users } from "#schema/auth.ts"
-import { profiles } from "#schema/public.ts"
-import { uploads } from "#schema/storage.ts"
+import { defineRelations } from "drizzle-orm"
+import * as schema from "#schema/index.ts"
 
-export const profileRelations = relations(profiles, ({ one }) => ({
-  user: one(users, {
-    fields: [profiles.userId],
-    references: [users.id],
-  }),
-}))
-
-export const userRelations = relations(users, ({ one, many }) => ({
-  accounts: many(accounts),
-  profile: one(profiles),
-  sessions: many(sessions),
-  uploads: many(uploads),
-}))
-
-export const accountRelations = relations(accounts, ({ one }) => ({
-  user: one(users, {
-    fields: [accounts.userId],
-    references: [users.id],
-  }),
-}))
-
-export const sessionRelations = relations(sessions, ({ one }) => ({
-  user: one(users, {
-    fields: [sessions.userId],
-    references: [users.id],
-  }),
-}))
-
-export const uploadRelations = relations(uploads, ({ one }) => ({
-  owner: one(users, {
-    fields: [uploads.ownerId],
-    references: [users.id],
-  }),
+export const relations = defineRelations(schema, (r) => ({
+  accounts: {
+    user: r.one.users({ from: r.accounts.userId, optional: false, to: r.users.id }),
+  },
+  profiles: {
+    user: r.one.users({ from: r.profiles.userId, optional: false, to: r.users.id }),
+  },
+  sessions: {
+    user: r.one.users({ from: r.sessions.userId, optional: false, to: r.users.id }),
+  },
+  uploads: {
+    owner: r.one.users({ from: r.uploads.ownerId, optional: false, to: r.users.id }),
+  },
+  users: {
+    accounts: r.many.accounts(),
+    profile: r.one.profiles({ from: r.users.id, to: r.profiles.userId }),
+    sessions: r.many.sessions(),
+    uploads: r.many.uploads(),
+  },
 }))

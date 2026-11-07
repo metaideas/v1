@@ -180,7 +180,7 @@ async function addLocalDatabaseUrl() {
 }
 
 async function listMigrations() {
-  return Array.fromAsync(new Bun.Glob("*.sql").scan({ cwd: MIGRATIONS_PATH }))
+  return Array.fromAsync(new Bun.Glob("*/migration.sql").scan({ cwd: MIGRATIONS_PATH }))
 }
 
 // Drizzle creates the schema, so the deploy that migrates the app's tables creates it too. The
