@@ -9,7 +9,7 @@
   },
   "exports": {
     "./helpers/*": "./src/helpers/*.ts",
-    "./schema": "./src/schema.ts",
+    "./schema": "./src/schema/index.ts",
     "./schemas": "./src/schemas.ts",
     "./client": "./src/client.ts"
   },
@@ -28,14 +28,13 @@
   "dependencies": {
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
-    "drizzle-orm": "0.45.3",
-    "drizzle-zod": "0.8.3",
+    "drizzle-orm": "1.0.0-rc.5",
     "varlock": "1.21.1"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",
-    "drizzle-kit": "0.31.11",
-    "drizzle-seed": "0.3.1",
+    "drizzle-kit": "1.0.0-rc.5",
+    "drizzle-seed": "1.0.0-rc.5",
     "postgres": "3.4.9",
     "typescript": "7.0.2"
   }

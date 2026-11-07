@@ -6,7 +6,6 @@ const app = defineApp({
   env: {
     AUTH_SECRET: v.string(),
     AUTH_TRUSTED_ORIGINS: v.string(),
-    CONVEX_SITE_URL: v.string(),
   },
 })
 

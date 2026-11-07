@@ -5,4 +5,5 @@ import { createAuthOptions } from "#functions/shared/auth.ts"
 const api = createApi(schema, createAuthOptions)
 
 export const { create, findOne, findMany } = api
+export const { consumeOne, incrementOne } = api
 export const { updateOne, updateMany, deleteOne, deleteMany } = api

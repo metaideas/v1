@@ -69,7 +69,7 @@ export default {
     "packages/database": {
       drizzle: {
         config: [],
-        entry: ["drizzle.config.ts", "src/schema.ts"],
+        entry: ["drizzle.config.ts", "src/relations.ts", "src/schema/index.ts"],
       },
       entry: ["scripts/*.ts"],
     },

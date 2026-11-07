@@ -19,6 +19,7 @@ const schemaGenerationContext: GenericQueryCtx<DataModel> = {
   meta: {
     getDeploymentMetadata: unavailable,
     getFunctionMetadata: unavailable,
+    getSnapshotTs: unavailable,
     getTransactionMetrics: unavailable,
   },
   runQuery: unavailable,

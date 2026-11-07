@@ -1,6 +1,5 @@
 import type { PropsWithChildren } from "react"
 import { ConvexQueryClient, ConvexReactClient } from "{{backendPackage}}/client"
-import type { AuthClient } from "{{backendPackage}}/client/auth"
 import { ConvexBetterAuthProvider } from "{{backendPackage}}/client/auth"
 import { auth } from "#shared/auth.ts"
 import { ENV } from "#shared/env.generated.ts"
@@ -23,12 +22,9 @@ queryClient.setDefaultOptions({
 })
 convexQueryClient.connect(queryClient)
 
-// oxlint-disable-next-line typescript/consistent-type-assertions -- Convex types `AuthClient` for a client with only its own plugins, so the Expo and additional-fields plugins make the shared client unassignable.
-const convexAuth = auth as unknown as AuthClient
-
 export default function ConvexProvider({ children }: PropsWithChildren) {
   return (
-    <ConvexBetterAuthProvider authClient={convexAuth} client={convex}>
+    <ConvexBetterAuthProvider authClient={auth} client={convex}>
       {children}
     </ConvexBetterAuthProvider>
   )

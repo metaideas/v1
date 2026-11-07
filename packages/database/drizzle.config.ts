@@ -3,7 +3,7 @@ import { defineConfig } from "drizzle-kit"
 import { is } from "drizzle-orm"
 import { PgSchema } from "drizzle-orm/pg-core"
 import { ENV } from "#env.generated.ts"
-import * as schema from "#schema.ts"
+import * as schema from "#schema/index.ts"
 
 if (!(checkIsLocalDatabase(ENV.DATABASE_URL) || ENV.RUN_PRODUCTION_MIGRATIONS)) {
   throw new Error(
@@ -17,14 +17,12 @@ const schemaNames = Object.values(schema)
 
 export default defineConfig({
   breakpoints: true,
-  casing: "snake_case",
   dbCredentials: {
     url: ENV.DATABASE_URL,
   },
   dialect: "postgresql",
   out: "./migrations",
-  schema: "./src/schema.ts",
+  schema: ["./src/schema/index.ts", "./src/relations.ts"],
   schemaFilter: ["public", ...schemaNames],
-  strict: true,
   verbose: true,
 })

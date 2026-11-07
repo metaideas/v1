@@ -1,0 +1,55 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "f9cd983b-d4af-4793-aadb-6300c92075e8",
+  "prevIds": ["ac34d8f6-40f5-4fa9-8a78-35b49308b14d"],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "auth", "jwks", "alg"],
+      "writes": ["s|col|auth.jwks.alg", "n|col|auth.jwks.alg", "e|col|auth.jwks.alg"],
+      "reads": ["n|tbl|auth.jwks", "n|sch|auth"]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": ["column", "auth", "jwks", "crv"],
+      "writes": ["s|col|auth.jwks.crv", "n|col|auth.jwks.crv", "e|col|auth.jwks.crv"],
+      "reads": ["n|tbl|auth.jwks", "n|sch|auth"]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "auth",
+        "table": "jwks",
+        "name": "alg",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "auth",
+        "table": "jwks",
+        "name": "crv",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

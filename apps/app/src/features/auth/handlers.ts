@@ -52,7 +52,7 @@ export const checkEmailAvailability = publicFunction
   .validator(z.object({ email: EmailSchema }))
   .handler(async ({ context, data }) => {
     const user = await context.database.query.users.findFirst({
-      where: (table, { eq }) => eq(table.email, data.email),
+      where: { email: data.email },
     })
 
     return { isAvailable: !user }
