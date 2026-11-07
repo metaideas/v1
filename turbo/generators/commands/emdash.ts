@@ -184,7 +184,7 @@ async function listMigrations() {
 }
 
 // Drizzle creates the schema, so the deploy that migrates the app's tables creates it too. The
-// schema stays out of src/schema.ts, because drizzle-kit push would then drop EmDash's tables.
+// schema stays out of src/schema/, because drizzle-kit push would then drop EmDash's tables.
 async function addSchemaMigration() {
   const before = await listMigrations()
   const sources = await Promise.all(

@@ -1,7 +1,8 @@
 import type { Logger } from "@v1/core/services/logging"
 import { SQL } from "bun"
 import { drizzle } from "drizzle-orm/bun-sql"
-import * as schema from "#schema.ts"
+import * as relations from "#relations.ts"
+import * as tables from "#schema/index.ts"
 
 export function createDatabase({ logger, url }: { url: string; logger?: Logger }) {
   return drizzle({
@@ -16,7 +17,7 @@ export function createDatabase({ logger, url }: { url: string; logger?: Logger }
           },
         }
       : false,
-    schema,
+    schema: { ...tables, ...relations },
   })
 }
 
