@@ -20,11 +20,11 @@
     "secret": "bunx auth@latest secret"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "1.6.30",
-    "@better-auth/electron": "1.6.30",
-    "@better-auth/expo": "1.6.30",
+    "@better-auth/drizzle-adapter": "1.7.18",
+    "@better-auth/electron": "1.7.18",
+    "@better-auth/expo": "1.7.18",
     "@v1/core": "workspace:*",
-    "better-auth": "1.6.30",
+    "better-auth": "1.7.18",
     "conf": "15.1.0",
     "drizzle-orm": "0.45.3",
     "humanspan": "0.3.0"

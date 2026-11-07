@@ -161,6 +161,9 @@ export const jwks = authSchema.table("jwks", {
 
   privateKey: pg.text().notNull(),
   publicKey: pg.text().notNull(),
+
+  alg: pg.text(),
+  crv: pg.text(),
 })
 export type Jwk = typeof jwks.$inferSelect
 export type NewJwk = typeof jwks.$inferInsert

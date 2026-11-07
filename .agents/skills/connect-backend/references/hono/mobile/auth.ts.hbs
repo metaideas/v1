@@ -10,7 +10,7 @@ export const auth = createAuthClient(buildApiUrl("/auth"), [
 
 export const { useSession } = auth
 
-export function getAuthHeaders() {
-  const cookie = auth.getCookie()
+export async function getAuthHeaders() {
+  const cookie = await auth.getCookie()
   return cookie ? { Cookie: cookie } : {}
 }

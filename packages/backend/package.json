@@ -22,12 +22,12 @@
     "generate:auth": "bun run ./scripts/generate-schema.ts"
   },
   "dependencies": {
-    "@convex-dev/better-auth": "0.12.5",
+    "@convex-dev/better-auth": "0.13.0",
     "@convex-dev/react-query": "0.1.0",
     "@tanstack/react-query": "5.104.1",
     "@v1/auth": "workspace:*",
     "@v1/core": "workspace:*",
-    "convex": "1.46.0",
+    "convex": "1.49.0",
     "fluent-convex": "0.13.0"
   },
   "devDependencies": {

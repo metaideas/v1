@@ -3,7 +3,7 @@ import * as Bun from "bun"
 const schemaDirectory = "src/functions/components/better-auth"
 const schemaPath = `${schemaDirectory}/schema.generated.ts`
 
-await Bun.$`cd ${schemaDirectory} && bun x auth generate --output schema.generated.ts -y`
+await Bun.$`cd ${schemaDirectory} && bun x auth@1.7.18 generate --output schema.generated.ts -y`
 
 const generatedSchema = await Bun.file(schemaPath).text()
 const portableSchema = generatedSchema.replace(
