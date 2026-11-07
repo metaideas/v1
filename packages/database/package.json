@@ -35,7 +35,7 @@
     "@tooling/tsconfig": "workspace:*",
     "drizzle-kit": "1.0.0-rc.5",
     "drizzle-seed": "1.0.0-rc.5",
-    "postgres": "3.4.9",
+    "postgres": "4.1.0",
     "typescript": "7.0.2"
   }
 }
