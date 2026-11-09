@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test"
+import { setTimeout as sleep } from "node:timers/promises"
 import { createWorkflows } from "#client.ts"
 
 const connection = { close: mock(() => Promise.resolve()) }
@@ -28,7 +29,7 @@ describe("createWorkflowsRunner", () => {
     const runner = createRunner()
 
     runner.connect()
-    await Bun.sleep(0)
+    await sleep(0)
     await runner.close()
 
     expect(connection.close).toHaveBeenCalledTimes(1)
@@ -42,7 +43,7 @@ describe("createWorkflowsRunner", () => {
     runner.connect()
     await runner.close()
     resolve(connection)
-    await Bun.sleep(0)
+    await sleep(0)
 
     expect(connection.close).toHaveBeenCalledTimes(1)
   })
@@ -52,7 +53,7 @@ describe("createWorkflowsRunner", () => {
     const runner = createRunner()
 
     runner.connect()
-    await Bun.sleep(0)
+    await sleep(0)
 
     expect(logger.error).toHaveBeenCalledTimes(1)
   })
