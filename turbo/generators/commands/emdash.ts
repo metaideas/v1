@@ -1,8 +1,12 @@
 import type { PlopTypes } from "@turbo/gen"
 import type { ImportItemInput } from "magicast"
-import Bun from "bun"
+import { execFile } from "node:child_process"
+import { existsSync } from "node:fs"
+import { glob, readFile, writeFile } from "node:fs/promises"
+import { promisify } from "node:util"
 
 import { addImports } from "../imports"
+import { runCommand } from "../run-command"
 import { readPackageJson, readPackageName } from "../schemas"
 
 type Edit = {
@@ -91,13 +95,11 @@ const EDITS: readonly Edit[] = [
 ]
 
 async function applyEdit(path: string, edit: Edit) {
-  const file = Bun.file(path)
-
-  if (!(await file.exists())) {
+  if (!existsSync(path)) {
     return `[MANUAL] ${path} is missing. ${edit.manual}`
   }
 
-  let source = await file.text()
+  let source = await readFile(path, "utf8")
 
   if (source.includes(edit.marker)) {
     return `[SKIPPED] ${path} already uses EmDash`
@@ -120,13 +122,13 @@ async function applyEdit(path: string, edit: Edit) {
     source = sourceWithImports
   }
 
-  await Bun.write(path, source)
+  await writeFile(path, source)
   return `${path}: connected EmDash`
 }
 
 async function addEnvironment() {
   const schemaPath = `${WEB_PATH}/.env.schema`
-  const schema = await Bun.file(schemaPath).text()
+  const schema = await readFile(schemaPath, "utf8")
   const missing = ENVIRONMENT.trim()
     .split("\n\n")
     .filter((declaration) => {
@@ -138,14 +140,13 @@ async function addEnvironment() {
     return `[SKIPPED] ${schemaPath} already declares the EmDash variables`
   }
 
-  await Bun.write(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
+  await writeFile(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
   return `${schemaPath}: added the optional EmDash variables`
 }
 
 async function ignoreContent() {
   const path = `${WEB_PATH}/.gitignore`
-  const file = Bun.file(path)
-  const source = (await file.exists()) ? await file.text() : ""
+  const source = existsSync(path) ? await readFile(path, "utf8") : ""
   const lines = new Set(source.split("\n").map((line) => line.trim()))
   const missing = IGNORED_PATHS.filter((entry) => !lines.has(entry))
 
@@ -154,33 +155,32 @@ async function ignoreContent() {
   }
 
   const prefix = source.trim() === "" ? "" : `${source.trimEnd()}\n\n`
-  await Bun.write(path, `${prefix}# EmDash\n${missing.join("\n")}\n`)
+  await writeFile(path, `${prefix}# EmDash\n${missing.join("\n")}\n`)
   return `${path}: ignored the EmDash uploads`
 }
 
 // apps/web reads the same local database as the other application workspaces.
 async function addLocalDatabaseUrl() {
   const path = `${WEB_PATH}/.env.development`
-  const file = Bun.file(path)
-  const source = (await file.exists()) ? await file.text() : ""
+  const source = existsSync(path) ? await readFile(path, "utf8") : ""
 
   if (/^DATABASE_URL=/m.test(source)) {
     return `[SKIPPED] ${path} already sets DATABASE_URL`
   }
 
-  const databaseEnvironment = await Bun.file(`${DATABASE_PATH}/.env.development`).text()
+  const databaseEnvironment = await readFile(`${DATABASE_PATH}/.env.development`, "utf8")
   const line = /^DATABASE_URL=.*$/m.exec(databaseEnvironment)?.[0]
 
   if (!line) {
     return `[MANUAL] ${DATABASE_PATH}/.env.development has no DATABASE_URL. Set DATABASE_URL in ${path}.`
   }
 
-  await Bun.write(path, `${source.trimEnd()}\n${line}\n`.trimStart())
+  await writeFile(path, `${source.trimEnd()}\n${line}\n`.trimStart())
   return `${path}: set DATABASE_URL to the local database`
 }
 
 async function listMigrations() {
-  return Array.fromAsync(new Bun.Glob("*/migration.sql").scan({ cwd: MIGRATIONS_PATH }))
+  return Array.fromAsync(glob("*/migration.sql", { cwd: MIGRATIONS_PATH }))
 }
 
 // Drizzle creates the schema, so the deploy that migrates the app's tables creates it too. The
@@ -188,7 +188,7 @@ async function listMigrations() {
 async function addSchemaMigration() {
   const before = await listMigrations()
   const sources = await Promise.all(
-    before.map((name) => Bun.file(`${MIGRATIONS_PATH}/${name}`).text())
+    before.map((name) => readFile(`${MIGRATIONS_PATH}/${name}`, "utf8"))
   )
 
   if (sources.some((source) => source.includes(SCHEMA_SQL.trim()))) {
@@ -197,9 +197,10 @@ async function addSchemaMigration() {
 
   // drizzle.config.ts loads DATABASE_URL through Varlock, which reads .env.development only for the
   // development environment. Generating the file never connects to the database.
-  await Bun.$`cd ${DATABASE_PATH} && bun run generate --custom --name=blog-schema`
-    .env({ ...process.env, VARLOCK_ENV: process.env.VARLOCK_ENV ?? "development" })
-    .quiet()
+  await promisify(execFile)("bun", ["run", "generate", "--custom", "--name=blog-schema"], {
+    cwd: DATABASE_PATH,
+    env: { ...process.env, VARLOCK_ENV: process.env.VARLOCK_ENV ?? "development" },
+  })
   const after = await listMigrations()
   const created = after.find((name) => !before.includes(name))
 
@@ -207,7 +208,7 @@ async function addSchemaMigration() {
     throw new Error(`drizzle-kit did not create a migration in ${MIGRATIONS_PATH}.`)
   }
 
-  await Bun.write(`${MIGRATIONS_PATH}/${created}`, SCHEMA_SQL)
+  await writeFile(`${MIGRATIONS_PATH}/${created}`, SCHEMA_SQL)
   return `${MIGRATIONS_PATH}/${created}: created the blog schema`
 }
 
@@ -215,11 +216,11 @@ export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
   plop.setGenerator("emdash", {
     actions: () => [
       async () => {
-        if (!(await Bun.file(`${WEB_PATH}/package.json`).exists())) {
+        if (!existsSync(`${WEB_PATH}/package.json`)) {
           throw new Error(`EmDash needs ${WEB_PATH}. Add it with bun template add.`)
         }
 
-        if (!(await Bun.file(`${DATABASE_PATH}/package.json`).exists())) {
+        if (!existsSync(`${DATABASE_PATH}/package.json`)) {
           throw new Error(
             `EmDash stores content in ${DATABASE_PATH}. Add it with bun template add.`
           )
@@ -231,7 +232,7 @@ export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
           return `[SKIPPED] ${WEB_PATH} already contains EmDash`
         }
 
-        await Bun.$`cd ${WEB_PATH} && bun add --exact emdash @astrojs/node`
+        await runCommand(["bun", "add", "--exact", "emdash", "@astrojs/node"], WEB_PATH)
         return `${WEB_PATH}: installed EmDash and the Astro Node adapter`
       },
       {

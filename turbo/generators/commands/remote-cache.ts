@@ -1,5 +1,5 @@
 import type { PlopTypes } from "@turbo/gen"
-import Bun from "bun"
+import { glob, readFile, writeFile } from "node:fs/promises"
 import { parseJSON } from "confbox"
 import * as z from "zod"
 
@@ -320,21 +320,21 @@ export function wireRemoteCacheEnv(source: string) {
 }
 
 export async function readTurboScriptNames() {
-  const manifest = RootScriptsSchema.parse(parseJSON(await Bun.file("package.json").text()))
+  const manifest = RootScriptsSchema.parse(parseJSON(await readFile("package.json", "utf8")))
   return turboScriptNames(manifest.scripts ?? {})
 }
 
 async function listWorkflowPaths() {
   const directory = ".github/workflows"
   const paths: string[] = []
-  for await (const name of new Bun.Glob("*.{yml,yaml}").scan({ cwd: directory })) {
+  for await (const name of glob("*.{yml,yaml}", { cwd: directory })) {
     paths.push(`${directory}/${name}`)
   }
   return paths.toSorted()
 }
 
 async function wireWorkflow(path: string, turboScripts: ReadonlySet<string>) {
-  const source = await Bun.file(path).text()
+  const source = await readFile(path, "utf8")
   if (!workflowRunsTurbo(source, turboScripts)) return
 
   const result = wireRemoteCacheEnv(source)
@@ -343,7 +343,7 @@ async function wireWorkflow(path: string, turboScripts: ReadonlySet<string>) {
     return `[SKIPPED] ${path} already sets the remote cache environment`
   }
 
-  await Bun.write(path, result.source)
+  await writeFile(path, result.source)
   return `${path}: ${result.detail}`
 }
 

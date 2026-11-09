@@ -1,4 +1,4 @@
-import Bun from "bun"
+import { readFile } from "node:fs/promises"
 import { parseJSON } from "confbox"
 import * as z from "zod"
 
@@ -40,7 +40,7 @@ function assertPackageJson(value: unknown): asserts value is z.infer<typeof Pack
 }
 
 export async function readPackageJson(path: string) {
-  const value = parseJSON(await Bun.file(path).text())
+  const value = parseJSON(await readFile(path, "utf8"))
   assertPackageJson(value)
 
   return value

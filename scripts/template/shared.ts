@@ -1,4 +1,8 @@
+import { execFile, spawn } from "node:child_process"
+import { existsSync } from "node:fs"
+import { glob, readFile, readdir, rm, writeFile } from "node:fs/promises"
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
+import { promisify } from "node:util"
 import { parseJSON, stringifyJSON } from "confbox"
 import {
   type KnipConfig,
@@ -29,6 +33,8 @@ const TEMPLATE_REMOTE = "template"
 export const TEMPLATE_SECTION_START = "<!-- TEMPLATE:START -->"
 const TEMPLATE_SECTION_END = "<!-- TEMPLATE:END -->"
 
+export const execFileAsync = promisify(execFile)
+
 const ignoredDirectories = new Set([".cache", ".git", ".turbo", "build", "dist", "node_modules"])
 
 // Narrowing the original value instead of returning the parsed copy keeps the key order of manifests that are written back.
@@ -37,14 +43,14 @@ function assertPackageJson(value: unknown): asserts value is PackageJson {
 }
 
 export async function readPackageJson(path: string) {
-  const value = parseJSON(await Bun.file(path).text())
+  const value = parseJSON(await readFile(path, "utf8"))
   assertPackageJson(value)
 
   return value
 }
 
 export async function writeJson(path: string, value: unknown) {
-  await Bun.write(path, `${stringifyJSON(value).trimEnd()}\n`)
+  await writeFile(path, `${stringifyJSON(value).trimEnd()}\n`)
 }
 
 export function normalizeScope(scope: string) {
@@ -73,10 +79,9 @@ export function getDependencyNames(packageJson: PackageJson) {
 
 export async function getWorkspaces(rootDir: string, kind: WorkspaceKind) {
   const workspaceRoot = join(rootDir, `${kind}s`)
-  const workspaceFiles = new Bun.Glob("*/package.json")
   const workspaces: Workspace[] = []
 
-  for await (const packageFile of workspaceFiles.scan({ cwd: workspaceRoot })) {
+  for await (const packageFile of glob("*/package.json", { cwd: workspaceRoot })) {
     const directory = dirname(packageFile)
     workspaces.push({
       directory: join(workspaceRoot, directory),
@@ -118,9 +123,9 @@ export function getWorkspacePath(workspace: Pick<WorkspaceNode, "kind" | "name">
 
 export async function readTemplateStamp(rootDir: string) {
   const path = join(rootDir, TEMPLATE_STAMP_FILE)
-  if (!(await Bun.file(path).exists())) return
+  if (!existsSync(path)) return
 
-  return TemplateStampSchema.parse(await Bun.file(path).json())
+  return TemplateStampSchema.parse(JSON.parse(await readFile(path, "utf8")))
 }
 
 export async function writeTemplateStamp(rootDir: string, stamp: TemplateStamp) {
@@ -128,35 +133,52 @@ export async function writeTemplateStamp(rootDir: string, stamp: TemplateStamp) 
 }
 
 export async function fetchTemplate(rootDir: string) {
-  const remote = await Bun.$`git remote get-url ${TEMPLATE_REMOTE}`.cwd(rootDir).quiet().nothrow()
-  if (remote.exitCode !== 0) {
-    await Bun.$`git remote add ${TEMPLATE_REMOTE} https://github.com/${TEMPLATE_REPO}.git`
-      .cwd(rootDir)
-      .quiet()
+  const options = { cwd: rootDir }
+  const hasRemote = await execFileAsync(
+    "git",
+    ["remote", "get-url", TEMPLATE_REMOTE],
+    options
+  ).then(
+    () => true,
+    () => false
+  )
+  if (!hasRemote) {
+    await execFileAsync(
+      "git",
+      ["remote", "add", TEMPLATE_REMOTE, `https://github.com/${TEMPLATE_REPO}.git`],
+      options
+    )
   }
-  await Bun.$`git fetch --quiet ${TEMPLATE_REMOTE} main`.cwd(rootDir).quiet()
+  await execFileAsync("git", ["fetch", "--quiet", TEMPLATE_REMOTE, "main"], options)
 
-  const head = await Bun.$`git rev-parse ${TEMPLATE_REMOTE}/main`.cwd(rootDir).text()
+  const { stdout: head } = await execFileAsync(
+    "git",
+    ["rev-parse", `${TEMPLATE_REMOTE}/main`],
+    options
+  )
   return head.trim()
 }
 
+// Lists files without following symlinks, so a linked file is not rewritten twice.
+async function listFiles(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true })
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const path = join(directory, entry.name)
+      if (ignoredDirectories.has(entry.name)) return []
+      if (entry.isDirectory()) return listFiles(path)
+      return entry.isFile() ? [path] : []
+    })
+  )
+
+  return files.flat()
+}
+
 async function getTextFiles(rootDir: string) {
-  const files = new Bun.Glob("**/*")
-  const paths: string[] = []
-
-  for await (const relativePath of files.scan({
-    cwd: rootDir,
-    dot: true,
-    onlyFiles: true,
-  })) {
-    if (relativePath.split("/").some((part) => ignoredDirectories.has(part))) continue
-
-    paths.push(join(rootDir, relativePath))
-  }
-
+  const paths = await listFiles(rootDir)
   const textFiles = await Promise.all(
     paths.map(async (path) => {
-      const bytes = new Uint8Array(await Bun.file(path).arrayBuffer())
+      const bytes = await readFile(path)
       return bytes.includes(0) ? undefined : path
     })
   )
@@ -168,10 +190,10 @@ export async function replaceTextInFiles(rootDir: string, search: string, replac
   const textFiles = await getTextFiles(rootDir)
   const changedFiles = await Promise.all(
     textFiles.map(async (path) => {
-      const contents = await Bun.file(path).text()
+      const contents = await readFile(path, "utf8")
       if (!contents.includes(search)) return null
 
-      await Bun.write(path, contents.replaceAll(search, replacement))
+      await writeFile(path, contents.replaceAll(search, replacement))
       return path
     })
   )
@@ -183,7 +205,7 @@ export async function findTextReferences(rootDir: string, search: string) {
   const textFiles = await getTextFiles(rootDir)
   const matchingFiles = await Promise.all(
     textFiles.map(async (path) => {
-      const contents = await Bun.file(path).text()
+      const contents = await readFile(path, "utf8")
       return contents.includes(search) ? path : null
     })
   )
@@ -234,7 +256,7 @@ export function resolvePathWithinRoot(rootDir: string, relativePath: string) {
 }
 
 export async function removePath(rootDir: string, relativePath: string) {
-  await Bun.$`rm -rf ${resolvePathWithinRoot(rootDir, relativePath)}`.quiet()
+  await rm(resolvePathWithinRoot(rootDir, relativePath), { force: true, recursive: true })
 }
 
 export function checkIsRemovedByCleanup(
@@ -292,15 +314,18 @@ export function removeTemplateSections(contents: string) {
   return remaining
 }
 
-export async function runCommand(command: string[], rootDir: string) {
-  const process = Bun.spawn(command, {
-    cwd: rootDir,
-    stderr: "inherit",
-    stdout: "inherit",
+export async function runCommand(
+  [command, ...args]: readonly [string, ...string[]],
+  rootDir: string
+) {
+  const child = spawn(command, args, { cwd: rootDir, stdio: "inherit" })
+  const exitCode = await new Promise<number | null>((resolve, reject) => {
+    child.once("error", reject).once("close", resolve)
   })
-  const exitCode = await process.exited
 
   if (exitCode !== 0) {
-    throw new Error(`Command failed: ${command.join(" ")}. Exited with code ${exitCode}.`)
+    throw new Error(
+      `Command failed: ${[command, ...args].join(" ")}. Exited with code ${exitCode}.`
+    )
   }
 }

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, type Mock, mock, spyOn, test } from "bun:test"
+import { setTimeout as sleep } from "node:timers/promises"
 import { lifecycle } from "#lifecycle.ts"
 
 const onError = mock()
@@ -154,7 +155,7 @@ describe("lifecycle", () => {
 
     process.emit("SIGTERM")
     running.reject(new Error("failed"))
-    await Bun.sleep(0)
+    await sleep(0)
     closing.resolve()
     await started
 

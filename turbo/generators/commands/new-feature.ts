@@ -1,5 +1,6 @@
 import type { PlopTypes } from "@turbo/gen"
-import Bun from "bun"
+import { existsSync, globSync } from "node:fs"
+import { readFile, writeFile } from "node:fs/promises"
 
 import { addImports } from "../imports"
 import { NewFeatureAnswersSchema } from "../schemas"
@@ -76,9 +77,10 @@ export type DesktopHandlers = {
 }
 
 async function declaresContract({ contract, schemasPath }: DesktopHandlers) {
-  const file = Bun.file(schemasPath)
-
-  return (await file.exists()) && new RegExp(`export const ${contract}\\b`).test(await file.text())
+  return (
+    existsSync(schemasPath)
+    && new RegExp(`export const ${contract}\\b`).test(await readFile(schemasPath, "utf8"))
+  )
 }
 
 /**
@@ -92,8 +94,7 @@ export async function addDesktopContract(handlers: DesktopHandlers) {
     return `[SKIPPED] ${schemasPath} already declares ${contract}`
   }
 
-  const file = Bun.file(schemasPath)
-  const source = (await file.exists()) ? await file.text() : ""
+  const source = existsSync(schemasPath) ? await readFile(schemasPath, "utf8") : ""
   const declaration = `export const ${contract} = defineContract({\n  ${key}: {\n    ping: channel({ input: z.void(), output: z.string() }),\n  },\n})\n`
   const updated = addImports([source.trimEnd(), declaration].filter(Boolean).join("\n\n"), [
     { from: "typedport", imported: "channel" },
@@ -105,7 +106,7 @@ export async function addDesktopContract(handlers: DesktopHandlers) {
     return `[MANUAL] ${schemasPath} already binds a name the contract needs. Declare ${contract} with typedport's defineContract.`
   }
 
-  await Bun.write(schemasPath, updated)
+  await writeFile(schemasPath, updated)
   return `${schemasPath}: declared ${contract}`
 }
 
@@ -121,13 +122,11 @@ export async function serveDesktopRouter(handlers: DesktopHandlers) {
     return `[MANUAL] ${schemasPath} doesn't declare ${contract}, so ${bridgePath} doesn't serve ${router} yet. ${manual}`
   }
 
-  const file = Bun.file(bridgePath)
-
-  if (!(await file.exists())) {
+  if (!existsSync(bridgePath)) {
     return `[MANUAL] ${bridgePath} is missing. ${manual}`
   }
 
-  const source = await file.text()
+  const source = await readFile(bridgePath, "utf8")
 
   if (source.includes(router)) {
     return `[SKIPPED] ${bridgePath} already serves ${router}`
@@ -149,16 +148,12 @@ export async function serveDesktopRouter(handlers: DesktopHandlers) {
     return `[MANUAL] ${bridgePath} already binds ${router}. ${manual}`
   }
 
-  await Bun.write(bridgePath, updated)
+  await writeFile(bridgePath, updated)
   return `${bridgePath}: served ${router}`
 }
 
 export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
-  const apps = [
-    ...new Bun.Glob("*/package.json").scanSync({
-      cwd: `${process.cwd()}/apps`,
-    }),
-  ]
+  const apps = [...globSync("*/package.json", { cwd: `${process.cwd()}/apps` })]
     .map((entry) => entry.split("/")[0])
     .filter((app): app is string => app !== undefined && !APPS_WITHOUT_FEATURES.has(app))
     .toSorted()

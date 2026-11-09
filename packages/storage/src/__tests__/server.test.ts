@@ -1,4 +1,5 @@
 import { describe, expect, mock, test } from "bun:test"
+import { setTimeout as sleep } from "node:timers/promises"
 import { StorageSyncError } from "@v1/core/errors"
 import { ValidationError } from "files-sdk/validation"
 import type { UploadRecord } from "#server.ts"
@@ -122,7 +123,7 @@ describe("createUploadStorage", () => {
     const pending = Symbol("pending")
 
     const upload = storage.upload("users/u1/report.pdf", PDF, PDF_OPTIONS)
-    expect(await Promise.race([upload, Bun.sleep(10).then(() => pending)])).toBe(pending)
+    expect(await Promise.race([upload, sleep(10).then(() => pending)])).toBe(pending)
 
     write.resolve(true)
     const result = await upload

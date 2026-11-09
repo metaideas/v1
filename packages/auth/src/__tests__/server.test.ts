@@ -1,13 +1,12 @@
 import { describe, expect, expectTypeOf, test } from "bun:test"
 import { admin } from "better-auth/plugins"
-import { SQL } from "bun"
-import { drizzle } from "drizzle-orm/bun-sql"
+import { drizzle } from "drizzle-orm/postgres-js"
 import { createServerAuth } from "#server.ts"
 
 const options = {
   basePath: "/auth",
   baseUrl: "http://localhost:3000",
-  database: drizzle({ client: new SQL("postgres://localhost:1/unused") }),
+  database: drizzle.mock(),
   secret: "test-secret-that-is-at-least-32-characters",
   trustedOrigins: [],
 }

@@ -1,4 +1,6 @@
-import type { Server } from "bun"
+import { once } from "node:events"
+import { createServer } from "node:http"
+import { getRequestListener } from "@hono/node-server"
 import { lifecycle } from "@v1/utils/lifecycle"
 import app from "#routes/index.ts"
 import { realtimeHandler } from "#routes/realtime.ts"
@@ -6,24 +8,38 @@ import { ENV } from "#shared/env.generated.ts"
 import { log } from "#shared/logger.ts"
 import { database, dispatcher, kv, realtime } from "#shared/services.ts"
 
-let server: Server<undefined> | undefined
+const handleRequest = getRequestListener(app.fetch)
+const server = createServer((request, response) => {
+  void handleRequest(request, response)
+})
+
+// A keep-alive connection stays open after its last response until it times out, which holds
+// `close` open, so once the server stops taking requests each connection closes as it goes idle.
+server.on("request", (_request, response) => {
+  response.on("close", () => {
+    if (!server.listening) {
+      server.closeIdleConnections()
+    }
+  })
+})
 
 await lifecycle(
-  () => {
-    server = Bun.serve({ fetch: app.fetch, port: ENV.PORT })
+  async () => {
+    server.listen(ENV.PORT)
+    await once(server, "listening")
   },
   {
     // The server stops taking requests and finishes the ones in progress before the services close.
     // Realtime streams never finish on their own, so they end once the server stops taking requests.
     close: async () => {
-      const stopped = server?.stop()
+      const stopped = server.listening && once(server.close(), "close")
       realtimeHandler.close()
       await stopped
       await Promise.all([
         dispatcher.close(),
         kv.dispose(),
         realtime.close(),
-        database.$client.close(),
+        database.$client.end(),
       ])
     },
     onError: (error, message) => {

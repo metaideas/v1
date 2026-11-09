@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs"
+import { glob, readFile, writeFile } from "node:fs/promises"
 import { basename, join, relative } from "node:path"
 import { defineCommand } from "citty"
 import consola from "consola"
@@ -129,7 +131,7 @@ async function cleanupTemplateFiles(
   await Promise.all(
     cleanupSections.map(async (relativePath) => {
       const path = resolvePathWithinRoot(rootDir, relativePath)
-      await Bun.write(path, removeTemplateSections(await Bun.file(path).text()))
+      await writeFile(path, removeTemplateSections(await readFile(path, "utf8")))
     })
   )
 
@@ -154,10 +156,10 @@ async function getWorkspaceLines(rootDir: string) {
 }
 
 async function getDocumentationLines(rootDir: string) {
-  const paths = await Array.fromAsync(new Bun.Glob("docs/*.md").scan({ cwd: rootDir }))
+  const paths = await Array.fromAsync(glob("docs/*.md", { cwd: rootDir }))
   const documents = await Promise.all(
     paths.map(async (path) => {
-      const title = /^title:\s*(.+)$/m.exec(await Bun.file(join(rootDir, path)).text())?.[1]
+      const title = /^title:\s*(.+)$/m.exec(await readFile(join(rootDir, path), "utf8"))?.[1]
       return { path, title: title ?? basename(path, ".md") }
     })
   )
@@ -183,7 +185,7 @@ async function writeReadme(rootDir: string, projectName: string, description: st
     ...(documentationLines.length > 0 ? ["## Documentation", documentationLines.join("\n")] : []),
   ].filter(Boolean)
 
-  await Bun.write(join(rootDir, "README.md"), `${sections.join("\n\n")}\n`)
+  await writeFile(join(rootDir, "README.md"), `${sections.join("\n\n")}\n`)
 }
 
 export default defineCommand({
@@ -351,7 +353,7 @@ export default defineCommand({
     await cleanupTemplateFiles(rootDir, cleanup.data)
     await writeReadme(rootDir, projectName, description.trim())
 
-    if (shouldInitializeGit && !(await Bun.file(join(rootDir, ".git")).exists()))
+    if (shouldInitializeGit && !existsSync(join(rootDir, ".git")))
       await runCommand(["git", "init"], rootDir)
     if (shouldInstall) {
       await runCommand(["bun", "install"], rootDir)

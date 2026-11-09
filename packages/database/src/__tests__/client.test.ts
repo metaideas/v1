@@ -6,7 +6,7 @@ describe("createDatabase", () => {
   test("logs the parameterized query without its bound values", async () => {
     const logger = { debug: mock(), error: mock(), info: mock(), warn: mock() }
     const database = createDatabase({ logger, url: "postgres://localhost:1/unused" })
-    await database.$client.close()
+    await database.$client.end()
 
     await database.execute(sql`SELECT ${"review-only-session-token"}`).catch(() => null)
 

@@ -1,11 +1,15 @@
 import type { PlopTypes } from "@turbo/gen"
 import type { ImportItemInput } from "magicast"
-import Bun from "bun"
+import { existsSync, globSync } from "node:fs"
+import { readFile, writeFile } from "node:fs/promises"
+import { createRequire } from "node:module"
+import { join } from "node:path"
 import { stringifyJSON } from "confbox"
 
 import type * as z from "zod"
 
 import { addImports } from "../imports"
+import { runCommand } from "../run-command"
 import {
   BundledModulesSchema,
   readPackageJson,
@@ -36,13 +40,11 @@ type SentrySetup = {
 const SENTRY_APPS = SentryAnswersSchema.shape.app.options
 
 async function applyEdit(path: string, edit: Edit) {
-  const file = Bun.file(path)
-
-  if (!(await file.exists())) {
+  if (!existsSync(path)) {
     return `[MANUAL] ${path} is missing. ${edit.manual}`
   }
 
-  let source = await file.text()
+  let source = await readFile(path, "utf8")
 
   if (source.includes(edit.marker)) {
     return `[SKIPPED] ${path} already uses Sentry`
@@ -65,15 +67,17 @@ async function applyEdit(path: string, edit: Edit) {
     source = sourceWithImports
   }
 
-  await Bun.write(path, edit.append ? `${source.trimEnd()}\n${edit.append}` : source)
+  await writeFile(path, edit.append ? `${source.trimEnd()}\n${edit.append}` : source)
   return `${path}: connected Sentry`
 }
 
 // `expo install` cannot edit a dynamic app.config.js and writes a range, so read the version the
 // installed Expo SDK supports and pin it.
 async function getExpoCompatibleVersion(appPath: string, name: string) {
-  const path = Bun.resolveSync("expo/bundledNativeModules.json", `${process.cwd()}/${appPath}`)
-  const versions = BundledModulesSchema.parse(await Bun.file(path).json())
+  const path = createRequire(join(process.cwd(), appPath, "package.json")).resolve(
+    "expo/bundledNativeModules.json"
+  )
+  const versions = BundledModulesSchema.parse(JSON.parse(await readFile(path, "utf8")))
   const range = versions[name]
 
   if (!range) {
@@ -84,7 +88,9 @@ async function getExpoCompatibleVersion(appPath: string, name: string) {
 }
 
 async function getDependencyVersion(appPath: string, packageName: string, dependency: string) {
-  const path = Bun.resolveSync(`${packageName}/package.json`, `${process.cwd()}/${appPath}`)
+  const path = createRequire(join(process.cwd(), appPath, "package.json")).resolve(
+    `${packageName}/package.json`
+  )
   const manifest = await readPackageJson(path)
   const version = manifest.dependencies?.[dependency]
 
@@ -104,7 +110,7 @@ async function trustSentryCli() {
   }
 
   manifest.trustedDependencies = [...trusted, "@sentry/cli"].toSorted()
-  await Bun.write("package.json", `${stringifyJSON(manifest).trimEnd()}\n`)
+  await writeFile("package.json", `${stringifyJSON(manifest).trimEnd()}\n`)
 }
 
 const SETUPS: Record<SentryApp, SentrySetup> = {
@@ -150,7 +156,7 @@ SENTRY_DEBUG=false
       path: "src/shared/monitoring.ts",
       templateFile: "templates/sentry/api-monitoring.ts.hbs",
     },
-    install: (appPath) => Bun.$`cd ${appPath} && bun add --exact @sentry/node`,
+    install: (appPath) => runCommand(["bun", "add", "--exact", "@sentry/node"], appPath),
     nextSteps: [],
     sdk: "@sentry/node",
   },
@@ -183,7 +189,7 @@ PUBLIC_SENTRY_DEBUG=false
       path: "src/shared/monitoring.ts",
       templateFile: "templates/sentry/app-monitoring.ts.hbs",
     },
-    install: (appPath) => Bun.$`cd ${appPath} && bun add --exact @sentry/browser`,
+    install: (appPath) => runCommand(["bun", "add", "--exact", "@sentry/browser"], appPath),
     nextSteps: [],
     sdk: "@sentry/browser",
   },
@@ -251,12 +257,12 @@ SENTRY_AUTH_TOKEN=
     install: async (appPath) => {
       await trustSentryCli()
       const version = await getExpoCompatibleVersion(appPath, "@sentry/react-native")
-      await Bun.$`cd ${appPath} && bun add --exact @sentry/react-native@${version}`
+      await runCommand(["bun", "add", "--exact", `@sentry/react-native@${version}`], appPath)
 
       // Bun's isolated linker does not expose the SDK's own @sentry/cli to the workspace, and the
       // native build hooks resolve the CLI from the workspace.
       const cliVersion = await getDependencyVersion(appPath, "@sentry/react-native", "@sentry/cli")
-      return Bun.$`cd ${appPath} && bun add --dev --exact @sentry/cli@${cliVersion}`
+      return runCommand(["bun", "add", "--dev", "--exact", `@sentry/cli@${cliVersion}`], appPath)
     },
     nextSteps: [
       "Run `bun run --filter mobile prebuild` to add Sentry to the native iOS and Android projects. Set SENTRY_ORG, SENTRY_PROJECT, and SENTRY_AUTH_TOKEN before prebuild to upload source maps and debug symbols from release builds.",
@@ -266,11 +272,7 @@ SENTRY_AUTH_TOKEN=
 }
 
 export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI) {
-  const apps = [
-    ...new Bun.Glob("*/package.json").scanSync({
-      cwd: `${process.cwd()}/apps`,
-    }),
-  ]
+  const apps = [...globSync("*/package.json", { cwd: `${process.cwd()}/apps` })]
     .map((entry) => entry.split("/")[0])
     .filter((app): app is SentryApp => SENTRY_APPS.some((sentryApp) => sentryApp === app))
     .toSorted()
@@ -300,7 +302,7 @@ export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI) {
         },
         async () => {
           const schemaPath = `${appPath}/.env.schema`
-          const schema = await Bun.file(schemaPath).text()
+          const schema = await readFile(schemaPath, "utf8")
           const missing = setup.environment
             .trim()
             .split("\n\n")
@@ -313,7 +315,7 @@ export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI) {
             return `[SKIPPED] ${schemaPath} already declares the Sentry variables`
           }
 
-          await Bun.write(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
+          await writeFile(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
           return `${schemaPath}: added the optional Sentry variables`
         },
         ...setup.edits.map((edit) => () => applyEdit(`${appPath}/${edit.path}`, edit)),

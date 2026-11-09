@@ -1,4 +1,8 @@
 import { beforeEach, describe, expect, test } from "bun:test"
+import { once } from "node:events"
+import { createServer } from "node:http"
+import { setTimeout as sleep } from "node:timers/promises"
+import { getRequestListener } from "@hono/node-server"
 import { PublishEventError, RealtimePayloadError } from "@v1/core/errors"
 import * as z from "@v1/utils/schema/mini"
 import { ms } from "humanspan"
@@ -35,6 +39,30 @@ function setup({ isAllowed = true } = {}) {
     realtime,
     subscribe,
   }
+}
+
+// Serves the handler the way `apps/api` does, including closing keep-alive connections on stop.
+async function listen(handler: { handle: (request: Request) => Promise<Response> }) {
+  const handleRequest = getRequestListener((request) => handler.handle(request))
+  const server = createServer((request, response) => {
+    void handleRequest(request, response)
+  })
+  server.on("request", (_request, response) => {
+    response.on("close", () => {
+      if (!server.listening) {
+        server.closeIdleConnections()
+      }
+    })
+  })
+  server.listen(0)
+  await once(server, "listening")
+  const address = server.address()
+
+  if (typeof address !== "object" || address === null) {
+    throw new Error("The test server is not listening on a TCP port")
+  }
+
+  return { stop: () => once(server.close(), "close"), url: `http://localhost:${address.port}` }
 }
 
 const CursorData = z.object({ cursor: z.string() })
@@ -110,7 +138,7 @@ describe("createRealtimeHandler", () => {
       { channel: "demo", cursor: first, params: { userId: "user_1" } },
     ])
     await stream.waitFor(2)
-    await Bun.sleep(20)
+    await sleep(20)
 
     expect(stream.events.map(({ type }) => type)).toEqual(["message", "ready"])
   })
@@ -243,7 +271,7 @@ describe("createRealtimeHandler", () => {
 
   test("ends open streams on close, so the server can stop", async () => {
     const { channel, handler } = setup()
-    const server = Bun.serve({ fetch: (request) => handler.handle(request), port: 0 })
+    const server = await listen(handler)
     const response = await fetch(server.url, {
       body: JSON.stringify({ subscriptions: [{ channel: "demo", params: { userId: "user_1" } }] }),
       method: "POST",
@@ -266,12 +294,12 @@ describe("createRealtimeHandler", () => {
       authorize: { demo: () => authorization.promise },
       realtime,
     })
-    const server = Bun.serve({ fetch: (request) => handler.handle(request), port: 0 })
+    const server = await listen(handler)
     const pending = fetch(server.url, {
       body: JSON.stringify({ subscriptions: [{ channel: "demo", params: { userId: "user_1" } }] }),
       method: "POST",
     })
-    await Bun.sleep(20)
+    await sleep(20)
 
     const stopped = server.stop()
     handler.close()
