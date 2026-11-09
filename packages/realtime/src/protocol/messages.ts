@@ -2,8 +2,8 @@ import * as z from "@v1/utils/schema/mini"
 import { ms } from "humanspan"
 
 /**
- * The server writes a comment this often, so servers and proxies keep the stream open and clients
- * notice a dead connection. It stays under the 10-second default `idleTimeout` of `Bun.serve`.
+ * The server writes a comment this often, so proxies keep the stream open and clients notice a dead
+ * connection. Node's HTTP server does not close an idle response stream, so proxies set the limit.
  */
 export const HEARTBEAT_INTERVAL_MS = ms("8s")
 

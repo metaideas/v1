@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import { setTimeout as sleep } from "node:timers/promises"
 import * as z from "@v1/utils/schema/mini"
 import { waitUntil } from "#__tests__/wait-until.ts"
 import { createConnection } from "#client/connection.ts"
@@ -151,9 +152,9 @@ describe("createConnection", () => {
     )
     await waitUntil(() => tokenRequests === 1)
     unsubscribe()
-    await Bun.sleep(50)
+    await sleep(50)
     token.resolve("token")
-    await Bun.sleep(20)
+    await sleep(20)
 
     expect(server.requests).toHaveLength(0)
   })
