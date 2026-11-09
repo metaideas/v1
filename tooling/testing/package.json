@@ -1,0 +1,19 @@
+{
+  "name": "@tooling/testing",
+  "private": true,
+  "description": "Shared Vitest configuration",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "bump:deps": "bun update --interactive",
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
+  },
+  "dependencies": {
+    "vitest": "5.1.0"
+  },
+  "devDependencies": {
+    "@tooling/tsconfig": "workspace:*"
+  }
+}

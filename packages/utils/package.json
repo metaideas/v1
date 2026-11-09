@@ -26,6 +26,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@tooling/testing": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
     "@types/bun": "1.4.4",
     "@types/node": "26.6.4",

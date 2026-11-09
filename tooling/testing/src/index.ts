@@ -1,0 +1,9 @@
+import { defineConfig } from "vitest/config"
+
+// The shared tsconfig preserves JSX for the bundlers that build the apps, so tests compile it here.
+// `include` repeats Vitest's default so Knip, which reads each workspace's config, finds the tests.
+// A workspace's own vitest.config.ts also stops Vitest from loading its vite.config.ts.
+export default defineConfig({
+  oxc: { jsx: { runtime: "automatic" } },
+  test: { include: ["src/**/*.test.{ts,tsx}"] },
+})

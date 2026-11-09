@@ -68,7 +68,7 @@ Follow the TypeScript, service, import, UI, component, test, comment, and commit
 - When a test covers important behavior but breaks on implementation details, such as internals, timing, or heavy mocking, rewrite it to test the behavior.
 - Keep test code in proportion to the change. A PR with 20 lines of change and 500 lines of tests has a test problem.
 - Use Bun to manage packages and execute scripts.
-- Use Vitest. Import `describe`, `expect`, `test`, and `vi` from `vitest`. A workspace with tests runs them with `vitest run` in its `test` script, and `bun run test` runs every workspace through Turborepo.
+- Use Vitest. Import `describe`, `expect`, `test`, and `vi` from `vitest`. A workspace with tests re-exports `@tooling/testing` from its `vitest.config.ts` and runs `vitest run` in its `test` script. `bun run test` runs every workspace through Turborepo.
 - Add tests to a `__tests__` folder beside the file they test.
 - Name each `describe` block after its function. Name each test case after its behavior.
 - Use `bun run build --filter=<workspace>` for builds of a target workspace.

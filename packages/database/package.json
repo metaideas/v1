@@ -34,6 +34,7 @@
     "varlock": "1.21.1"
   },
   "devDependencies": {
+    "@tooling/testing": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
     "@types/bun": "1.4.4",
     "drizzle-kit": "1.0.0-rc.5",

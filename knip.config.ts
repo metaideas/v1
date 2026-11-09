@@ -1,6 +1,11 @@
 import type { KnipConfig } from "knip"
 import analyze, { ignoreDependencies } from "adamantite/analyze"
 
+// Knip skips loading a config file that only re-exports another package (webpro-nl/knip@ab775b1),
+// so it never reads `include` from the vitest.config.ts files that re-export @tooling/testing.
+// Drop these entries once Knip loads those files.
+const vitest = { entry: "src/**/*.test.{ts,tsx}" }
+
 export default {
   ...analyze,
   ignoreDependencies: ignoreDependencies.monorepo,
@@ -35,6 +40,7 @@ export default {
     "apps/app": {
       entry: "src/routeTree.gen.{ts,js}",
       vite: false,
+      vitest,
     },
     "apps/desktop": {
       entry: [
@@ -65,6 +71,7 @@ export default {
     },
     "packages/*": {
       project: "src/**/*.{js,jsx,ts,tsx}",
+      vitest,
     },
     "packages/database": {
       drizzle: {
@@ -72,12 +79,15 @@ export default {
         entry: ["drizzle.config.ts", "src/relations.ts", "src/schema/index.ts"],
       },
       entry: ["scripts/*.ts"],
+      vitest,
     },
     "packages/ui": {
       project: "src/**/*.{css,js,jsx,ts,tsx}",
+      vitest,
     },
     "tooling/linting": {
       entry: "src/rules/*.ts",
+      vitest,
     },
   },
 } satisfies KnipConfig

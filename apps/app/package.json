@@ -50,6 +50,7 @@
     "@tanstack/react-query-devtools": "5.104.1",
     "@tanstack/react-router-devtools": "1.167.2",
     "@tooling/internationalization": "workspace:*",
+    "@tooling/testing": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
     "@types/node": "26.6.4",
     "@types/react": "19.2.4",

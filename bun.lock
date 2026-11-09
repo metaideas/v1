@@ -91,6 +91,7 @@
         "@tanstack/react-query-devtools": "5.104.1",
         "@tanstack/react-router-devtools": "1.167.2",
         "@tooling/internationalization": "workspace:*",
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/node": "26.6.4",
         "@types/react": "19.2.4",
@@ -309,6 +310,7 @@
         "humanspan": "0.3.0",
       },
       "devDependencies": {
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "typescript": "7.0.2",
@@ -356,6 +358,7 @@
         "varlock": "1.21.1",
       },
       "devDependencies": {
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "drizzle-kit": "1.0.0-rc.5",
@@ -379,6 +382,7 @@
       },
       "devDependencies": {
         "@react-email/ui": "6.11.0",
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "@types/react": "19.2.4",
@@ -398,6 +402,7 @@
         "tryharder": "0.4.0",
       },
       "devDependencies": {
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "typescript": "7.0.2",
@@ -414,6 +419,7 @@
         "unstorage": "1.17.5",
       },
       "devDependencies": {
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "typescript": "7.0.2",
@@ -432,6 +438,7 @@
       },
       "devDependencies": {
         "@hono/node-server": "2.1.6",
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "@types/react": "19.2.4",
@@ -456,6 +463,7 @@
         "tryharder": "0.4.0",
       },
       "devDependencies": {
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "typescript": "7.0.2",
@@ -487,6 +495,7 @@
         "shiki": "4.5.0",
       },
       "devDependencies": {
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "@types/react": "19.2.4",
@@ -512,6 +521,7 @@
         "zod": "4.6.5",
       },
       "devDependencies": {
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "@types/node": "26.6.4",
@@ -529,6 +539,7 @@
         "tryharder": "0.4.0",
       },
       "devDependencies": {
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "typescript": "7.0.2",
@@ -548,9 +559,19 @@
         "adamantite": "0.43.0",
       },
       "devDependencies": {
+        "@tooling/testing": "workspace:*",
         "@tooling/tsconfig": "workspace:*",
         "@types/bun": "1.4.4",
         "vitest": "5.1.0",
+      },
+    },
+    "tooling/testing": {
+      "name": "@tooling/testing",
+      "dependencies": {
+        "vitest": "5.1.0",
+      },
+      "devDependencies": {
+        "@tooling/tsconfig": "workspace:*",
       },
     },
     "tooling/tsconfig": {
@@ -2198,6 +2219,8 @@
     "@tooling/internationalization": ["@tooling/internationalization@workspace:tooling/internationalization"],
 
     "@tooling/linting": ["@tooling/linting@workspace:tooling/linting"],
+
+    "@tooling/testing": ["@tooling/testing@workspace:tooling/testing"],
 
     "@tooling/tsconfig": ["@tooling/tsconfig@workspace:tooling/tsconfig"],
 
