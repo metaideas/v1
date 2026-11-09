@@ -1,4 +1,4 @@
-import { describe, expectTypeOf, test } from "bun:test"
+import { describe, expectTypeOf, test } from "vitest"
 import { createRealtimeClient } from "#react.ts"
 
 describe("useRealtime", () => {

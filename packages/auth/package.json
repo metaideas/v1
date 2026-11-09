@@ -17,7 +17,8 @@
   "scripts": {
     "bump:deps": "bun update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "secret": "bunx auth@latest secret"
+    "secret": "bunx auth@latest secret",
+    "test": "vitest run"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.18",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",
     "@types/bun": "1.4.4",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
   }
 }

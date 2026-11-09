@@ -1,5 +1,5 @@
-import { mock } from "bun:test"
 import { createParser } from "eventsource-parser"
+import { vi } from "vitest"
 import { waitUntil } from "#__tests__/wait-until.ts"
 import { compareCursors } from "#protocol/address.ts"
 
@@ -57,7 +57,7 @@ function createClient() {
     channels,
     close: () => Promise.resolve(),
     connect: () => Promise.resolve(client),
-    destroy: mock(),
+    destroy: vi.fn(),
     isOpen: true,
     isReady: true,
 
@@ -115,10 +115,10 @@ function createClient() {
 
 /**
  * Replaces `redis` with an in-memory stand-in for the commands the package uses: streams, the emit
- * script, and pub/sub. Bun shares module mocks across test files.
+ * script, and pub/sub. It applies to the modules that the test imports afterward.
  */
-export async function mockRedis() {
-  await mock.module("redis", () => ({ createClient: mock(() => createClient()) }))
+export function mockRedis() {
+  vi.doMock("redis", () => ({ createClient: vi.fn(() => createClient()) }))
 
   return {
     append,

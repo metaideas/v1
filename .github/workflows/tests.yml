@@ -166,4 +166,4 @@ jobs:
         run: bun run codegen
 
       - name: Run tests
-        run: bun test apps packages tooling scripts turbo
+        run: bun run test

@@ -23,7 +23,8 @@
     "migrate": "varlock run -- bun --bun drizzle-kit migrate",
     "push": "varlock run -- bun --bun drizzle-kit push",
     "reset": "varlock run -- bun --bun run ./scripts/reset.ts",
-    "seed": "varlock run -- bun --bun run ./scripts/seed.ts"
+    "seed": "varlock run -- bun --bun run ./scripts/seed.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@v1/core": "workspace:*",
@@ -37,6 +38,7 @@
     "@types/bun": "1.4.4",
     "drizzle-kit": "1.0.0-rc.5",
     "drizzle-seed": "1.0.0-rc.5",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
   }
 }

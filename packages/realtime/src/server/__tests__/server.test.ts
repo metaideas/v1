@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, test } from "bun:test"
 import { once } from "node:events"
 import { createServer } from "node:http"
 import { setTimeout as sleep } from "node:timers/promises"
@@ -6,9 +5,10 @@ import { getRequestListener } from "@hono/node-server"
 import { PublishEventError, RealtimePayloadError } from "@v1/core/errors"
 import * as z from "@v1/utils/schema/mini"
 import { ms } from "humanspan"
+import { beforeEach, describe, expect, test } from "vitest"
 import { mockRedis, readEvents } from "#server/__tests__/fakes.ts"
 
-const redis = await mockRedis()
+const redis = mockRedis()
 
 const { createRealtime } = await import("#server/realtime.ts")
 const { createRealtimeHandler } = await import("#server/handler.ts")

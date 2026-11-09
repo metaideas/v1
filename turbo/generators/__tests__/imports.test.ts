@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test"
 import { parseModule } from "magicast"
+import { describe, expect, test } from "vitest"
 
 import { addImports } from "../imports"
 

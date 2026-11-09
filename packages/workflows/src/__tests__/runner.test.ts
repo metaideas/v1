@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test"
 import { setTimeout as sleep } from "node:timers/promises"
+import { beforeEach, describe, expect, test, vi } from "vitest"
 import { createWorkflows } from "#client.ts"
 
-const connection = { close: mock(() => Promise.resolve()) }
-const connect = mock(() => Promise.resolve(connection))
+const connection = { close: vi.fn(() => Promise.resolve()) }
+const connect = vi.fn(() => Promise.resolve(connection))
 
-await mock.module("inngest/connect", () => ({ connect }))
+vi.doMock("inngest/connect", () => ({ connect }))
 
 const { createWorkflowsRunner } = await import("#runner.ts")
 
-const logger = { debug: mock(), error: mock(), info: mock(), warn: mock() }
+const logger = { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() }
 
 function createRunner() {
   return createWorkflowsRunner({

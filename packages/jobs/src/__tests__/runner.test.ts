@@ -1,11 +1,11 @@
-import { describe, expect, mock, test } from "bun:test"
+import { describe, expect, test, vi } from "vitest"
 import { mockQueues, UnrecoverableError } from "#__tests__/fakes.ts"
 
-const { processors, redis, worker } = await mockQueues()
+const { processors, redis, worker } = mockQueues()
 
 const { createJobsRunner } = await import("#runner.ts")
 
-const greetUser = mock((_payload: { userId: string }, _context: unknown) => Promise.resolve("hi"))
+const greetUser = vi.fn((_payload: { userId: string }, _context: unknown) => Promise.resolve("hi"))
 
 const jobRunner = createJobsRunner({
   handlers: { default: { "greet-user": greetUser } },

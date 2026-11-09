@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test"
+import { describe, expect, test } from "vitest"
 import { isAllowedFeatureFile } from "#feature-files.ts"
 
 const feature = "/repo/apps/app/src/features/auth"

@@ -93,7 +93,14 @@
     "env:scan": {
       "cache": false,
       "dependsOn": ["build"]
-    }
+    },
+    "test": {
+      "dependsOn": ["codegen"],
+      // The database tests run only when DATABASE_URL points at a Postgres server.
+      "env": ["DATABASE_URL"]
+    },
+    // Tests for the template commands in scripts/ and the template recipes in turbo/generators/.
+    "//#test:template": {}
   },
   "ui": "tui"
 }

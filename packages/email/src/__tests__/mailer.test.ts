@@ -1,6 +1,6 @@
-import { describe, expect, mock, test } from "bun:test"
 import { EmailDeliveryError, SendEmailError } from "@v1/core/errors"
 import { isTimeoutError } from "tryharder/errors"
+import { describe, expect, test, vi } from "vitest"
 import type { EmailMessage, SendContext } from "#transports.ts"
 import { createMailer } from "#mailer.ts"
 
@@ -10,7 +10,7 @@ const to = ["ada@example.com"]
 
 describe("createMailer", () => {
   test("renders the template subject, HTML, and text and sends them through the transport", async () => {
-    const send = mock((_message: EmailMessage, _context: SendContext) =>
+    const send = vi.fn((_message: EmailMessage, _context: SendContext) =>
       Promise.resolve({ id: "sent" })
     )
     const mailer = createMailer({ from, transport: { send } })
@@ -29,7 +29,7 @@ describe("createMailer", () => {
   })
 
   test("retries temporary failures with the same idempotency key", async () => {
-    const send = mock((_message: EmailMessage, _context: SendContext) =>
+    const send = vi.fn((_message: EmailMessage, _context: SendContext) =>
       send.mock.calls.length < 2
         ? Promise.reject(new EmailDeliveryError({ isRetryable: true, transport: "test" }))
         : Promise.resolve({ id: "sent" })
@@ -45,7 +45,7 @@ describe("createMailer", () => {
 
   test("returns SendEmailError without retrying a permanent failure", async () => {
     const cause = new EmailDeliveryError({ isRetryable: false, transport: "test" })
-    const send = mock(() => Promise.reject(cause))
+    const send = vi.fn(() => Promise.reject(cause))
     const mailer = createMailer({ from, transport: { send } })
 
     const result = await mailer.send("password-reset", props, { to })
@@ -56,7 +56,7 @@ describe("createMailer", () => {
   })
 
   test("returns SendEmailError once every attempt fails", async () => {
-    const send = mock(() => Promise.reject(new Error("connection refused")))
+    const send = vi.fn(() => Promise.reject(new Error("connection refused")))
     const mailer = createMailer({ attempts: 2, from, transport: { send } })
 
     const result = await mailer.send("password-reset", props, { to })

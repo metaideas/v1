@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test"
 import { setTimeout as sleep } from "node:timers/promises"
 import * as z from "@v1/utils/schema/mini"
+import { describe, expect, test } from "vitest"
 import { waitUntil } from "#__tests__/wait-until.ts"
 import { createConnection } from "#client/connection.ts"
 import { type SubscribeRequest, SubscribeRequestSchema } from "#protocol/messages.ts"

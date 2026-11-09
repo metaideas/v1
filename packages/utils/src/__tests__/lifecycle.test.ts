@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, type Mock, mock, spyOn, test } from "bun:test"
 import { setTimeout as sleep } from "node:timers/promises"
+import { afterEach, beforeEach, describe, expect, type Mock, test, vi } from "vitest"
 import { lifecycle } from "#lifecycle.ts"
 
-const onError = mock()
+const onError = vi.fn()
 
 const hang = () => Promise.withResolvers<undefined>().promise
 
@@ -31,7 +31,7 @@ beforeEach(() => {
   exited = new Promise((resolve) => {
     resolveExit = resolve
   })
-  exit = spyOn(process, "exit").mockImplementation((code) => {
+  exit = vi.spyOn(process, "exit").mockImplementation((code) => {
     resolveExit(code === undefined || code === null ? undefined : Number(code))
 
     return undefined as never
@@ -58,7 +58,7 @@ afterEach(() => {
 
 describe("lifecycle", () => {
   test("closes and exits with code 0 on SIGTERM", async () => {
-    const close = mock(() => Promise.resolve())
+    const close = vi.fn(() => Promise.resolve())
     await lifecycle(idle, { close, onError })
 
     process.emit("SIGTERM")
@@ -85,7 +85,7 @@ describe("lifecycle", () => {
   })
 
   test("closes and exits with code 1 after an uncaught exception", async () => {
-    const close = mock(() => Promise.resolve())
+    const close = vi.fn(() => Promise.resolve())
     await lifecycle(idle, { close, onError })
 
     process.emit("uncaughtException", new Error("thrown"))
@@ -95,7 +95,7 @@ describe("lifecycle", () => {
   })
 
   test("closes and exits with code 1 when run fails", async () => {
-    const close = mock(() => Promise.resolve())
+    const close = vi.fn(() => Promise.resolve())
 
     await lifecycle(fail, { close, onError })
 
@@ -105,7 +105,7 @@ describe("lifecycle", () => {
   })
 
   test("keeps running after run returns", async () => {
-    const close = mock(() => Promise.resolve())
+    const close = vi.fn(() => Promise.resolve())
 
     await lifecycle(idle, { close, onError })
 
@@ -114,7 +114,7 @@ describe("lifecycle", () => {
   })
 
   test("logs an unhandled rejection and keeps running", async () => {
-    const close = mock(() => Promise.resolve())
+    const close = vi.fn(() => Promise.resolve())
     await lifecycle(idle, { close, onError })
 
     process.emit("unhandledRejection", new Error("rejected"), Promise.resolve())
@@ -125,7 +125,7 @@ describe("lifecycle", () => {
   })
 
   test("closes once when it stops more than once", async () => {
-    const close = mock(() => Promise.resolve())
+    const close = vi.fn(() => Promise.resolve())
     await lifecycle(idle, { close, onError })
 
     process.emit("uncaughtException", new Error("thrown"))
@@ -163,7 +163,7 @@ describe("lifecycle", () => {
   })
 
   test("exits at once with code 1 on a second signal of another kind", async () => {
-    const close = mock(hang)
+    const close = vi.fn(hang)
     await lifecycle(idle, { close, onError })
 
     process.emit("SIGTERM")

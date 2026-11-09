@@ -25,7 +25,6 @@
     "ios": "varlock run -- expo run:ios",
     "prebuild": "varlock run -- expo prebuild --clean",
     "start": "varlock run -- expo start",
-    "test": "bun test",
     "web": "varlock run -- expo start --web"
   },
   "dependencies": {
