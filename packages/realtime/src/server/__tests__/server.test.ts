@@ -289,9 +289,15 @@ describe("createRealtimeHandler", () => {
 
   test("refuses a stream whose authorization finishes after close", async () => {
     const realtime = createRealtime({ url: "redis://localhost:6379" })
+    const authorizing = Promise.withResolvers<undefined>()
     const authorization = Promise.withResolvers<boolean>()
     const handler = createRealtimeHandler({
-      authorize: { demo: () => authorization.promise },
+      authorize: {
+        demo: () => {
+          authorizing.resolve()
+          return authorization.promise
+        },
+      },
       realtime,
     })
     const server = await listen(handler)
@@ -299,7 +305,8 @@ describe("createRealtimeHandler", () => {
       body: JSON.stringify({ subscriptions: [{ channel: "demo", params: { userId: "user_1" } }] }),
       method: "POST",
     })
-    await sleep(20)
+    // The server stops only once the handler holds the request, so the request isn't refused.
+    await authorizing.promise
 
     const stopped = server.stop()
     handler.close()
