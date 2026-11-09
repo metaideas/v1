@@ -1,11 +1,11 @@
 import type { Logger } from "@v1/core/services/logging"
-import { SQL } from "bun"
-import { drizzle } from "drizzle-orm/bun-sql"
+import { drizzle } from "drizzle-orm/postgres-js"
+import postgres from "postgres"
 import { relations } from "#relations.ts"
 
 export function createDatabase({ logger, url }: { url: string; logger?: Logger }) {
   return drizzle({
-    client: new SQL(url),
+    client: postgres(url),
     logger: logger
       ? {
           // Bound parameters carry values such as session tokens and password hashes, which

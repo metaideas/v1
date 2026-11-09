@@ -1,4 +1,7 @@
 {
   "extends": "@tooling/tsconfig/internal-package.json",
+  "compilerOptions": {
+    "types": ["bun"]
+  },
   "include": ["drizzle.config.ts", "src", "scripts", "reset.d.ts"]
 }
