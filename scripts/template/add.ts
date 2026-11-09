@@ -1,3 +1,5 @@
+import { execFileSync, spawnSync } from "node:child_process"
+import { existsSync } from "node:fs"
 import { join } from "node:path"
 import consola from "consola"
 
@@ -24,22 +26,22 @@ type TemplateWorkspace = {
 
 async function copyTemplateWorkspace(rootDir: string, ref: string, workspace: TemplateWorkspace) {
   const workspacePath = getWorkspacePath(workspace)
-  const archive = await Bun.$`git archive --format=tar ${ref} ${workspacePath}`
-    .cwd(rootDir)
-    .quiet()
-    .nothrow()
-  if (archive.exitCode !== 0) {
+  const archive = spawnSync("git", ["archive", "--format=tar", ref, workspacePath], {
+    cwd: rootDir,
+    maxBuffer: Number.POSITIVE_INFINITY,
+  })
+  if (archive.status !== 0) {
     throw new Error(
       `${workspacePath} does not exist in ${TEMPLATE_REPO}@${ref.slice(0, 12)}: ${archive.stderr.toString().trim()}`
     )
   }
 
-  await Bun.$`tar -x -C ${rootDir} < ${archive.stdout}`.quiet()
+  execFileSync("tar", ["-x", "-C", rootDir], { input: archive.stdout })
 
   return readPackageJson(join(rootDir, workspacePath, "package.json"))
 }
 
-async function getMissingTemplateDependencies(
+function getMissingTemplateDependencies(
   rootDir: string,
   packageJson: PackageJson,
   visited: Set<string>
@@ -58,13 +60,9 @@ async function getMissingTemplateDependencies(
       visited.add(workspacePath)
       return true
     })
-  const existence = await Promise.all(
-    candidates.map((workspace) =>
-      Bun.file(join(rootDir, getWorkspacePath(workspace), "package.json")).exists()
-    )
+  return candidates.filter(
+    (workspace) => !existsSync(join(rootDir, getWorkspacePath(workspace), "package.json"))
   )
-
-  return candidates.filter((_, index) => !existence[index])
 }
 
 async function addWorkspaces(
@@ -79,7 +77,7 @@ async function addWorkspaces(
 
   const workspacePath = getWorkspacePath(workspace)
   const packageJson = await copyTemplateWorkspace(rootDir, ref, workspace)
-  const missing = await getMissingTemplateDependencies(rootDir, packageJson, visited)
+  const missing = getMissingTemplateDependencies(rootDir, packageJson, visited)
 
   await renameProject({
     rootDir: join(rootDir, workspacePath),
@@ -130,7 +128,7 @@ export default defineCommand({
     const target: TemplateWorkspace = { kind: args.kind, name: args.name }
     const targetPath = getWorkspacePath(target)
 
-    if (await Bun.file(join(rootDir, targetPath, "package.json")).exists()) {
+    if (existsSync(join(rootDir, targetPath, "package.json"))) {
       consola.error(`The ${targetPath} workspace already exists in this project.`)
       process.exitCode = 1
       return

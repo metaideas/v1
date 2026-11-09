@@ -2,6 +2,7 @@ import { defineCommand } from "citty"
 import consola from "consola"
 
 import {
+  execFileAsync,
   fetchTemplate,
   getProjectScope,
   getScopePrefix,
@@ -44,7 +45,10 @@ export default defineCommand({
     }
 
     const format = args["name-only"] ? ["--name-only"] : []
-    const diff = await Bun.$`git diff ${format} ${stamp.commit} ${head}`.cwd(rootDir).text()
+    const { stdout: diff } = await execFileAsync("git", ["diff", ...format, stamp.commit, head], {
+      cwd: rootDir,
+      maxBuffer: Number.POSITIVE_INFINITY,
+    })
     const scope = await getProjectScope(rootDir)
 
     process.stdout.write(diff.replaceAll(getScopePrefix(TEMPLATE_SCOPE), getScopePrefix(scope)))

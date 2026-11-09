@@ -1,8 +1,10 @@
 import type { PlopTypes } from "@turbo/gen"
 import type { ImportItemInput } from "magicast"
-import Bun from "bun"
+import { existsSync } from "node:fs"
+import { readFile, writeFile } from "node:fs/promises"
 
 import { addImports } from "../imports"
+import { runCommand } from "../run-command"
 import { readPackageJson } from "../schemas"
 
 type Edit = {
@@ -154,13 +156,11 @@ function readTheme(css: string): Theme {
 }
 
 async function applyEdit(path: string, edit: Edit) {
-  const file = Bun.file(path)
-
-  if (!(await file.exists())) {
+  if (!existsSync(path)) {
     return `[MANUAL] ${path} is missing. ${edit.manual}`
   }
 
-  let source = await file.text()
+  let source = await readFile(path, "utf8")
 
   if (source.includes(edit.marker)) {
     return `[SKIPPED] ${path} already uses bull-board`
@@ -181,13 +181,13 @@ async function applyEdit(path: string, edit: Edit) {
 
   source = sourceWithImports
 
-  await Bun.write(path, source)
+  await writeFile(path, source)
   return `${path}: connected bull-board`
 }
 
 async function addEnvironment() {
   const schemaPath = `${API_PATH}/.env.schema`
-  const schema = await Bun.file(schemaPath).text()
+  const schema = await readFile(schemaPath, "utf8")
   const missing = ENVIRONMENT.trim()
     .split("\n\n")
     .filter((declaration) => {
@@ -199,7 +199,7 @@ async function addEnvironment() {
     return `[SKIPPED] ${schemaPath} already declares the jobs dashboard variables`
   }
 
-  await Bun.write(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
+  await writeFile(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
   return `${schemaPath}: added the optional jobs dashboard variables`
 }
 
@@ -210,7 +210,7 @@ export function registerBullBoardGenerator(plop: PlopTypes.NodePlopAPI) {
 
       return [
         async () => {
-          if (!(await Bun.file(`${JOBS_PATH}/package.json`).exists())) {
+          if (!existsSync(`${JOBS_PATH}/package.json`)) {
             throw new Error(`The jobs dashboard needs ${JOBS_PATH}. Add it with bun template add.`)
           }
 
@@ -230,17 +230,26 @@ export function registerBullBoardGenerator(plop: PlopTypes.NodePlopAPI) {
             throw new Error(`${JOBS_PATH} does not declare a version of bullmq and redis.`)
           }
 
-          await Bun.$`cd ${API_PATH} && bun add --exact @bull-board/api @bull-board/hono bullmq@${bullmq} redis@${redis}`
+          await runCommand(
+            [
+              "bun",
+              "add",
+              "--exact",
+              "@bull-board/api",
+              "@bull-board/hono",
+              `bullmq@${bullmq}`,
+              `redis@${redis}`,
+            ],
+            API_PATH
+          )
           return `${API_PATH}: installed bull-board`
         },
         async () => {
-          const styles = Bun.file(UI_STYLES_PATH)
-
-          if (!(await styles.exists())) {
+          if (!existsSync(UI_STYLES_PATH)) {
             return `[SKIPPED] ${UI_STYLES_PATH} is missing, so the dashboard keeps the bull-board theme`
           }
 
-          answers.theme = JSON.stringify(readTheme(await styles.text()), null, 2)
+          answers.theme = JSON.stringify(readTheme(await readFile(UI_STYLES_PATH, "utf8")), null, 2)
           return `Matched the dashboard to the shadcn theme in ${UI_STYLES_PATH}`
         },
         {

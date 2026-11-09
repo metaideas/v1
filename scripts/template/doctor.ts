@@ -1,3 +1,6 @@
+import { spawnSync } from "node:child_process"
+import { existsSync, globSync } from "node:fs"
+import { glob, readFile } from "node:fs/promises"
 import { dirname, join, relative, resolve } from "node:path"
 import { defineCommand } from "citty"
 import { parseJSONC } from "confbox"
@@ -37,7 +40,7 @@ type Context = {
 
 type Check = {
   name: string
-  run: (context: Context) => Promise<string[]>
+  run: (context: Context) => string[] | Promise<string[]>
 }
 
 const BACKEND_MARKERS = [
@@ -71,9 +74,7 @@ const TOOL_COMMANDS = [
 async function collectEnvFiles(rootDir: string) {
   const patterns = ["{apps,packages}/*/.env.schema", "packages/*/env/.env.*"]
   const files = await Promise.all(
-    patterns.map((pattern) =>
-      Array.fromAsync(new Bun.Glob(pattern).scan({ cwd: rootDir, dot: true }))
-    )
+    patterns.map((pattern) => Array.fromAsync(glob(pattern, { cwd: rootDir })))
   )
 
   return files.flat().map((path) => join(rootDir, path))
@@ -90,16 +91,9 @@ function matchDirectives(contents: string, directive: string) {
 async function checkEnvPaths(context: Context, directive: string, label: string) {
   const failures = await Promise.all(
     context.envFiles.map(async (file) => {
-      const contents = await Bun.file(file).text()
-      const missing = await Promise.all(
-        matchDirectives(contents, directive).map(async (path) => {
-          const target = resolve(dirname(file), path)
-          return (await Bun.file(target).exists()) ? undefined : path
-        })
-      )
-
-      return missing
-        .filter((path): path is string => path !== undefined)
+      const contents = await readFile(file, "utf8")
+      return matchDirectives(contents, directive)
+        .filter((path) => !existsSync(resolve(dirname(file), path)))
         .map((path) => `${relative(context.rootDir, file)} ${label} ${path}, which does not exist`)
     })
   )
@@ -173,17 +167,16 @@ const checks: Check[] = [
   {
     name: "Package source takes configuration as arguments",
     run: async ({ rootDir, workspaces }) => {
-      const sourceFiles = new Bun.Glob("src/**/*.{ts,tsx}")
       const packages = workspaces.filter((workspace) => workspace.kind === "package")
 
       const failures = await Promise.all(
         packages.map(async (workspace) => {
-          const files = [...sourceFiles.scanSync({ cwd: workspace.directory })].filter(
+          const files = globSync("src/**/*.{ts,tsx}", { cwd: workspace.directory }).filter(
             (file) => !file.endsWith("env.generated.ts")
           )
           const readers = await Promise.all(
             files.map(async (file) => {
-              const contents = await Bun.file(join(workspace.directory, file)).text()
+              const contents = await readFile(join(workspace.directory, file), "utf8")
               return ENV_VALUE_IMPORT.test(contents) ? [file] : []
             })
           )
@@ -212,10 +205,12 @@ const checks: Check[] = [
     name: "Turbo build env entries are declared by a schema",
     run: async ({ envFiles, rootDir }) => {
       const turbo = TurboJsonSchema.parse(
-        parseJSONC(await Bun.file(join(rootDir, "turbo.json")).text(), { allowTrailingComma: true })
+        parseJSONC(await readFile(join(rootDir, "turbo.json"), "utf8"), {
+          allowTrailingComma: true,
+        })
       )
       const patterns = turbo.tasks.build?.env ?? []
-      const contents = await Promise.all(envFiles.map((file) => Bun.file(file).text()))
+      const contents = await Promise.all(envFiles.map((file) => readFile(file, "utf8")))
       const keys = contents.flatMap((text) =>
         [...text.matchAll(/^([A-Z][A-Z0-9_]*)=/gm)].map((match) => match[1])
       )
@@ -262,15 +257,9 @@ const checks: Check[] = [
         }
 
         const { cleanupPaths, cleanupSections } = cleanup.data
-        const missingPaths = await Promise.all(
-          cleanupPaths.map(async (path) =>
-            (await Bun.file(join(rootDir, path)).exists()) ? undefined : path
-          )
-        )
-
         return [
-          ...missingPaths
-            .filter((path): path is string => path !== undefined)
+          ...cleanupPaths
+            .filter((path) => !existsSync(join(rootDir, path)))
             .map((path) => `v1.cleanupPaths lists ${path}, which does not exist`),
           ...cleanupSections
             .filter((path) => !markedFiles.includes(join(rootDir, path)))
@@ -289,9 +278,9 @@ const checks: Check[] = [
   {
     name: "README.md describes the project",
     run: async ({ rootDir, stamp }) => {
-      const readme = Bun.file(join(rootDir, "README.md"))
-      if (!stamp || !(await readme.exists())) return []
-      const contents = await readme.text()
+      const readmePath = join(rootDir, "README.md")
+      if (!stamp || !existsSync(readmePath)) return []
+      const contents = await readFile(readmePath, "utf8")
       if (!contents.includes(`bun create ${TEMPLATE_REPO}`)) return []
 
       return [
@@ -302,66 +291,57 @@ const checks: Check[] = [
   {
     name: "AGENTS.md references docs that setup keeps",
     run: async ({ rootDir }) => {
-      const agentsFile = Bun.file(join(rootDir, "AGENTS.md"))
-      if (!(await agentsFile.exists())) return []
+      const agentsPath = join(rootDir, "AGENTS.md")
+      if (!existsSync(agentsPath)) return []
 
       const packageJson = await readPackageJson(join(rootDir, "package.json"))
       const cleanup = TemplateCleanupSchema.safeParse(packageJson.v1)
       const cleanupPaths = cleanup.success ? cleanup.data.cleanupPaths : []
       const references = new Set(
-        removeTemplateSections(await agentsFile.text()).match(/docs\/[\w-]+\.md/g)
+        removeTemplateSections(await readFile(agentsPath, "utf8")).match(/docs\/[\w-]+\.md/g)
       )
-      const failures = await Promise.all(
-        [...references].map(async (path) => {
-          if (!(await Bun.file(join(rootDir, path)).exists()))
-            return `AGENTS.md references ${path}, which does not exist`
-          if (checkIsRemovedByCleanup(rootDir, path, cleanupPaths))
-            return `AGENTS.md references ${path}, which v1.cleanupPaths removes during setup`
-          return null
-        })
-      )
-
-      return failures.filter((failure): failure is string => failure !== null)
+      return [...references].flatMap((path) => {
+        if (!existsSync(join(rootDir, path)))
+          return [`AGENTS.md references ${path}, which does not exist`]
+        if (checkIsRemovedByCleanup(rootDir, path, cleanupPaths))
+          return [`AGENTS.md references ${path}, which v1.cleanupPaths removes during setup`]
+        return []
+      })
     },
   },
   {
     name: "Backend connections have their backend workspace",
-    run: async ({ workspaces }) => {
+    run: ({ workspaces }) => {
       const apps = workspaces.filter((workspace) => workspace.kind === "app")
-      const failures = await Promise.all(
-        apps.flatMap((app) =>
-          BACKEND_MARKERS.map(async ({ backend, file }) => {
-            if (!(await Bun.file(join(app.directory, file)).exists())) return []
+      return apps.flatMap((app) =>
+        BACKEND_MARKERS.flatMap(({ backend, file }) => {
+          if (!existsSync(join(app.directory, file))) return []
 
-            const target = workspaces.find(
-              (workspace) => workspace.kind === backend.kind && workspace.name === backend.name
-            )
-            const appPath = getWorkspacePath(app)
-            const backendPath = getWorkspacePath(backend)
-            if (!target) return [`${appPath}/${file} needs ${backendPath}, which does not exist`]
-            if (!app.dependencies.includes(target.packageName))
-              return [`${appPath}/${file} needs ${appPath} to depend on ${target.packageName}`]
-            return []
-          })
-        )
+          const target = workspaces.find(
+            (workspace) => workspace.kind === backend.kind && workspace.name === backend.name
+          )
+          const appPath = getWorkspacePath(app)
+          const backendPath = getWorkspacePath(backend)
+          if (!target) return [`${appPath}/${file} needs ${backendPath}, which does not exist`]
+          if (!app.dependencies.includes(target.packageName))
+            return [`${appPath}/${file} needs ${appPath} to depend on ${target.packageName}`]
+          return []
+        })
       )
-
-      return failures.flat()
     },
   },
 ]
 
-async function runTool(rootDir: string, command: readonly string[]) {
-  const result = await Bun.$`bun run ${command}`
-    .cwd(rootDir)
-    .env({ ...process.env, VARLOCK_ENV: process.env.VARLOCK_ENV ?? "development" })
-    .quiet()
-    .nothrow()
-  if (result.exitCode === 0) return []
+function runTool(rootDir: string, command: readonly string[]) {
+  const result = spawnSync("bun", ["run", ...command], {
+    cwd: rootDir,
+    encoding: "utf8",
+    env: { ...process.env, VARLOCK_ENV: process.env.VARLOCK_ENV ?? "development" },
+    maxBuffer: Number.POSITIVE_INFINITY,
+  })
+  if (result.status === 0) return []
 
-  return [
-    `bun run ${command.join(" ")} failed:\n${result.stdout.toString()}${result.stderr.toString()}`,
-  ]
+  return [`bun run ${command.join(" ")} failed:\n${result.stdout}${result.stderr}`]
 }
 
 function report(name: string, failures: string[]) {
@@ -398,13 +378,8 @@ export default defineCommand({
     }
     const tools = TOOL_COMMANDS.filter((command) => !(args.fast && command[0] === "build"))
     const steps = [
-      ...checks.map(
-        (check) => () => check.run(context).then((failures) => report(check.name, failures))
-      ),
-      ...tools.map(
-        (command) => () =>
-          runTool(rootDir, command).then((failures) => report(`bun run ${command[0]}`, failures))
-      ),
+      ...checks.map((check) => async () => report(check.name, await check.run(context))),
+      ...tools.map((command) => () => report(`bun run ${command[0]}`, runTool(rootDir, command))),
     ]
     const failed = await steps.reduce(async (previous, step) => {
       const previousFailed = await previous

@@ -1,8 +1,10 @@
 import type { PlopTypes } from "@turbo/gen"
-import Bun from "bun"
+import { existsSync, globSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 
 import type * as z from "zod"
 
+import { runCommand } from "../run-command"
 import { RealtimeAnswersSchema, readPackageJson, readPackageName } from "../schemas"
 
 type RealtimeApp = z.infer<typeof RealtimeAnswersSchema>["app"]
@@ -21,19 +23,21 @@ const REALTIME_PATH = "packages/realtime"
 const ROUTE_PATH = "apps/api/src/routes/realtime.ts"
 
 async function hasExport(path: string, name: string) {
-  const file = Bun.file(path)
   return (
-    (await file.exists())
-    && new RegExp(`^export (?:async )?(?:const|function) ${name}\\b`, "m").test(await file.text())
+    existsSync(path)
+    && new RegExp(`^export (?:async )?(?:const|function) ${name}\\b`, "m").test(
+      await readFile(path, "utf8")
+    )
   )
 }
 
 const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
   app: {
     check: async (appPath) => {
-      const environment = Bun.file(`${appPath}/.env.development`)
+      const environmentPath = `${appPath}/.env.development`
       const isRemote =
-        (await environment.exists()) && /^PUBLIC_API_URL=\S+/m.test(await environment.text())
+        existsSync(environmentPath)
+        && /^PUBLIC_API_URL=\S+/m.test(await readFile(environmentPath, "utf8"))
 
       if (isRemote && (await hasExport(`${appPath}/src/shared/auth.ts`, "authClient"))) return
 
@@ -81,11 +85,7 @@ const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
 }
 
 export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
-  const apps = [
-    ...new Bun.Glob("*/package.json").scanSync({
-      cwd: `${process.cwd()}/apps`,
-    }),
-  ]
+  const apps = [...globSync("*/package.json", { cwd: `${process.cwd()}/apps` })]
     .map((entry) => entry.split("/")[0])
     .filter((app): app is RealtimeApp => REALTIME_APPS.some((realtimeApp) => realtimeApp === app))
     .toSorted()
@@ -98,13 +98,13 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
 
       return [
         async () => {
-          if (!(await Bun.file(`${REALTIME_PATH}/package.json`).exists())) {
+          if (!existsSync(`${REALTIME_PATH}/package.json`)) {
             throw new Error(
               `The realtime client needs ${REALTIME_PATH}. Add it with bun template add.`
             )
           }
 
-          if (!(await Bun.file(ROUTE_PATH).exists())) {
+          if (!existsSync(ROUTE_PATH)) {
             throw new Error(`The realtime client streams from ${ROUTE_PATH}, which is missing.`)
           }
 
@@ -119,7 +119,7 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
           }
 
           const dependency = `${name}@workspace:*`
-          await Bun.$`cd ${appPath} && bun add ${dependency}`
+          await runCommand(["bun", "add", dependency], appPath)
           return `${appPath}: added ${name}`
         },
         {

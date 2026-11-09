@@ -1,10 +1,14 @@
 import type { PlopTypes } from "@turbo/gen"
 import type { ImportItemInput } from "magicast"
-import Bun from "bun"
+import { existsSync, globSync } from "node:fs"
+import { readFile, writeFile } from "node:fs/promises"
+import { createRequire } from "node:module"
+import { join } from "node:path"
 
 import type * as z from "zod"
 
 import { addImports } from "../imports"
+import { runCommand } from "../run-command"
 import { BundledModulesSchema, PostHogAnswersSchema, readPackageJson } from "../schemas"
 
 type PostHogApp = z.infer<typeof PostHogAnswersSchema>["app"]
@@ -37,13 +41,11 @@ const EXPO_PEER_MODULES = [
 ] as const
 
 async function applyEdit(path: string, edit: Edit) {
-  const file = Bun.file(path)
-
-  if (!(await file.exists())) {
+  if (!existsSync(path)) {
     return `[MANUAL] ${path} is missing. ${edit.manual}`
   }
 
-  let source = await file.text()
+  let source = await readFile(path, "utf8")
 
   if (source.includes(edit.marker)) {
     return `[SKIPPED] ${path} already uses PostHog`
@@ -66,15 +68,17 @@ async function applyEdit(path: string, edit: Edit) {
     source = sourceWithImports
   }
 
-  await Bun.write(path, source)
+  await writeFile(path, source)
   return `${path}: connected PostHog`
 }
 
 // `expo install` cannot edit a dynamic app.config.js and writes a range, so read the version the
 // installed Expo SDK supports and pin it.
 async function getExpoCompatibleVersion(appPath: string, name: string) {
-  const path = Bun.resolveSync("expo/bundledNativeModules.json", `${process.cwd()}/${appPath}`)
-  const versions = BundledModulesSchema.parse(await Bun.file(path).json())
+  const path = createRequire(join(process.cwd(), appPath, "package.json")).resolve(
+    "expo/bundledNativeModules.json"
+  )
+  const versions = BundledModulesSchema.parse(JSON.parse(await readFile(path, "utf8")))
   const range = versions[name]
 
   if (!range) {
@@ -113,7 +117,7 @@ POSTHOG_HOST=https://us.i.posthog.com
     files: [
       { path: "src/shared/analytics.ts", templateFile: "templates/posthog/api-analytics.ts.hbs" },
     ],
-    install: (appPath) => Bun.$`cd ${appPath} && bun add --exact posthog-node`,
+    install: (appPath) => runCommand(["bun", "add", "--exact", "posthog-node"], appPath),
     nextSteps: ["Capture server events with `analytics?.capture()` from #shared/analytics.ts."],
     sdk: "posthog-node",
   },
@@ -155,7 +159,7 @@ PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
         templateFile: "templates/posthog/app-analytics-provider.tsx.hbs",
       },
     ],
-    install: (appPath) => Bun.$`cd ${appPath} && bun add --exact posthog-js`,
+    install: (appPath) => runCommand(["bun", "add", "--exact", "posthog-js"], appPath),
     nextSteps: [
       "Call `usePostHog().identify(user.id)` from posthog-js/react once a session loads.",
     ],
@@ -212,7 +216,7 @@ EXPO_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
           async (name) => `${name}@${await getExpoCompatibleVersion(appPath, name)}`
         )
       )
-      return Bun.$`cd ${appPath} && bun add --exact posthog-react-native ${modules}`
+      return runCommand(["bun", "add", "--exact", "posthog-react-native", ...modules], appPath)
     },
     nextSteps: [
       "Call `usePostHog()?.identify(user.id)` from posthog-react-native once a session loads. The hook returns undefined when no project key is set.",
@@ -223,11 +227,7 @@ EXPO_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 }
 
 export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI) {
-  const apps = [
-    ...new Bun.Glob("*/package.json").scanSync({
-      cwd: `${process.cwd()}/apps`,
-    }),
-  ]
+  const apps = [...globSync("*/package.json", { cwd: `${process.cwd()}/apps` })]
     .map((entry) => entry.split("/")[0])
     .filter((app): app is PostHogApp => POSTHOG_APPS.some((posthogApp) => posthogApp === app))
     .toSorted()
@@ -257,7 +257,7 @@ export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI) {
         })),
         async () => {
           const schemaPath = `${appPath}/.env.schema`
-          const schema = await Bun.file(schemaPath).text()
+          const schema = await readFile(schemaPath, "utf8")
           const missing = setup.environment
             .trim()
             .split("\n\n")
@@ -270,7 +270,7 @@ export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI) {
             return `[SKIPPED] ${schemaPath} already declares the PostHog variables`
           }
 
-          await Bun.write(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
+          await writeFile(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
           return `${schemaPath}: added the optional PostHog variables`
         },
         ...setup.edits.map((edit) => () => applyEdit(`${appPath}/${edit.path}`, edit)),

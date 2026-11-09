@@ -1,8 +1,9 @@
 import type { PlopTypes } from "@turbo/gen"
-import Bun from "bun"
 
 import type * as z from "zod"
 
+import { glob } from "node:fs/promises"
+import { runCommand } from "../run-command"
 import { NewPackageAnswersSchema, readPackageJson, readPackageName } from "../schemas"
 
 type NewPackageAnswers = PlopTypes.Answers
@@ -26,12 +27,9 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
         async () => {
           const rootPackageJson = await readPackageJson("package.json")
           const toolingPackageName = await readPackageName("tooling/tsconfig/package.json")
-          const workspacePackageJsonPaths = new Bun.Glob("{apps,packages}/*/package.json")
           let packageScope: string | undefined
 
-          for await (const packageJsonPath of workspacePackageJsonPaths.scan({
-            cwd: process.cwd(),
-          })) {
+          for await (const packageJsonPath of glob("{apps,packages}/*/package.json")) {
             const packageJson = await readPackageJson(packageJsonPath)
             const match = packageJson.name?.match(/^@([^/]+)\//)
             if (match?.[1]) {
@@ -74,7 +72,7 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
           type: "add",
         },
         async () => {
-          await Bun.$`bun install`
+          await runCommand(["bun", "install"])
           return `Created ${answers.packageScope}/${name}`
         },
       ]
