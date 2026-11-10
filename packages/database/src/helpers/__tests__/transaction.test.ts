@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test"
 import { sql } from "drizzle-orm"
+import { describe, expect, test } from "vitest"
 import { createDatabase } from "#client.ts"
 import { withTransaction } from "#helpers/transaction.ts"
 

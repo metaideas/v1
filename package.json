@@ -31,8 +31,9 @@
     "scripts": "bun run scripts/index.ts",
     "start": "turbo run start",
     "template": "bun run scripts/index.ts template",
-    "test": "bun test",
-    "test:watch": "bun test --watch"
+    "test": "turbo run test test:template",
+    "test:template": "vitest run",
+    "test:watch": "turbo watch test test:template"
   },
   "devDependencies": {
     "@turbo/gen": "2.11.7",
@@ -50,6 +51,7 @@
     "turbo": "2.11.7",
     "typescript": "7.0.2",
     "varlock": "1.21.1",
+    "vitest": "5.1.0",
     "zod": "4.6.5"
   },
   "overrides": {
@@ -79,6 +81,7 @@
   "v1": {
     "cleanupPaths": [
       ".github/workflows/pullfrog.yml",
+      "scripts/codemods",
       "apps/docs/vercel.json",
       "apps/web/vercel.json"
     ],

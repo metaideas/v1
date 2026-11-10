@@ -1,4 +1,4 @@
-import { mock } from "bun:test"
+import { vi } from "vitest"
 
 type FakeJob = { attemptsMade: number; data: unknown; id: string; name: string }
 
@@ -9,38 +9,46 @@ export class UnrecoverableError extends Error {
 }
 
 /**
- * Replaces Redis and BullMQ for the package. Bun shares module mocks across test files, so the
- * fakes cover every export the package uses.
+ * Replaces Redis and BullMQ for the modules that the test imports afterward. The fakes cover every
+ * export the package uses.
  */
-export async function mockQueues() {
-  const add = mock((name: string, data: unknown, options: { jobId?: string }) =>
+export function mockQueues() {
+  const add = vi.fn((name: string, data: unknown, options: { jobId?: string }) =>
     Promise.resolve({ data, id: options.jobId ?? "1", name })
   )
   const processors = new Map<string, Processor>()
   const redis = {
-    disconnect: mock(),
-    on: mock(),
-    quit: mock(() => Promise.resolve("OK")),
+    disconnect: vi.fn(),
+    on: vi.fn(),
+    quit: vi.fn(() => Promise.resolve("OK")),
     status: "ready",
   }
   const worker = {
-    close: mock((_force?: boolean) => Promise.resolve()),
+    close: vi.fn((_force?: boolean) => Promise.resolve()),
     on: () => worker,
     run: () => Promise.resolve(),
   }
-  const queue = { add, close: () => Promise.resolve(), on: mock() }
-  const Queue = mock(() => queue)
+  const queue = { add, close: () => Promise.resolve(), on: vi.fn() }
 
-  await mock.module("redis", () => ({ createClient: mock(() => ({})) }))
-  await mock.module("bullmq", () => ({
+  // The package calls `new Queue()` and `new Worker()`, and an arrow function can't be constructed.
+  function createQueue() {
+    return queue
+  }
+
+  function createWorker(name: string, processor: Processor) {
+    processors.set(name, processor)
+
+    return worker
+  }
+
+  const Queue = vi.fn(createQueue)
+
+  vi.doMock("redis", () => ({ createClient: vi.fn(() => ({})) }))
+  vi.doMock("bullmq", () => ({
     Queue,
     UnrecoverableError,
-    Worker: mock((queue: string, processor: Processor) => {
-      processors.set(queue, processor)
-
-      return worker
-    }),
-    createNodeRedisClient: mock(() => redis),
+    Worker: vi.fn(createWorker),
+    createNodeRedisClient: vi.fn(() => redis),
   }))
 
   return { Queue, add, processors, queue, redis, worker }

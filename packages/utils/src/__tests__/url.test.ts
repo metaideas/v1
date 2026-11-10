@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test"
+import { describe, expect, test } from "vitest"
 import { createUrlBuilder } from "#url.ts"
 
 describe("createUrlBuilder", () => {

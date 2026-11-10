@@ -52,7 +52,7 @@ jobs:
               .github/* | .agents/* | .claude/* | .zed/*)
                 return 0
                 ;;
-              docs/* | scripts/* | infra/* | turbo/generators/* | tooling/linting/*)
+              docs/* | scripts/* | infra/* | turbo/generators/* | tooling/linting/* | tooling/testing/*)
                 return 0
                 ;;
               *.md)
@@ -166,4 +166,4 @@ jobs:
         run: bun run codegen
 
       - name: Run tests
-        run: bun test apps packages tooling scripts turbo
+        run: bun run test

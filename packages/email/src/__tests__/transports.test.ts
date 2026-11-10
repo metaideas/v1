@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, mock, spyOn, test } from "bun:test"
 import { EmailDeliveryError } from "@v1/core/errors"
+import { afterEach, describe, expect, test, vi } from "vitest"
 import { resendTransport, smtpTransport } from "#transports.ts"
 
 const message = {
@@ -11,12 +11,12 @@ const message = {
 }
 
 function stubResendResponse(status: number, body: object) {
-  const fetch = spyOn(globalThis, "fetch")
+  const fetch = vi.spyOn(globalThis, "fetch")
   fetch.mockResolvedValue(Response.json(body, { status }))
 }
 
 afterEach(() => {
-  mock.restore()
+  vi.restoreAllMocks()
 })
 
 describe("resendTransport", () => {

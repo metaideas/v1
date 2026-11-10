@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test"
 import { isValidElement, type ReactNode } from "react"
+import { describe, expect, test } from "vitest"
 
 import { loadHighlighter } from "#utils/highlighter.tsx"
 

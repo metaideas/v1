@@ -8,13 +8,16 @@
   },
   "scripts": {
     "bump:deps": "bun update --interactive",
-    "clean": "git clean -xdf .cache .turbo dist node_modules"
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "test": "vitest run"
   },
   "dependencies": {
     "adamantite": "0.43.0"
   },
   "devDependencies": {
+    "@tooling/testing": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
-    "@types/bun": "1.4.4"
+    "@types/bun": "1.4.4",
+    "vitest": "5.1.0"
   }
 }

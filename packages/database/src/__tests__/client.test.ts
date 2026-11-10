@@ -1,10 +1,10 @@
-import { describe, expect, mock, test } from "bun:test"
 import { sql } from "drizzle-orm"
+import { describe, expect, test, vi } from "vitest"
 import { createDatabase } from "#client.ts"
 
 describe("createDatabase", () => {
   test("logs the parameterized query without its bound values", async () => {
-    const logger = { debug: mock(), error: mock(), info: mock(), warn: mock() }
+    const logger = { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() }
     const database = createDatabase({ logger, url: "postgres://localhost:1/unused" })
     await database.$client.end()
 

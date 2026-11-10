@@ -1,8 +1,8 @@
-import { describe, expect, test } from "bun:test"
 import { DispatchJobError, JobPayloadError } from "@v1/core/errors"
+import { describe, expect, test } from "vitest"
 import { mockQueues } from "#__tests__/fakes.ts"
 
-const { add, Queue, queue } = await mockQueues()
+const { add, Queue, queue } = mockQueues()
 
 const { createDispatcher } = await import("#dispatcher.ts")
 
