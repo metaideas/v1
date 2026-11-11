@@ -135,18 +135,18 @@ describe("lifecycle", () => {
     expect(close).toHaveBeenCalledTimes(1)
   })
   test("exits with code 1 when an uncaught exception arrives while it closes", async () => {
-    const closing = Promise.withResolvers<undefined>()
+    const closing = Promise.withResolvers<boolean>()
     await lifecycle(idle, { close: () => closing.promise, onError })
 
     process.emit("SIGTERM")
     process.emit("uncaughtException", new Error("thrown"))
-    closing.resolve()
+    closing.resolve(true)
 
     expect(await exited).toBe(1)
   })
 
   test("exits with code 1 when run fails while it closes", async () => {
-    const closing = Promise.withResolvers<undefined>()
+    const closing = Promise.withResolvers<boolean>()
     const running = Promise.withResolvers<undefined>()
     const started = lifecycle(() => running.promise, {
       close: () => closing.promise,
@@ -156,7 +156,7 @@ describe("lifecycle", () => {
     process.emit("SIGTERM")
     running.reject(new Error("failed"))
     await sleep(0)
-    closing.resolve()
+    closing.resolve(true)
     await started
 
     expect(await exited).toBe(1)

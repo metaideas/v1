@@ -19,7 +19,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "convex dev",
     "env:set": "convex env set",
-    "generate:auth": "bun run ./scripts/generate-schema.ts"
+    "generate:auth": "node ./scripts/generate-schema.ts"
   },
   "dependencies": {
     "@convex-dev/better-auth": "0.13.0",

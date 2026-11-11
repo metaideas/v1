@@ -18,7 +18,7 @@
     "dev": "electron-forge start",
     "env:check": "varlock load",
     "env:scan": "test -d dist && varlock scan --path .env.schema dist",
-    "env:scan:build": "bun --bun vite build --config vite.renderer.config.ts",
+    "env:scan:build": "vite build --config vite.renderer.config.ts",
     "make": "electron-forge make"
   },
   "dependencies": {

@@ -44,12 +44,14 @@ export default {
     },
     "apps/desktop": {
       entry: [
+        "src/renderer/main.tsx",
         "src/shared/env.generated.ts",
         "src/shell/main.ts",
         "src/shell/preload.ts",
         "forge.config.ts",
       ],
       project: "src/**/*.{css,js,jsx,ts,tsx}",
+      vite: false,
     },
     "apps/docs": {
       project: "src/**/*.{astro,css,js,jsx,mdx,ts,tsx}",

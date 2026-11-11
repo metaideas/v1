@@ -28,7 +28,7 @@
     "@hono/node-server": "2.1.6",
     "@tooling/testing": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
-    "@types/bun": "1.4.4",
+    "@types/node": "26.6.4",
     "@types/react": "19.2.4",
     "typescript": "7.0.2",
     "vitest": "5.1.0"
