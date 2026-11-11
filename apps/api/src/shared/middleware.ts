@@ -1,12 +1,16 @@
-import { findIp } from "@arcjet/ip"
-import { type TimeExpression, ms } from "@sanely/duration"
+import type { TimeExpression } from "@sanely/duration"
+import type { Context } from "hono"
+import { getConnInfo } from "@hono/node-server/conninfo"
+import { fixedWindow, headers, rateLimit } from "@sanely/ratelimit"
+import { ip } from "@sanely/request"
 import { identifyUser } from "evlog/better-auth"
-import { rateLimiter } from "hono-rate-limiter"
 import { createMiddleware } from "hono/factory"
 import { HTTPException } from "hono/http-exception"
 import { languageDetector } from "hono/language"
 import type { AccessTokenAppContext, AppContext, AuthenticatedAppContext } from "#shared/types.ts"
+import { ENV } from "#shared/env.generated.ts"
 import { baseLocale, locales } from "#shared/internationalization/runtime.js"
+import { limiter } from "#shared/services.ts"
 
 export const withLanguageDetection = languageDetector({
   caches: false,
@@ -47,14 +51,56 @@ export const requireAccessToken = createMiddleware<AccessTokenAppContext>(async 
   await next()
 })
 
+type RateLimitingOptions = {
+  /**
+   * Labels the limit in the `RateLimit` headers and in its Redis keys, such as `health`.
+   */
+  name: string
+  limit: number
+  window: TimeExpression
+}
+
 /**
- * Adds basic rate limiting protection with a fixed window to the request.
+ * Reads the caller's public IP address from the headers that `HOSTING_PLATFORM` sets, or from the
+ * connection. Callers without one, such as on localhost, share one count.
  */
-export function withRateLimiting(interval: TimeExpression, limit: number) {
-  return rateLimiter<AppContext>({
-    keyGenerator: (c) => findIp(c.req.raw),
-    limit,
-    standardHeaders: "draft-7",
-    windowMs: ms(interval),
+function identifyCaller(c: Context<AppContext>) {
+  const request = { headers: c.req.raw.headers, ip: getConnInfo(c).remote.address }
+
+  return ip(request, { platform: ENV.HOSTING_PLATFORM }) ?? null
+}
+
+/**
+ * Allows each caller `limit` requests per fixed `window`. A denied request gets status 429, and
+ * when Redis cannot count the request, status 503.
+ */
+export function withRateLimiting({ limit, name, window }: RateLimitingOptions) {
+  const perCaller = limiter({
+    algorithm: fixedWindow({ limit, window }),
+    identify: identifyCaller,
+    name,
+  })
+
+  return createMiddleware<AppContext>(async (c, next) => {
+    const result = await rateLimit(perCaller, c)
+
+    if (result.reason === "storeError") {
+      c.var.log.error(result.error, { rateLimit: { name } })
+      throw new HTTPException(503, { message: "Service unavailable" })
+    }
+
+    const limitHeaders = headers(result)
+
+    if (!result.success) {
+      throw new HTTPException(429, {
+        res: new Response("Too many requests", { headers: limitHeaders }),
+      })
+    }
+
+    for (const [header, value] of Object.entries(limitHeaders)) {
+      c.header(header, value)
+    }
+
+    await next()
   })
 }
