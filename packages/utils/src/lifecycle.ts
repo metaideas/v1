@@ -1,4 +1,4 @@
-import { ms } from "humanspan"
+import { ms } from "@sanely/duration"
 import * as try$ from "tryharder"
 import { isUnhandledException } from "tryharder/errors"
 

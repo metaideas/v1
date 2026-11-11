@@ -1,7 +1,7 @@
 import type { Logger } from "@v1/core/services/logging"
+import { ms, seconds } from "@sanely/duration"
 import { DispatchJobError, type JobPayloadError, JobsFault } from "@v1/core/errors"
 import { Queue, createNodeRedisClient } from "bullmq"
-import { ms, seconds } from "humanspan"
 import { createClient } from "redis"
 import * as try$ from "tryharder"
 import type { JobInput, JobName, QueueName } from "#catalog.ts"

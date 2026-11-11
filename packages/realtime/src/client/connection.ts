@@ -1,7 +1,7 @@
 import type { Logger } from "@v1/core/services/logging"
+import { ms } from "@sanely/duration"
 import * as z from "@v1/utils/schema/mini"
 import { type EventSourceMessage, createParser } from "eventsource-parser"
-import { ms } from "humanspan"
 import type { ChannelName, ChannelParamsInput, RealtimeMessage } from "#channels/catalog.ts"
 import { getEvent, isEventName } from "#channels/lookup.ts"
 import { addressChannel, compareCursors } from "#protocol/address.ts"

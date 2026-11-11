@@ -1,4 +1,4 @@
-import { seconds } from "humanspan"
+import { seconds } from "@sanely/duration"
 import { useEffect, useEffectEvent, useState } from "react"
 
 import { useIsMobile } from "#hooks/use-mobile.ts"

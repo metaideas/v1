@@ -1,10 +1,10 @@
 import { findIp } from "@arcjet/ip"
+import { type TimeExpression, ms } from "@sanely/duration"
 import { identifyUser } from "evlog/better-auth"
 import { rateLimiter } from "hono-rate-limiter"
 import { createMiddleware } from "hono/factory"
 import { HTTPException } from "hono/http-exception"
 import { languageDetector } from "hono/language"
-import { type TimeExpression, ms } from "humanspan"
 import type { AccessTokenAppContext, AppContext, AuthenticatedAppContext } from "#shared/types.ts"
 import { baseLocale, locales } from "#shared/internationalization/runtime.js"
 

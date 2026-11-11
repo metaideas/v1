@@ -30,6 +30,7 @@
         "@arcjet/ip": "1.14.0",
         "@hono/node-server": "2.1.6",
         "@hono/trpc-server": "0.4.2",
+        "@sanely/duration": "0.1.0",
         "@scalar/hono-api-reference": "0.12.10",
         "@trpc/server": "11.19.0",
         "@v1/auth": "workspace:*",
@@ -44,7 +45,6 @@
         "hono": "4.13.13",
         "hono-openapi": "1.3.3",
         "hono-rate-limiter": "0.5.4",
-        "humanspan": "0.3.0",
         "ioredis": "6.0.0",
         "std-env": "4.3.0",
         "superjson": "2.2.6",
@@ -303,11 +303,11 @@
         "@better-auth/drizzle-adapter": "1.7.18",
         "@better-auth/electron": "1.7.18",
         "@better-auth/expo": "1.7.18",
+        "@sanely/duration": "0.1.0",
         "@v1/core": "workspace:*",
         "better-auth": "1.7.18",
         "conf": "15.1.0",
         "drizzle-orm": "1.0.0-rc.5",
-        "humanspan": "0.3.0",
       },
       "devDependencies": {
         "@tooling/testing": "workspace:*",
@@ -372,8 +372,8 @@
       "dependencies": {
         "@react-email/components": "1.0.12",
         "@react-email/render": "2.1.0",
+        "@sanely/duration": "0.1.0",
         "@v1/core": "workspace:*",
-        "humanspan": "0.3.0",
         "nodemailer": "10.0.15",
         "react": "19.2.3",
         "react-dom": "19.2.3",
@@ -394,10 +394,10 @@
     "packages/jobs": {
       "name": "@v1/jobs",
       "dependencies": {
+        "@sanely/duration": "0.1.0",
         "@v1/core": "workspace:*",
         "@v1/utils": "workspace:*",
         "bullmq": "6.3.11",
-        "humanspan": "0.3.0",
         "redis": "6.2.1",
         "tryharder": "0.4.0",
       },
@@ -429,10 +429,10 @@
     "packages/realtime": {
       "name": "@v1/realtime",
       "dependencies": {
+        "@sanely/duration": "0.1.0",
         "@v1/core": "workspace:*",
         "@v1/utils": "workspace:*",
         "eventsource-parser": "4.1.2",
-        "humanspan": "0.3.0",
         "redis": "6.2.1",
         "tryharder": "0.4.0",
       },
@@ -456,10 +456,10 @@
         "@aws-sdk/lib-storage": "3.1146.0",
         "@aws-sdk/s3-presigned-post": "3.1146.0",
         "@aws-sdk/s3-request-presigner": "3.1146.0",
+        "@sanely/duration": "0.1.0",
         "@v1/core": "workspace:*",
         "@v1/utils": "workspace:*",
         "files-sdk": "2.6.2",
-        "humanspan": "0.3.0",
         "tryharder": "0.4.0",
       },
       "devDependencies": {
@@ -477,6 +477,7 @@
       "name": "@v1/ui",
       "dependencies": {
         "@base-ui/react": "1.8.0",
+        "@sanely/duration": "0.1.0",
         "@shadcn/react": "0.3.1",
         "@shikijs/core": "4.5.0",
         "@tanstack/react-form": "1.33.5",
@@ -486,7 +487,6 @@
         "cn": "0.4.0",
         "date-fns": "4.4.0",
         "embla-carousel-react": "8.6.0",
-        "humanspan": "0.3.0",
         "input-otp": "1.5.0",
         "react-day-picker": "10.0.2",
         "react-icons": "5.7.0",
@@ -513,8 +513,8 @@
     "packages/utils": {
       "name": "@v1/utils",
       "dependencies": {
+        "@sanely/duration": "0.1.0",
         "faultier": "3.2.0",
-        "humanspan": "0.3.0",
         "nanoid": "6.0.2",
         "tryharder": "0.4.0",
         "ufo": "1.6.4",
@@ -1998,6 +1998,8 @@
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
 
+    "@sanely/duration": ["@sanely/duration@0.1.0", "", {}, "sha512-r3HPUGIl25/nj2HefuGdEoV41jiZ1OlWqRvbtecTgeSdU575dfYf47tylMfKXVYzP9uBEB+MfhTv+pHHoj184Q=="],
+
     "@scalar/client-side-rendering": ["@scalar/client-side-rendering@0.4.9", "", { "dependencies": { "@scalar/helpers": "0.16.1", "@scalar/schemas": "0.13.0", "@scalar/types": "0.23.0", "@scalar/validation": "0.6.6" } }, "sha512-QCQLUgR5JdaS90HnQCIst77LR+tQE3DdCkH9xMWcvC2lQJwdXZ+w6Gur3XOHX1pYIqTmRQVfSOYmEBIadPwI0w=="],
 
     "@scalar/helpers": ["@scalar/helpers@0.16.1", "", {}, "sha512-XhEnvri3Y9p6CdByMh+TqHfxS5Tz6iVMioq40empHq+/5wfOpxqj/cu3F2SDLtAYbseck03UTtJGcRcby8Y+TQ=="],
@@ -3345,8 +3347,6 @@
     "httpxy": ["httpxy@0.5.5", "", {}, "sha512-uDjmnPyp1q4Sgzf3w+J/Fc6UqcCEj0x4Wjp7OqK5dGhNeDgpyrAmnS6ey8QWrX3SWDon2DMKf9sBa5X9+CVyMA=="],
 
     "human-signals": ["human-signals@8.0.1", "", {}, "sha512-eKCa6bwnJhvxj14kZk5NCPc6Hb6BdsU9DZcOnmQKSnO1VKrfV0zCvtttPZUsBvjmNDn8rpcJfpwSYnHBjc95MQ=="],
-
-    "humanspan": ["humanspan@0.3.0", "", {}, "sha512-h63eDEYkf6WFkQF+7fAvPPfsxzJ0MbJALHNLj4OQb09VfoS6HLO0Pm/uEv76Ni2i8KYgyyfGWAjOUJI4XR9EyQ=="],
 
     "hyphenate-style-name": ["hyphenate-style-name@1.1.0", "", {}, "sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw=="],
 

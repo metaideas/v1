@@ -1,7 +1,7 @@
 import type { Logger } from "@v1/core/services/logging"
+import { ms } from "@sanely/duration"
 import { PublishEventError, RealtimeFault, type RealtimePayloadError } from "@v1/core/errors"
 import * as z from "@v1/utils/schema/mini"
-import { ms } from "humanspan"
 import { type RedisClientType, createClient } from "redis"
 import * as try$ from "tryharder"
 import type { ChannelName, ChannelParamsInput, EventData, EventName } from "#channels/catalog.ts"

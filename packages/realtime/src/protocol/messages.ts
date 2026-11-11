@@ -1,5 +1,5 @@
+import { ms } from "@sanely/duration"
 import * as z from "@v1/utils/schema/mini"
-import { ms } from "humanspan"
 
 /**
  * The server writes a comment this often, so proxies keep the stream open and clients notice a dead

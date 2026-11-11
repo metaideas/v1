@@ -1,5 +1,5 @@
+import { ms } from "@sanely/duration"
 import * as z from "@v1/utils/schema/mini"
-import { ms } from "humanspan"
 import type { ChannelName, ChannelParams } from "#channels/catalog.ts"
 import type { Listener } from "#server/hub.ts"
 import { getHistory, isChannelName } from "#channels/lookup.ts"

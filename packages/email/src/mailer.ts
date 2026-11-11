@@ -1,7 +1,7 @@
 import type { Logger } from "@v1/core/services/logging"
 import { render } from "@react-email/render"
+import { ms } from "@sanely/duration"
 import { EmailDeliveryError, EmailFault, SendEmailError } from "@v1/core/errors"
-import { ms } from "humanspan"
 import * as try$ from "tryharder"
 import { isTimeoutError } from "tryharder/errors"
 import type { EmailTransport } from "#transports.ts"
