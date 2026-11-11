@@ -51,7 +51,7 @@ describe("createMailer", () => {
     const result = await mailer.send("password-reset", props, { to })
 
     expect(result).toBeInstanceOf(SendEmailError)
-    expect(result).toMatchObject({ cause, template: "password-reset", to })
+    expect(result).toMatchObject({ cause, fields: { template: "password-reset", to } })
     expect(send).toHaveBeenCalledTimes(1)
   })
 

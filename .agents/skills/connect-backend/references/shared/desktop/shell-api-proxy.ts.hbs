@@ -1,5 +1,5 @@
 import type { WebContents } from "electron"
-import * as Faultier from "faultier"
+import * as Fault from "@sanely/errors"
 import { type StreamMessage, apiProxyContract, getStreamChannel } from "#shared/api-proxy.ts"
 import { createShellRouter } from "#shared/bridge.ts"
 import { buildApiUrl } from "#shared/utils.ts"
@@ -7,9 +7,9 @@ import { buildApiUrl } from "#shared/utils.ts"
 /**
  * The renderer asked the shell to send a request somewhere other than the API.
  */
-export class ForbiddenUrlError extends Faultier.Tagged("ForbiddenUrlError")<{ url: string }>() {}
+export class ForbiddenUrlError extends Fault.Tagged("ForbiddenUrlError")<{ url: string }>() {}
 
-const ApiProxyFault = Faultier.registry({ ForbiddenUrlError })
+const ApiProxyFault = Fault.registry({ ForbiddenUrlError })
 
 // The renderer never receives the session cookie, even when the API refreshes it.
 const HIDDEN_RESPONSE_HEADERS = new Set(["set-cookie"])
@@ -66,7 +66,7 @@ async function forward(
     send(sender, id, { type: "end" })
   } catch (error) {
     send(sender, id, {
-      message: Faultier.isFault(error) ? error.message : "The API stream failed",
+      message: Fault.isFault(error) ? error.message : "The API stream failed",
       type: "error",
     })
   }

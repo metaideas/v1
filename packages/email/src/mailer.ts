@@ -60,7 +60,8 @@ export function createMailer({
           jitter: true,
           limit: attempts,
           maxDelayMs: 2000,
-          shouldRetry: (error) => !(error instanceof EmailDeliveryError) || error.isRetryable,
+          shouldRetry: (error) =>
+            !(error instanceof EmailDeliveryError) || error.fields.isRetryable,
         })
         .timeout(timeoutMs)
         .run({

@@ -1,14 +1,14 @@
-import * as Faultier from "faultier"
+import * as Fault from "@sanely/errors"
 
-export class AssertUnreachableError extends Faultier.Tagged("AssertUnreachableError")<{
+export class AssertUnreachableError extends Fault.Tagged("AssertUnreachableError")<{
   value: string
 }>() {}
 
-export class AssertConditionFailedError extends Faultier.Tagged("AssertConditionFailedError")<{
+export class AssertConditionFailedError extends Fault.Tagged("AssertConditionFailedError")<{
   condition: string
 }>() {}
 
-export const AssertFault = Faultier.registry({
+export const AssertFault = Fault.registry({
   AssertConditionFailedError,
   AssertUnreachableError,
 })

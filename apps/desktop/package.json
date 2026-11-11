@@ -22,6 +22,7 @@
     "make": "electron-forge make"
   },
   "dependencies": {
+    "@sanely/errors": "0.1.0",
     "@tanstack/react-devtools": "0.10.13",
     "@tanstack/react-query": "5.104.1",
     "@tanstack/react-query-devtools": "5.104.1",
@@ -30,7 +31,6 @@
     "@v1/ui": "workspace:*",
     "electron-squirrel-startup": "1.0.1",
     "evlog": "2.30.0",
-    "faultier": "3.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "typedport": "0.3.0",

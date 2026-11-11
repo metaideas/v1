@@ -31,7 +31,7 @@ describe("resendTransport", () => {
       .send(message, { idempotencyKey: "key" })
       .catch((error: unknown) => error)
 
-    expect(error).toMatchObject({ isRetryable: true, transport: "resend" })
+    expect(error).toMatchObject({ fields: { isRetryable: true, transport: "resend" } })
   })
 
   test("reports an exhausted quota as a permanent delivery error", async () => {
@@ -45,7 +45,7 @@ describe("resendTransport", () => {
       .send(message, { idempotencyKey: "key" })
       .catch((error: unknown) => error)
 
-    expect(error).toMatchObject({ isRetryable: false, transport: "resend" })
+    expect(error).toMatchObject({ fields: { isRetryable: false, transport: "resend" } })
   })
 })
 
@@ -58,6 +58,6 @@ describe("smtpTransport", () => {
       .catch((error: unknown) => error)
 
     expect(error).toBeInstanceOf(EmailDeliveryError)
-    expect(error).toMatchObject({ isRetryable: true, transport: "smtp" })
+    expect(error).toMatchObject({ fields: { isRetryable: true, transport: "smtp" } })
   })
 })

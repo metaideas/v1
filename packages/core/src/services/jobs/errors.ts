@@ -1,10 +1,10 @@
-import * as Faultier from "faultier"
+import * as Fault from "@sanely/errors"
 
 /**
  * A job could not reach its queue, such as when Redis is down. Callers decide whether to retry the
  * request, fall back, or fail it.
  */
-export class DispatchJobError extends Faultier.Tagged("DispatchJobError")<{
+export class DispatchJobError extends Fault.Tagged("DispatchJobError")<{
   job: string
   queue: string
 }>() {}
@@ -12,12 +12,12 @@ export class DispatchJobError extends Faultier.Tagged("DispatchJobError")<{
 /**
  * A payload did not match the job's schema, so the job was not dispatched.
  */
-export class JobPayloadError extends Faultier.Tagged("JobPayloadError")<{
+export class JobPayloadError extends Fault.Tagged("JobPayloadError")<{
   job: string
   queue: string
 }>() {}
 
-export const JobsFault = Faultier.registry({
+export const JobsFault = Fault.registry({
   DispatchJobError,
   JobPayloadError,
 })

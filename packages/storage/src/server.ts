@@ -169,7 +169,7 @@ function createSyncPlugin({
   onUploadStored,
 }: SyncCallbacks & { logger?: Logger }): FilesPlugin {
   async function sync(
-    operation: StorageSyncError["operation"],
+    operation: StorageSyncError["fields"]["operation"],
     key: string,
     write: () => Promise<unknown>
   ) {

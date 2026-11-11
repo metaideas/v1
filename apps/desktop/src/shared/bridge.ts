@@ -1,5 +1,5 @@
 import type { WebContents } from "electron"
-import * as Faultier from "faultier"
+import * as Fault from "@sanely/errors"
 import { createRouter, type Transport } from "typedport"
 import { fromWire } from "typedport/wire"
 
@@ -39,5 +39,5 @@ export const transport: Transport = async (path, payload) =>
  * file system error, crosses as `internal`.
  */
 export function isExposedError(error: unknown) {
-  return Faultier.isFault(error)
+  return Fault.isFault(error)
 }

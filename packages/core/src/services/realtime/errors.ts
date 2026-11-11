@@ -1,10 +1,10 @@
-import * as Faultier from "faultier"
+import * as Fault from "@sanely/errors"
 
 /**
  * An event could not reach Redis, so no subscriber received it. Callers decide whether to retry,
  * fall back, or fail the request.
  */
-export class PublishEventError extends Faultier.Tagged("PublishEventError")<{
+export class PublishEventError extends Fault.Tagged("PublishEventError")<{
   channel: string
   event: string
 }>() {}
@@ -12,12 +12,12 @@ export class PublishEventError extends Faultier.Tagged("PublishEventError")<{
 /**
  * A channel's params or an event's data did not match its schema, so the event was not published.
  */
-export class RealtimePayloadError extends Faultier.Tagged("RealtimePayloadError")<{
+export class RealtimePayloadError extends Fault.Tagged("RealtimePayloadError")<{
   channel: string
   event: string
 }>() {}
 
-export const RealtimeFault = Faultier.registry({
+export const RealtimeFault = Fault.registry({
   PublishEventError,
   RealtimePayloadError,
 })
