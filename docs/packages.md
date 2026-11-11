@@ -135,7 +135,7 @@ There is no rate limiting package workspace. `apps/api` counts requests with [`@
 app.get("/", withRateLimiting({ limit: 60, name: "health", window: "1 minute" }), handler)
 ```
 
-The name labels the limit in the `RateLimit` response headers and in its Redis keys, so give each limit its own name. A denied request gets status 429 with a `Retry-After` header. When Redis does not answer within a second, the middleware logs the error and responds with status 503.
+The name labels the limit in the `RateLimit` response headers and in its Redis keys, so give each limit its own name. A denied request gets status 429 with a `Retry-After` header. While Redis is down, the middleware logs the error and responds with status 503. The Redis client turns off its offline queue, so a failed check never replays into the next window when Redis returns.
 
 The middleware identifies a caller by public IP address with [`@sanely/request`](https://github.com/adelrodriguez/sanely/tree/main/packages/request). Set `HOSTING_PLATFORM` in `apps/api` to the platform that serves the API, such as `vercel` or `fly-io`, so the address comes from the header that platform sets and a client cannot forge. With the default, `none`, the address comes from the connection, or from forwarding headers such as `X-Forwarded-For` when the connection comes from a private network. Callers without a public address, such as requests from localhost, share one count.
 

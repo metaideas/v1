@@ -21,7 +21,9 @@ export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 
 export const kv = createStorage({ driver: redisDriver({ url: ENV.REDIS_URL }) })
 
-export const redis = createClient({ url: ENV.REDIS_URL })
+// Without the offline queue, a rate limit check fails at once while Redis is down. Queued checks
+// would replay on reconnect and spend the new window after their requests already failed.
+export const redis = createClient({ disableOfflineQueue: true, url: ENV.REDIS_URL })
 redis.on("error", (error) => {
   log.error({ error, message: "Redis connection error", scope: "api" })
 })
