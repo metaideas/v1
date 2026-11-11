@@ -10,7 +10,7 @@ import {
   TEMPLATE_REPO,
   TEMPLATE_SCOPE,
   writeTemplateStamp,
-} from "./shared"
+} from "./shared.ts"
 
 export default defineCommand({
   args: {

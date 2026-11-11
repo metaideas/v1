@@ -1,6 +1,6 @@
 import { defineCommand, runMain } from "citty"
 
-import template from "./template"
+import template from "./template/index.ts"
 
 const main = defineCommand({
   meta: {

@@ -4,8 +4,8 @@ import { basename, join, relative } from "node:path"
 import { defineCommand } from "citty"
 import consola from "consola"
 
-import { renameProject } from "./rename"
-import { GitHubCommitSchema, type TemplateCleanup, TemplateCleanupSchema } from "./schemas"
+import { renameProject } from "./rename.ts"
+import { GitHubCommitSchema, type TemplateCleanup, TemplateCleanupSchema } from "./schemas.ts"
 import {
   getProjectScope,
   getWorkspaceGraph,
@@ -24,7 +24,7 @@ import {
   type WorkspaceNode,
   writeJson,
   writeTemplateStamp,
-} from "./shared"
+} from "./shared.ts"
 
 async function promptForWorkspaceNames(kind: WorkspaceKind, names: string[]) {
   const selected = await consola.prompt(`Select ${kind}s to keep`, {

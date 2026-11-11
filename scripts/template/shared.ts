@@ -10,7 +10,7 @@ import {
   PackageJsonSchema,
   type TemplateStamp,
   TemplateStampSchema,
-} from "./schemas"
+} from "./schemas.ts"
 
 export type WorkspaceKind = "app" | "package"
 

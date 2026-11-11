@@ -2,7 +2,7 @@ import { relative } from "node:path"
 import { defineCommand } from "citty"
 import consola from "consola"
 
-import { findTextReferences, getWorkspaceGraph, getWorkspacePath, removePath } from "./shared"
+import { findTextReferences, getWorkspaceGraph, getWorkspacePath, removePath } from "./shared.ts"
 
 function isProse(path: string) {
   return path.startsWith(".agents/") || path.endsWith(".md") || path.endsWith(".mdx")

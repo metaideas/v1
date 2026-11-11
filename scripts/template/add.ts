@@ -4,8 +4,8 @@ import { join } from "node:path"
 import consola from "consola"
 
 import { defineCommand } from "citty"
-import type { PackageJson } from "./schemas"
-import { renameProject } from "./rename"
+import type { PackageJson } from "./schemas.ts"
+import { renameProject } from "./rename.ts"
 import {
   fetchTemplate,
   getDependencyNames,
@@ -17,7 +17,7 @@ import {
   TEMPLATE_REPO,
   TEMPLATE_SCOPE,
   type WorkspaceKind,
-} from "./shared"
+} from "./shared.ts"
 
 type TemplateWorkspace = {
   kind: WorkspaceKind

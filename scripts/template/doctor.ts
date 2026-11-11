@@ -11,7 +11,7 @@ import {
   type TemplateStamp,
   TemplateCleanupSchema,
   TurboJsonSchema,
-} from "./schemas"
+} from "./schemas.ts"
 import {
   checkIsRemovedByCleanup,
   findTextReferences,
@@ -28,7 +28,7 @@ import {
   TEMPLATE_SECTION_START,
   TEMPLATE_STAMP_FILE,
   type WorkspaceNode,
-} from "./shared"
+} from "./shared.ts"
 
 type Context = {
   envFiles: string[]

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { afterEach, describe, expect, test } from "vitest"
 
-import { getExpoAppId, renameProject } from "../rename"
+import { getExpoAppId, renameProject } from "../rename.ts"
 
 const EXPO_CONFIG = 'const APP_ID = "v1"\nconst APP_NAME = "v1"\n'
 
