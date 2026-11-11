@@ -58,7 +58,7 @@ Do not read project configuration from `process.env` or `import.meta.env` in app
 
 ## Environment selection
 
-`VARLOCK_ENV` selects development, test, preview, or production. Local commands use safe `.env.development` values and `.env.local` overrides. CI and deployment commands must set their target explicitly. Before a remote build or mutation, run `varlock load` or the workspace's wrapped command. Bun does not load dotenv files automatically. This prevents precedence-rule conflicts.
+`VARLOCK_ENV` selects development, test, preview, or production. Local commands use safe `.env.development` values and `.env.local` overrides. CI and deployment commands must set their target explicitly. Before a remote build or mutation, run `varlock load` or the workspace's wrapped command. Node does not load dotenv files automatically. This prevents precedence-rule conflicts.
 
 Required production credentials are absent from committed development files when no safe substitute exists. Every Varlock workspace owns an `env:check` script that runs `varlock load`. The root `bun run env:check` runs these scripts in parallel through Turbo. Turbo passes deployment variables without a cached validation result.
 

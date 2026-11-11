@@ -86,7 +86,7 @@ Each app reaches the API in its own way, because each runs on an origin that can
    - **extension auth**: copy from `references/shared/extension-auth/`: `auth.ts.hbs` to `shared/auth.ts`; `schemas.ts.hbs` and `hooks.ts.hbs` to `features/auth/`; and `account-panel.tsx.hbs` to `features/auth/components/account-panel.tsx`. Render `AccountPanel` on its own route in `entrypoints/popup/main.tsx`, such as `<Route component={AccountPanel} path="/account" />`, and link to it from the popup, as `features/demo/components/popup-demo.tsx` links to `/settings`. Generate the extension's key and its origin:
 
      ```bash
-     bun --eval 'const { createHash, generateKeyPairSync } = await import("node:crypto"); const { publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048, privateKeyEncoding: { format: "pem", type: "pkcs8" }, publicKeyEncoding: { format: "der", type: "spki" } }); const id = createHash("sha256").update(publicKey).digest("hex").slice(0, 32).replace(/./g, (digit) => String.fromCharCode(97 + Number.parseInt(digit, 16))); console.log(`EXTENSION_KEY=${publicKey.toString("base64")}\nchrome-extension://${id}`)'
+     node --input-type=module --eval 'const { createHash, generateKeyPairSync } = await import("node:crypto"); const { publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048, privateKeyEncoding: { format: "pem", type: "pkcs8" }, publicKeyEncoding: { format: "der", type: "spki" } }); const id = createHash("sha256").update(publicKey).digest("hex").slice(0, 32).replace(/./g, (digit) => String.fromCharCode(97 + Number.parseInt(digit, 16))); console.log(`EXTENSION_KEY=${publicKey.toString("base64")}\nchrome-extension://${id}`)'
      ```
 
      Set `EXTENSION_KEY` in the extension's `.env.development`. For a published extension, use the public key from the Chrome Web Store instead, so the development and published IDs match. In `wxt.config.ts`, add the key to the manifest:
@@ -108,8 +108,8 @@ Each app reaches the API in its own way, because each runs on an origin that can
 6. If the user wants an example, copy `references/<backend>/<app>/example.tsx.hbs` into the routes directory as `backend-example.tsx` (`trpc-example.tsx` for trpc, `convex-example.tsx` for convex): `src/routes/` in app, `src/renderer/routes/` in desktop, and `src/app/` in mobile (`src/app/(auth)/(authenticated)/` when auth is on). After adding a route in app or desktop, including the desktop account route, regenerate the committed route tree by loading the Vite config that declares the router plugin:
 
    ```bash
-   cd apps/app && CI=1 bun --eval 'import { resolveConfig } from "vite"; await resolveConfig({}, "build")'
-   cd apps/desktop && CI=1 bun --eval 'import { resolveConfig } from "vite"; await resolveConfig({ configFile: "vite.renderer.config.ts" }, "build")'
+   cd apps/app && CI=1 node --eval 'import { resolveConfig } from "vite"; await resolveConfig({}, "build")'
+   cd apps/desktop && CI=1 node --eval 'import { resolveConfig } from "vite"; await resolveConfig({ configFile: "vite.renderer.config.ts" }, "build")'
    ```
 
 7. Run `bun install`, `bun run codegen`, then `bun template doctor`. Fix what it reports. Finish when it passes.

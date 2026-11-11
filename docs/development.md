@@ -1,13 +1,13 @@
 ---
 title: Development
-description: Run, build, test, and maintain a v1 project with Bun, Turbo, and Adamantite.
+description: Run, build, test, and maintain a v1 project with Node, Bun, Turbo, and Adamantite.
 sidebar:
   order: 3
 ---
 
 ## Tooling Requirements
 
-The root `package.json` is the source of truth for tool versions: `packageManager` pins Bun and `engines` sets the minimum Node.js version.
+Node runs the application workspaces, scripts, and tests. Bun installs packages and runs package scripts. The root `package.json` is the source of truth for tool versions: `packageManager` pins Bun and `engines` sets the minimum Node.js version.
 
 ## Commands
 
