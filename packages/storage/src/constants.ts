@@ -1,4 +1,4 @@
-import { seconds } from "humanspan"
+import { seconds } from "@sanely/duration"
 
 export const STORAGE_ALLOWED_TYPES = ["image/*", "application/pdf"] as const
 

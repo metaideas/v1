@@ -1,0 +1,13 @@
+// vite.config.ts replaces this with an ID that each build generates once, so the client and the
+// server that come from the same build share it.
+declare const __DEPLOYMENT_ID__: string
+
+/**
+ * The ID of the build that this code comes from.
+ */
+export const DEPLOYMENT_ID = __DEPLOYMENT_ID__
+
+/**
+ * Answers with the ID of the deployment that serves the app now.
+ */
+export const DEPLOYMENT_ENDPOINT = "/api/deployment"

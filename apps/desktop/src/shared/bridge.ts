@@ -1,7 +1,7 @@
 import type { WebContents } from "electron"
-import * as Faultier from "faultier"
-import { createRouter, type Transport } from "typedport"
-import { fromWire } from "typedport/wire"
+import * as Fault from "@sanely/errors"
+import { createRouter, type Transport } from "@sanely/rpc"
+import { fromWire } from "@sanely/rpc/wire"
 
 /**
  * The preload exposes this on `globalThis.bridge`. It forwards each call to the shell unchanged.
@@ -39,5 +39,5 @@ export const transport: Transport = async (path, payload) =>
  * file system error, crosses as `internal`.
  */
 export function isExposedError(error: unknown) {
-  return Faultier.isFault(error)
+  return Fault.isFault(error)
 }

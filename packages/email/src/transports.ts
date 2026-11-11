@@ -1,8 +1,8 @@
 import type { ErrorResponse } from "resend"
+import * as try$ from "@sanely/try"
 import { EmailDeliveryError, EmailFault } from "@v1/core/errors"
 import { createTransport } from "nodemailer"
 import { Resend } from "resend"
-import * as try$ from "tryharder"
 
 export type EmailMessage = {
   from: string

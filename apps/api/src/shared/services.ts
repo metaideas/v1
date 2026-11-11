@@ -1,3 +1,5 @@
+import { buildLimiter } from "@sanely/ratelimit"
+import { redisStore } from "@sanely/ratelimit/stores/redis"
 import { AUTH_API_COOKIE_PREFIX, AUTH_APP_NAME } from "@v1/auth/constants"
 import { createAccessTokenPlugin, createServerAuth } from "@v1/auth/server"
 import { createDatabase } from "@v1/database/client"
@@ -7,6 +9,7 @@ import { createDispatcher } from "@v1/jobs/dispatcher"
 import { createRealtime } from "@v1/realtime/server"
 import { createUploadStorage, createS3Adapter } from "@v1/storage/server"
 import { createWorkflows } from "@v1/workflows/client"
+import { createClient } from "redis"
 import { createStorage } from "unstorage"
 import redisDriver from "unstorage/drivers/redis"
 import { ENV } from "#shared/env.generated.ts"
@@ -17,6 +20,20 @@ import { allowedOrigins } from "#shared/utils.ts"
 export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 
 export const kv = createStorage({ driver: redisDriver({ url: ENV.REDIS_URL }) })
+
+// Without the offline queue, a rate limit check fails at once while Redis is down. Queued checks
+// would replay on reconnect and spend the new window after their requests already failed.
+export const redis = createClient({ disableOfflineQueue: true, url: ENV.REDIS_URL })
+redis.on("error", (error) => {
+  log.error({ error, message: "Redis connection error", scope: "api" })
+})
+// The client reconnects on its own, so connecting rejects only once it stops reconnecting.
+redis.connect().catch((error: unknown) => {
+  log.error({ error, message: "Redis connection closed", scope: "api" })
+})
+
+// Rate limits count in Redis, so every API instance shares them.
+export const limiter = buildLimiter({ prefix: "ratelimit", store: redisStore(redis) })
 
 export const dispatcher = createDispatcher({ logger: log, url: ENV.JOBS_REDIS_URL })
 

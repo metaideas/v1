@@ -1,4 +1,4 @@
-import { seconds } from "humanspan"
+import { seconds } from "@sanely/duration"
 
 export const AUTH_COOKIE_PREFIX = "v1"
 // The API's auth instance namespaces its cookies so the two localhost jars

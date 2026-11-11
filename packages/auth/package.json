@@ -24,11 +24,11 @@
     "@better-auth/drizzle-adapter": "1.7.18",
     "@better-auth/electron": "1.7.18",
     "@better-auth/expo": "1.7.18",
+    "@sanely/duration": "0.1.0",
     "@v1/core": "workspace:*",
     "better-auth": "1.7.18",
     "conf": "15.1.0",
-    "drizzle-orm": "1.0.0-rc.5",
-    "humanspan": "0.3.0"
+    "drizzle-orm": "1.0.0-rc.5"
   },
   "devDependencies": {
     "@tooling/testing": "workspace:*",

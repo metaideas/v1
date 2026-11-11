@@ -1,6 +1,6 @@
+import { mergeRouters } from "@sanely/rpc"
+import { toWire } from "@sanely/rpc/wire"
 import { ipcMain } from "electron"
-import { mergeRouters } from "typedport"
-import { toWire } from "typedport/wire"
 import { localFilesRouter } from "#features/local-files/handlers.ts"
 import { isExposedError } from "#shared/bridge.ts"
 import { log } from "#shared/logger.ts"

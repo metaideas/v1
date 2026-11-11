@@ -8,7 +8,7 @@ export const authRouter = createShellRouter(authContract, {
     const { data } = await auth.getSession()
     return data ? SessionUserSchema.parse(data.user) : null
   },
-  "auth.signIn": async (input) => {
+  "auth.signIn": async ({ input }) => {
     const { data, error } = await auth.signIn.email(input)
     if (!data) {
       throw AuthFault.create("SignInError").withMessage(error.message ?? "Could not sign in")

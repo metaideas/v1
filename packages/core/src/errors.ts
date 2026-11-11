@@ -1,5 +1,5 @@
+import { merge } from "@sanely/errors"
 import { AssertFault } from "@v1/utils/assert"
-import * as Faultier from "faultier"
 import { AuthFault } from "#domains/auth/errors.ts"
 import { EmailFault } from "#services/email/errors.ts"
 import { JobsFault } from "#services/jobs/errors.ts"
@@ -7,7 +7,7 @@ import { PaymentsFault } from "#services/payments/errors.ts"
 import { RealtimeFault } from "#services/realtime/errors.ts"
 import { StorageFault } from "#services/storage/errors.ts"
 
-export const AppFault = Faultier.merge(
+export const AppFault = merge(
   AuthFault,
   EmailFault,
   JobsFault,
@@ -25,5 +25,5 @@ export * from "#services/payments/errors.ts"
 export * from "#services/realtime/errors.ts"
 export * from "#services/storage/errors.ts"
 
-export { matchTag, matchTags, Fault, isFault } from "faultier"
-export type { SerializableFault } from "faultier/types"
+export { Base as Fault, isFault, matchTag, matchTags } from "@sanely/errors"
+export type { SerializableFault } from "@sanely/errors/types"

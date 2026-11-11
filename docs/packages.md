@@ -127,6 +127,18 @@ export const { useFile, useList, useSearch, useUpload } = createUploadStorageCli
 
 There is no key-value package workspace. An application workspace that needs one creates an [unstorage](https://unstorage.unjs.io/) instance in its composition root. `apps/api` uses the Redis driver against Redis from Docker Compose and passes the instance to handlers as `c.var.kv`. Namespace keys per feature with unstorage's `prefixStorage`. Values must be JSON-serializable; dates come back as strings.
 
+## Rate Limiting
+
+There is no rate limiting package workspace. `apps/api` counts requests with [`@sanely/ratelimit`](https://github.com/adelrodriguez/sanely/tree/main/packages/ratelimit) in Redis at `REDIS_URL`, so every instance of the API shares the counts. `withRateLimiting` from `#shared/middleware.ts` allows each caller a number of requests per fixed window:
+
+```ts
+app.get("/hello", withRateLimiting({ limit: 60, name: "hello", window: "1 minute" }), handler)
+```
+
+The name labels the limit in the `RateLimit` response headers and in its Redis keys, so give each limit its own name. A denied request gets status 429 with a `Retry-After` header. While Redis is down, the middleware logs the error and responds with status 503. The Redis client turns off its offline queue, so a failed check never replays into the next window when Redis returns.
+
+The middleware identifies a caller by public IP address with [`@sanely/request`](https://github.com/adelrodriguez/sanely/tree/main/packages/request). Set `HOSTING_PLATFORM` in `apps/api` to the platform that serves the API, such as `vercel` or `fly-io`, so the address comes from the header that platform sets and a client cannot forge. With the default, `none`, the address comes from the connection, or from forwarding headers such as `X-Forwarded-For` when the connection comes from a private network. Callers without a public address, such as requests from localhost or a load balancer's health probes, share one count across every instance, so leave health checks unlimited.
+
 ## Jobs
 
 `packages/jobs` runs fire-and-forget background jobs on Redis through [BullMQ](https://docs.bullmq.io/). A dispatcher adds a job to a queue, and a jobs runner in another process, such as `apps/worker`, picks it up. Use a job for one unit of work that can run later and retry on its own, such as sending an email, resizing an upload, or calling a slow third-party API. Use a [workflow](#workflows) when the work has several steps whose progress must survive a crash, or waits between them.

@@ -97,13 +97,13 @@ export async function addDesktopContract(handlers: DesktopHandlers) {
   const source = existsSync(schemasPath) ? await readFile(schemasPath, "utf8") : ""
   const declaration = `export const ${contract} = defineContract({\n  ${key}: {\n    ping: channel({ input: z.void(), output: z.string() }),\n  },\n})\n`
   const updated = addImports([source.trimEnd(), declaration].filter(Boolean).join("\n\n"), [
-    { from: "typedport", imported: "channel" },
-    { from: "typedport", imported: "defineContract" },
+    { from: "@sanely/rpc", imported: "channel" },
+    { from: "@sanely/rpc", imported: "defineContract" },
     { from: "zod", imported: "*", local: "z" },
   ])
 
   if (updated === undefined) {
-    return `[MANUAL] ${schemasPath} already binds a name the contract needs. Declare ${contract} with typedport's defineContract.`
+    return `[MANUAL] ${schemasPath} already binds a name the contract needs. Declare ${contract} with @sanely/rpc's defineContract.`
   }
 
   await writeFile(schemasPath, updated)

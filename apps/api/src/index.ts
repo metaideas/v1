@@ -6,9 +6,14 @@ import app from "#routes/index.ts"
 import { realtimeHandler } from "#routes/realtime.ts"
 import { ENV } from "#shared/env.generated.ts"
 import { log } from "#shared/logger.ts"
-import { database, dispatcher, kv, realtime } from "#shared/services.ts"
+import { database, dispatcher, kv, realtime, redis } from "#shared/services.ts"
 
 const handleRequest = getRequestListener(app.fetch)
+
+async function closeRedis() {
+  if (redis.isReady) await redis.close()
+  else if (redis.isOpen) redis.destroy()
+}
 const server = createServer((request, response) => {
   void handleRequest(request, response)
 })
@@ -39,6 +44,7 @@ await lifecycle(
         dispatcher.close(),
         kv.dispose(),
         realtime.close(),
+        closeRedis(),
         database.$client.end(),
       ])
     },

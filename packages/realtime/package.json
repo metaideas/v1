@@ -17,12 +17,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@sanely/duration": "0.1.0",
+    "@sanely/try": "0.1.0",
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
     "eventsource-parser": "4.1.2",
-    "humanspan": "0.3.0",
-    "redis": "6.2.1",
-    "tryharder": "0.4.0"
+    "redis": "6.2.1"
   },
   "devDependencies": {
     "@hono/node-server": "2.1.6",

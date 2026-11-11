@@ -1,6 +1,6 @@
-import * as Faultier from "faultier"
+import * as Fault from "@sanely/errors"
 
-export class SendEmailError extends Faultier.Tagged("SendEmailError")<{
+export class SendEmailError extends Fault.Tagged("SendEmailError")<{
   template: string
   to: string[]
 }>() {}
@@ -9,14 +9,14 @@ export class SendEmailError extends Faultier.Tagged("SendEmailError")<{
  * A transport could not deliver a message. `isRetryable` is false when the provider rejected the
  * message itself, such as an invalid sender, so another attempt would fail the same way.
  */
-export class EmailDeliveryError extends Faultier.Tagged("EmailDeliveryError")<{
+export class EmailDeliveryError extends Fault.Tagged("EmailDeliveryError")<{
   transport: string
   isRetryable: boolean
 }>() {}
 
-export class EmailConfigurationError extends Faultier.Tagged("EmailConfigurationError")() {}
+export class EmailConfigurationError extends Fault.Tagged("EmailConfigurationError")() {}
 
-export const EmailFault = Faultier.registry({
+export const EmailFault = Fault.registry({
   EmailConfigurationError,
   EmailDeliveryError,
   SendEmailError,

@@ -1,5 +1,5 @@
+import { isTimeoutError } from "@sanely/try/errors"
 import { EmailDeliveryError, SendEmailError } from "@v1/core/errors"
-import { isTimeoutError } from "tryharder/errors"
 import { describe, expect, test, vi } from "vitest"
 import type { EmailMessage, SendContext } from "#transports.ts"
 import { createMailer } from "#mailer.ts"
@@ -51,7 +51,7 @@ describe("createMailer", () => {
     const result = await mailer.send("password-reset", props, { to })
 
     expect(result).toBeInstanceOf(SendEmailError)
-    expect(result).toMatchObject({ cause, template: "password-reset", to })
+    expect(result).toMatchObject({ cause, fields: { template: "password-reset", to } })
     expect(send).toHaveBeenCalledTimes(1)
   })
 

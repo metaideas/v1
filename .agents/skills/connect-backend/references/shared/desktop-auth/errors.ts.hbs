@@ -1,13 +1,13 @@
-import * as Faultier from "faultier"
+import * as Fault from "@sanely/errors"
 
 /**
  * The API rejected the email and password, or could not sign the user in.
  */
-export class SignInError extends Faultier.Tagged("SignInError")() {}
+export class SignInError extends Fault.Tagged("SignInError")() {}
 
 /**
  * The renderer asked for an access token without a session.
  */
-export class SignedOutError extends Faultier.Tagged("SignedOutError")() {}
+export class SignedOutError extends Fault.Tagged("SignedOutError")() {}
 
-export const AuthFault = Faultier.registry({ SignInError, SignedOutError })
+export const AuthFault = Fault.registry({ SignInError, SignedOutError })

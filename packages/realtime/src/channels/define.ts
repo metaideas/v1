@@ -1,5 +1,5 @@
+import type { TimeExpression } from "@sanely/duration"
 import type * as z from "@v1/utils/schema/mini"
-import type { TimeExpression } from "humanspan"
 
 /**
  * Declares a channel: the params that address one instance of it, and the events it carries. An

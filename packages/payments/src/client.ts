@@ -1,7 +1,7 @@
 import type { Storage } from "unstorage"
+import * as try$ from "@sanely/try"
 import { InvalidWebhookError, PaymentsFault } from "@v1/core/errors"
 import Stripe from "stripe"
-import * as try$ from "tryharder"
 import { prefixStorage } from "unstorage"
 import { ExpandedPaymentMethodSchema } from "#schemas.ts"
 

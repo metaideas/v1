@@ -133,3 +133,17 @@ const { status } = useRealtime({
 ```
 
 A repeat run reports skips without replacing `src/shared/realtime.ts`.
+
+## Add an update notice
+
+A browser tab can stay open across many deployments and keep running old code. `skew` adds [`@sanely/skew`](https://github.com/adelrodriguez/sanely/tree/main/packages/skew) to `apps/app`, so an open tab asks the user to reload when a newer deployment is live:
+
+```bash
+bun run generate skew
+```
+
+The template command installs the package and gives each build an ID in `vite.config.ts`, which the client and server bundles of that build share. It adds `src/shared/deployment.ts`, which exports the ID, and the `/api/deployment` route, which answers with the ID of the deployment that serves the app now, with `Cache-Control: no-store`. It adds `src/shared/components/update-notice.tsx` and renders it in `src/shared/components/providers.tsx`. The notice checks `/api/deployment` when the tab becomes visible, when the network comes back, and every 5 minutes, and shows a **Reload** button when the IDs differ. Then it builds the app once, so TanStack Router adds the route to `src/routeTree.gen.ts`.
+
+The notice never appears in development, because the page and the route come from the same build. To see it, build and start the app, open a page, then build and start the app again.
+
+Where an edit does not apply, the template command prints the step to finish by hand. A repeat run reports skips without replacing generated application code.
