@@ -20,20 +20,23 @@ export default function UpdateNotice() {
     return null
   }
 
+  // The wrapper positions the notice, because the alert's own `relative` outranks `fixed`.
   return (
-    <Alert className="fixed inset-x-4 top-4 z-50 mx-auto max-w-md shadow-lg">
-      <Icon.Info />
-      <AlertTitle>New version available</AlertTitle>
-      <AlertDescription>
-        {deployment.reloadStatus === "blocked"
-          ? "The update is not ready yet. Try again in a few minutes."
-          : "Reload to get the latest version."}
-      </AlertDescription>
-      <AlertAction>
-        <Button onClick={deployment.reload} size="xs" variant="outline">
-          Reload
-        </Button>
-      </AlertAction>
-    </Alert>
+    <div className="fixed inset-x-4 top-4 z-50 mx-auto max-w-md">
+      <Alert className="shadow-lg">
+        <Icon.Info />
+        <AlertTitle>New version available</AlertTitle>
+        <AlertDescription>
+          {deployment.reloadStatus === "blocked"
+            ? "The update is not ready yet. Try again in a few minutes."
+            : "Reload to get the latest version."}
+        </AlertDescription>
+        <AlertAction>
+          <Button onClick={deployment.reload} size="xs" variant="outline">
+            Reload
+          </Button>
+        </AlertAction>
+      </Alert>
+    </div>
   )
 }
