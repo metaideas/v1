@@ -2,7 +2,7 @@ import * as z from "@v1/utils/schema"
 import { describeRoute, resolver, validator } from "hono-openapi"
 import demoRoutes from "#routes/v1/demo.ts"
 import { m } from "#shared/internationalization/messages.js"
-import { requireSession } from "#shared/middleware.ts"
+import { requireSession, withRateLimiting } from "#shared/middleware.ts"
 import { factory } from "#shared/utils.ts"
 
 export default factory
@@ -22,6 +22,7 @@ export default factory
         },
       },
     }),
+    withRateLimiting({ limit: 60, name: "hello", window: "1 minute" }),
     validator("query", z.object({ name: z.string().optional() })),
     (c) => {
       const query = c.req.valid("query")
