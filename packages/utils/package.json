@@ -20,8 +20,8 @@
   "dependencies": {
     "@sanely/duration": "0.1.0",
     "@sanely/errors": "0.1.0",
+    "@sanely/try": "0.1.0",
     "nanoid": "6.0.2",
-    "tryharder": "0.4.0",
     "ufo": "1.6.4",
     "zod": "4.6.5"
   },

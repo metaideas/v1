@@ -1,11 +1,11 @@
 import { ms } from "@sanely/duration"
-import * as try$ from "tryharder"
-import { isUnhandledException } from "tryharder/errors"
+import * as try$ from "@sanely/try"
+import { isUnhandledException } from "@sanely/try/errors"
 
 // Below the 30 seconds that Kubernetes and most platforms allow between SIGTERM and SIGKILL.
 const DEFAULT_TIMEOUT_MS = ms("25s")
 
-// tryharder wraps an error that it does not map, which hides the original in the log.
+// @sanely/try wraps an error that it does not map, which hides the original in the log.
 function unwrap(error: unknown) {
   return isUnhandledException(error) ? error.cause : error
 }

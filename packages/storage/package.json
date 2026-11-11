@@ -22,10 +22,10 @@
     "@aws-sdk/s3-presigned-post": "3.1146.0",
     "@aws-sdk/s3-request-presigner": "3.1146.0",
     "@sanely/duration": "0.1.0",
+    "@sanely/try": "0.1.0",
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
-    "files-sdk": "2.6.2",
-    "tryharder": "0.4.0"
+    "files-sdk": "2.6.2"
   },
   "devDependencies": {
     "@tooling/testing": "workspace:*",

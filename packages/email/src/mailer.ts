@@ -1,9 +1,9 @@
 import type { Logger } from "@v1/core/services/logging"
 import { render } from "@react-email/render"
 import { ms } from "@sanely/duration"
+import * as try$ from "@sanely/try"
+import { isTimeoutError } from "@sanely/try/errors"
 import { EmailDeliveryError, EmailFault, SendEmailError } from "@v1/core/errors"
-import * as try$ from "tryharder"
-import { isTimeoutError } from "tryharder/errors"
 import type { EmailTransport } from "#transports.ts"
 import { type TemplateName, type TemplateProps, templates } from "#registry.ts"
 
@@ -46,20 +46,20 @@ export function createMailer({
       options: SendOptions
     ): Promise<{ id: string } | SendEmailError> {
       const { element, subject } = templates[name](props)
-      const { html, text } = await try$.all({
-        html: () => render(element),
-        text: () => render(element, { plainText: true }),
-      })
+      const [html, text] = await Promise.all([
+        render(element),
+        render(element, { plainText: true }),
+      ])
       const message = { from: options.from ?? from, html, subject, text, to: options.to }
       const idempotencyKey = crypto.randomUUID()
 
       const result = await try$
         .retry({
           backoff: "exponential",
-          delayMs: 250,
+          delay: "250ms",
           jitter: true,
           limit: attempts,
-          maxDelayMs: 2000,
+          maxDelay: "2s",
           shouldRetry: (error) =>
             !(error instanceof EmailDeliveryError) || error.fields.isRetryable,
         })

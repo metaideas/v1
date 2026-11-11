@@ -22,12 +22,12 @@
     "@react-email/components": "1.0.12",
     "@react-email/render": "2.1.0",
     "@sanely/duration": "0.1.0",
+    "@sanely/try": "0.1.0",
     "@v1/core": "workspace:*",
     "nodemailer": "10.0.15",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "resend": "6.32.0",
-    "tryharder": "0.4.0"
+    "resend": "6.32.0"
   },
   "devDependencies": {
     "@react-email/ui": "6.11.0",

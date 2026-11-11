@@ -1,5 +1,5 @@
+import { isTimeoutError } from "@sanely/try/errors"
 import { EmailDeliveryError, SendEmailError } from "@v1/core/errors"
-import { isTimeoutError } from "tryharder/errors"
 import { describe, expect, test, vi } from "vitest"
 import type { EmailMessage, SendContext } from "#transports.ts"
 import { createMailer } from "#mailer.ts"

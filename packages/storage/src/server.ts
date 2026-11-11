@@ -2,6 +2,7 @@ import type { Logger } from "@v1/core/services/logging"
 import type { Adapter, Files, FilesPlugin, StoredFile, UploadResult } from "files-sdk"
 import type { AllowedOrigins } from "files-sdk/api"
 import type { MemoryAdapterOptions } from "files-sdk/memory"
+import * as try$ from "@sanely/try"
 import { StorageFault, StorageSyncError } from "@v1/core/errors"
 import { createFiles, handlers } from "files-sdk"
 import { createFilesRouter } from "files-sdk/api"
@@ -9,7 +10,6 @@ import { memory } from "files-sdk/memory"
 import { s3 } from "files-sdk/s3"
 import { signedUrlPolicy } from "files-sdk/signed-url-policy"
 import { ValidationError, validation } from "files-sdk/validation"
-import * as try$ from "tryharder"
 import {
   STORAGE_ALLOWED_TYPES,
   STORAGE_MAX_LIST_RESULTS,

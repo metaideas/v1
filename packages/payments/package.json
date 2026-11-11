@@ -16,10 +16,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@sanely/try": "0.1.0",
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
     "stripe": "23.0.0",
-    "tryharder": "0.4.0",
     "unstorage": "1.17.5"
   },
   "devDependencies": {
