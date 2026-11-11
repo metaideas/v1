@@ -1,4 +1,4 @@
-import { channel, defineContract } from "typedport"
+import { channel, defineContract } from "@sanely/rpc"
 import * as z from "zod"
 
 export const LocalTextFileSchema = z.object({

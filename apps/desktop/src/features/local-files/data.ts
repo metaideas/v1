@@ -1,5 +1,5 @@
+import { createClient } from "@sanely/rpc"
 import { mutationOptions } from "@tanstack/react-query"
-import { createClient } from "typedport"
 import { type LocalTextFile, localFilesContract } from "#features/local-files/schemas.ts"
 import { transport } from "#shared/bridge.ts"
 

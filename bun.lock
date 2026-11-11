@@ -111,6 +111,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@sanely/errors": "0.1.0",
+        "@sanely/rpc": "0.1.0",
         "@tanstack/react-devtools": "0.10.13",
         "@tanstack/react-query": "5.104.1",
         "@tanstack/react-query-devtools": "5.104.1",
@@ -121,7 +122,6 @@
         "evlog": "2.30.0",
         "react": "19.2.3",
         "react-dom": "19.2.3",
-        "typedport": "0.3.0",
         "varlock": "1.21.1",
         "zod": "4.6.5",
       },
@@ -2001,6 +2001,8 @@
     "@sanely/duration": ["@sanely/duration@0.1.0", "", {}, "sha512-r3HPUGIl25/nj2HefuGdEoV41jiZ1OlWqRvbtecTgeSdU575dfYf47tylMfKXVYzP9uBEB+MfhTv+pHHoj184Q=="],
 
     "@sanely/errors": ["@sanely/errors@0.1.0", "", {}, "sha512-IflXHlZcL50dp0mUdpYvy/ym4hwB62lqpr/wyOsQ7TpDwfU6ukivAcVrcJQyI1zW32RGP1iW8Pn7LvgeD5enaQ=="],
+
+    "@sanely/rpc": ["@sanely/rpc@0.1.0", "", { "dependencies": { "@sanely/duration": "^0.1.0", "@standard-schema/spec": "^1.0.0" } }, "sha512-ddawCLUULgj/kSfgs63PQbnQeVwXVscxf/wT/DL2yAAVij9pnjbnT4k8Z4tvXoWqFNDF+Zu5MSqW0yZMyNEGUw=="],
 
     "@sanely/try": ["@sanely/try@0.1.0", "", { "dependencies": { "@sanely/duration": "^0.1.0" } }, "sha512-P+XMuqh/mI5ICLiNam1+i+titJCrmJHShVdgbZPYrJ0tyobnyLZYS9jSCnayY+i5qdcfdybT8e47PmRnkbhK4Q=="],
 
@@ -4509,8 +4511,6 @@
     "type-fest": ["type-fest@5.8.0", "", { "dependencies": { "tagged-tag": "^1.0.0" } }, "sha512-YGYEVz3Fm5iy/AybuA0oyNFq7H4CgQNfRp/qfe8nurE1kuCeNm3/vfm9X4Mtl+qLyaKJUh5xrFZwogr41SMjYA=="],
 
     "type-is": ["type-is@2.1.0", "", { "dependencies": { "content-type": "^2.0.0", "media-typer": "^1.1.0", "mime-types": "^3.0.0" } }, "sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA=="],
-
-    "typedport": ["typedport@0.3.0", "", { "dependencies": { "@standard-schema/spec": "^1.0.0" } }, "sha512-i2WNVNIHqmTpahs3PLx6RwaZmZSWL9k0sEgNOU4CoFRf826j3SAFTo+nwDrQ+NEnJx+on4nM7RxkXikdu6avRg=="],
 
     "typescript": ["typescript@7.0.2", "", { "optionalDependencies": { "@typescript/typescript-aix-ppc64": "7.0.2", "@typescript/typescript-darwin-arm64": "7.0.2", "@typescript/typescript-darwin-x64": "7.0.2", "@typescript/typescript-freebsd-arm64": "7.0.2", "@typescript/typescript-freebsd-x64": "7.0.2", "@typescript/typescript-linux-arm": "7.0.2", "@typescript/typescript-linux-arm64": "7.0.2", "@typescript/typescript-linux-loong64": "7.0.2", "@typescript/typescript-linux-mips64el": "7.0.2", "@typescript/typescript-linux-ppc64": "7.0.2", "@typescript/typescript-linux-riscv64": "7.0.2", "@typescript/typescript-linux-s390x": "7.0.2", "@typescript/typescript-linux-x64": "7.0.2", "@typescript/typescript-netbsd-arm64": "7.0.2", "@typescript/typescript-netbsd-x64": "7.0.2", "@typescript/typescript-openbsd-arm64": "7.0.2", "@typescript/typescript-openbsd-x64": "7.0.2", "@typescript/typescript-sunos-x64": "7.0.2", "@typescript/typescript-win32-arm64": "7.0.2", "@typescript/typescript-win32-x64": "7.0.2" }, "bin": { "tsc": "bin/tsc" } }, "sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA=="],
 

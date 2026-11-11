@@ -168,7 +168,7 @@ apps/desktop/src
   └── features/     # Feature folders
 ```
 
-A feature calls the main process through a [typedport](https://github.com/adelrodriguez/typedport) contract that it owns. Imports flow one way on each side, and the two sides meet only at the contract:
+A feature calls the main process through an [@sanely/rpc](https://github.com/adelrodriguez/sanely/tree/main/packages/rpc) contract that it owns. Imports flow one way on each side, and the two sides meet only at the contract:
 
 ```sh
 features/<feature>/schemas.ts, errors.ts  # Contract named after the feature, and its errors
@@ -176,7 +176,7 @@ features/<feature>/schemas.ts, errors.ts  # Contract named after the feature, an
   → features/<feature>/data.ts            # Client over #shared/bridge.ts → hooks.ts → components/ → renderer/routes/
 ```
 
-A feature's `handlers.ts` builds its router with `createShellRouter` from `#shared/bridge.ts`. `shell/bridge.ts` merges every feature's router with typedport's `mergeRouters` and serves the result over IPC, and `bun run generate new-feature` adds a new desktop feature's router to that merge. The router parses every payload before a resolver runs, because renderer input is untrusted. Faults that features define reach the renderer with their message, and every other failure crosses as `internal`. The preload exposes only the transport, so it never changes. Name the contract's root key after the feature, such as `localFiles`, so channel names can't collide; `mergeRouters` throws at startup if two features declare the same channel.
+A feature's `handlers.ts` builds its router with `createShellRouter` from `#shared/bridge.ts`. `shell/bridge.ts` merges every feature's router with @sanely/rpc's `mergeRouters` and serves the result over IPC, and `bun run generate new-feature` adds a new desktop feature's router to that merge. The router parses every payload before a resolver runs, because renderer input is untrusted. Faults that features define reach the renderer with their message, and every other failure crosses as `internal`. The preload exposes only the transport, so it never changes. Name the contract's root key after the feature, such as `localFiles`, so channel names can't collide; `mergeRouters` throws at startup if two features declare the same channel.
 
 ### Extension
 

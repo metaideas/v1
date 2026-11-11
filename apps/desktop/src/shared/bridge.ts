@@ -1,7 +1,7 @@
 import type { WebContents } from "electron"
 import * as Fault from "@sanely/errors"
-import { createRouter, type Transport } from "typedport"
-import { fromWire } from "typedport/wire"
+import { createRouter, type Transport } from "@sanely/rpc"
+import { fromWire } from "@sanely/rpc/wire"
 
 /**
  * The preload exposes this on `globalThis.bridge`. It forwards each call to the shell unchanged.

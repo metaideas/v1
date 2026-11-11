@@ -9,7 +9,7 @@ import { createShellRouter } from "#shared/bridge.ts"
 const openedPaths = new WeakMap<WebContents, Set<string>>()
 
 export const localFilesRouter = createShellRouter(localFilesContract, {
-  "localFiles.open": async (_input, { context }) => {
+  "localFiles.open": async ({ context }) => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       filters: [
         {
@@ -33,7 +33,7 @@ export const localFilesRouter = createShellRouter(localFilesContract, {
       path: selectedPath,
     }
   },
-  "localFiles.save": async (file, { context }) => {
+  "localFiles.save": async ({ context, input: file }) => {
     if (!openedPaths.get(context.sender)?.has(file.path)) {
       throw LocalFilesFault.create("UnselectedPathError", { path: file.path }).withMessage(
         "Cannot save to a path that the open dialog did not select"

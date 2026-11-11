@@ -81,13 +81,13 @@ export function createApiProxyRouter(getHeaders: () => Record<string, string> = 
   const requests = new Map<string, AbortController>()
 
   return createShellRouter(apiProxyContract, {
-    "api.abort": ({ id }) => {
+    "api.abort": ({ input: { id } }) => {
       requests.get(id)?.abort()
       requests.delete(id)
     },
     // Reading `request.method` instead of destructuring it works around
     // https://github.com/oxc-project/oxc/issues/27772.
-    "api.fetch": async (request, { context }) => {
+    "api.fetch": async ({ context, input: request }) => {
       const { id, url } = request
       if (!isForwarded(url)) {
         throw ApiProxyFault.create("ForbiddenUrlError", { url }).withMessage(
