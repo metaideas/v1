@@ -1,0 +1,39 @@
+import { createDeploymentMonitor } from "@sanely/skew"
+import { useDeploymentStatus } from "@sanely/skew/react"
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@v1/ui/components/alert"
+import { Button } from "@v1/ui/components/button"
+import { Icon } from "@v1/ui/components/icon"
+import { DEPLOYMENT_ENDPOINT, DEPLOYMENT_ID } from "#shared/deployment.ts"
+
+const monitor = createDeploymentMonitor({
+  running: { id: DEPLOYMENT_ID },
+  target: DEPLOYMENT_ENDPOINT,
+})
+
+/**
+ * Asks the user to reload when a newer deployment of the app is live.
+ */
+export default function UpdateNotice() {
+  const deployment = useDeploymentStatus(monitor)
+
+  if (deployment.status !== "stale") {
+    return null
+  }
+
+  return (
+    <Alert className="fixed inset-x-4 top-4 z-50 mx-auto max-w-md shadow-lg">
+      <Icon.Info />
+      <AlertTitle>New version available</AlertTitle>
+      <AlertDescription>
+        {deployment.reloadStatus === "blocked"
+          ? "The update is not ready yet. Try again in a few minutes."
+          : "Reload to get the latest version."}
+      </AlertDescription>
+      <AlertAction>
+        <Button onClick={deployment.reload} size="xs" variant="outline">
+          Reload
+        </Button>
+      </AlertAction>
+    </Alert>
+  )
+}

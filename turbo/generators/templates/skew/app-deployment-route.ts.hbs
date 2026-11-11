@@ -1,0 +1,14 @@
+import { serializeDescriptor } from "@sanely/skew"
+import { createFileRoute } from "@tanstack/react-router"
+import { DEPLOYMENT_ID } from "#shared/deployment.ts"
+
+export const Route = createFileRoute("/api/deployment")({
+  server: {
+    handlers: {
+      GET: () =>
+        new Response(serializeDescriptor({ id: DEPLOYMENT_ID }), {
+          headers: { "Cache-Control": "no-store", "Content-Type": "application/json" },
+        }),
+    },
+  },
+})
