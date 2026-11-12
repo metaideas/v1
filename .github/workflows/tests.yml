@@ -98,36 +98,16 @@ jobs:
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Setup Node.js
+      - name: Setup Node.js and pnpm, and install dependencies
         if: ${{ steps.scan.outputs.run == 'true' }}
-        uses: actions/setup-node@v7
+        uses: pnpm/setup@v3.1.2
         with:
-          node-version-file: ".node-version"
-
-      - name: Setup Bun
-        if: ${{ steps.scan.outputs.run == 'true' }}
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.4.4"
-
-      - name: Cache dependencies
-        if: ${{ steps.scan.outputs.run == 'true' }}
-        uses: actions/cache@v6
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        if: ${{ steps.scan.outputs.run == 'true' }}
-        run: bun install --frozen-lockfile
+          cache: true
+          require-lockfile: true
 
       - name: Scan client artifacts for sensitive values
         if: ${{ steps.scan.outputs.run == 'true' }}
-        run: bun run env:scan
+        run: pnpm run env:scan
         env:
           VARLOCK_ENV: development
 
@@ -139,31 +119,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - name: Setup Node.js and pnpm, and install dependencies
+        uses: pnpm/setup@v3.1.2
         with:
-          node-version-file: ".node-version"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.4.4"
-
-      - name: Cache dependencies
-        uses: actions/cache@v6
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+          cache: true
+          require-lockfile: true
 
       - name: Generate source files
-        run: bun run codegen
+        run: pnpm run codegen
 
       - name: Run tests
-        run: bun run test
+        run: pnpm run test

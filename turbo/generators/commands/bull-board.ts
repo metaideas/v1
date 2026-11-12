@@ -211,7 +211,7 @@ export function registerBullBoardGenerator(plop: PlopTypes.NodePlopAPI) {
       return [
         async () => {
           if (!existsSync(`${JOBS_PATH}/package.json`)) {
-            throw new Error(`The jobs dashboard needs ${JOBS_PATH}. Add it with bun template add.`)
+            throw new Error(`The jobs dashboard needs ${JOBS_PATH}. Add it with pnpm template add.`)
           }
 
           const api = await readPackageJson(`${API_PATH}/package.json`)
@@ -232,9 +232,8 @@ export function registerBullBoardGenerator(plop: PlopTypes.NodePlopAPI) {
 
           await runCommand(
             [
-              "bun",
+              "pnpm",
               "add",
-              "--exact",
               "@bull-board/api",
               "@bull-board/hono",
               `bullmq@${bullmq}`,
@@ -262,7 +261,7 @@ export function registerBullBoardGenerator(plop: PlopTypes.NodePlopAPI) {
         ...EDITS.map((edit) => () => applyEdit(`${API_PATH}/${edit.path}`, edit)),
         () =>
           "Set JOBS_DASHBOARD_USERNAME and JOBS_DASHBOARD_PASSWORD in apps/api, then open /jobs on the API.",
-        () => "Run `bun run codegen` and `bun run fix`, then `bun template doctor`.",
+        () => "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm template doctor`.",
       ]
     },
     description: "Add a bull-board dashboard for the job queues to apps/api",

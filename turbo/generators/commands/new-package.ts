@@ -72,7 +72,7 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
           type: "add",
         },
         async () => {
-          await runCommand(["bun", "install"])
+          await runCommand(["pnpm", "install"])
           return `Created ${answers.packageScope}/${name}`
         },
       ]

@@ -10,9 +10,9 @@
   },
   "scripts": {
     "build": "electron-forge package",
-    "bump:deps": "bun update --interactive",
+    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo .vite dist node_modules out",
-    "codegen": "bun run --parallel \"codegen:*\"",
+    "codegen": "pnpm run \"/^codegen:/\"",
     "codegen:env": "varlock codegen",
     "codegen:i18n": "paraglide-js compile --project ../../tooling/internationalization/project.inlang --outdir ./src/shared/internationalization",
     "dev": "electron-forge start",

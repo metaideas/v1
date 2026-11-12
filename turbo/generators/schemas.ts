@@ -32,8 +32,6 @@ export const SentryAnswersSchema = z.object({
 
 export const BundledModulesSchema = z.record(z.string(), z.string())
 
-export const TrustedDependenciesSchema = z.array(z.string()).optional()
-
 // Narrowing the original value instead of returning the parsed copy keeps the key order of manifests that are written back.
 function assertPackageJson(value: unknown): asserts value is z.infer<typeof PackageJsonSchema> {
   PackageJsonSchema.parse(value)

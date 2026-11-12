@@ -8,9 +8,9 @@
   },
   "scripts": {
     "android": "varlock run -- expo run:android",
-    "bump:deps": "bun update --interactive",
+    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo .expo dist node_modules",
-    "codegen": "bun run --parallel \"codegen:*\"",
+    "codegen": "pnpm run \"/^codegen:/\"",
     "codegen:env": "varlock codegen",
     "codegen:i18n": "node scripts/codegen.mts",
     "dev": "varlock run -- expo start --port ${PORT:-3002}",

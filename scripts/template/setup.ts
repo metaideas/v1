@@ -135,7 +135,6 @@ async function cleanupTemplateFiles(
     })
   )
 
-  delete packageJson["bun-create"]
   delete packageJson.v1
   await writeJson(packageJsonPath, packageJson)
 }
@@ -200,8 +199,8 @@ export default defineCommand({
       type: "boolean",
     },
     install: {
-      description: "Run bun install",
-      negativeDescription: "Skip bun install",
+      description: "Run pnpm install",
+      negativeDescription: "Skip pnpm install",
       type: "boolean",
     },
     "keep-apps": {
@@ -309,7 +308,7 @@ export default defineCommand({
       ?? (shouldAcceptDefaults ? true : await promptForConfirmation("Initialize a git repository?"))
     const shouldInstall =
       args.install
-      ?? (shouldAcceptDefaults ? true : await promptForConfirmation("Run bun install?"))
+      ?? (shouldAcceptDefaults ? true : await promptForConfirmation("Run pnpm install?"))
 
     const selectionError =
       getSelectionError(
@@ -356,20 +355,20 @@ export default defineCommand({
     if (shouldInitializeGit && !existsSync(join(rootDir, ".git")))
       await runCommand(["git", "init"], rootDir)
     if (shouldInstall) {
-      await runCommand(["bun", "install"], rootDir)
-      await runCommand(["bun", "run", "codegen"], rootDir)
+      await runCommand(["pnpm", "install"], rootDir)
+      await runCommand(["pnpm", "run", "codegen"], rootDir)
     }
     // Prebuild regenerates the committed native projects from app.config.js, but it can only
     // install CocoaPods on macOS.
     if (selection.keepApps.includes("mobile")) {
       if (shouldInstall && process.platform === "darwin")
-        await runCommand(["bun", "run", "--filter", "mobile", "prebuild"], rootDir)
+        await runCommand(["pnpm", "run", "--filter", "mobile", "prebuild"], rootDir)
       else
         consola.warn(
-          "Run `bun run --filter mobile prebuild` on macOS to rename the native iOS and Android projects."
+          "Run `pnpm run --filter mobile prebuild` on macOS to rename the native iOS and Android projects."
         )
     }
 
-    consola.success("Template setup complete. Run `bun template doctor` to verify the project.")
+    consola.success("Template setup complete. Run `pnpm template doctor` to verify the project.")
   },
 })

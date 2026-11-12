@@ -78,7 +78,7 @@ export function registerSkewGenerator(plop: PlopTypes.NodePlopAPI) {
     actions: () => [
       async () => {
         if (!existsSync(`${APP_PATH}/package.json`)) {
-          throw new Error(`The update notice needs ${APP_PATH}. Add it with bun template add.`)
+          throw new Error(`The update notice needs ${APP_PATH}. Add it with pnpm template add.`)
         }
 
         const app = await readPackageJson(`${APP_PATH}/package.json`)
@@ -87,7 +87,7 @@ export function registerSkewGenerator(plop: PlopTypes.NodePlopAPI) {
           return `[SKIPPED] ${APP_PATH} already contains @sanely/skew`
         }
 
-        await runCommand(["bun", "add", "--exact", "@sanely/skew"], APP_PATH)
+        await runCommand(["pnpm", "add", "@sanely/skew"], APP_PATH)
         return `${APP_PATH}: installed @sanely/skew`
       },
       {
@@ -111,12 +111,12 @@ export function registerSkewGenerator(plop: PlopTypes.NodePlopAPI) {
       ...EDITS.map((edit) => () => applyEdit(`${APP_PATH}/${edit.path}`, edit)),
       // TanStack Router adds the new route to the committed route tree when the app builds.
       async () => {
-        await runCommand(["bun", "run", "build"], APP_PATH)
+        await runCommand(["pnpm", "run", "build"], APP_PATH)
         return `${APP_PATH}: built the app, which adds /api/deployment to src/routeTree.gen.ts`
       },
       () =>
         "The notice appears only after a new deployment. To see it, build and start the app, open a page, then build and start the app again.",
-      () => "Run `bun run fix`, then `bun template doctor`.",
+      () => "Run `pnpm run fix`, then `pnpm template doctor`.",
     ],
     description: "Add a notice to apps/app that asks users to reload after a new deployment",
     prompts: [],

@@ -14,7 +14,7 @@
     "./client": "./src/client.ts"
   },
   "scripts": {
-    "bump:deps": "bun update --interactive",
+    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "codegen": "varlock codegen",
     "dev": "varlock run -- drizzle-kit studio --port ${PORT:-4000}",

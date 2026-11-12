@@ -32,7 +32,7 @@ export default defineCommand({
     const stamp = await readTemplateStamp(rootDir)
     if (!stamp?.commit) {
       consola.error(
-        "No template commit is recorded in .template.json. Run bun template setup first."
+        "No template commit is recorded in .template.json. Run pnpm template setup first."
       )
       process.exitCode = 1
       return

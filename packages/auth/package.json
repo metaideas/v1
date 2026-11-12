@@ -15,9 +15,9 @@
     "./start": "./src/start.ts"
   },
   "scripts": {
-    "bump:deps": "bun update --interactive",
+    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "secret": "bunx auth@latest secret",
+    "secret": "pnpm dlx auth@latest secret",
     "test": "vitest run"
   },
   "dependencies": {

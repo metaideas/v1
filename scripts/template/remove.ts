@@ -62,7 +62,7 @@ export default defineCommand({
     )
     const references = [...new Set(referencingFiles.flat())]
       .map((path) => relative(rootDir, path))
-      .filter((path) => !isProse(path) && path !== "bun.lock")
+      .filter((path) => !isProse(path) && path !== "pnpm-lock.yaml")
       .toSorted()
 
     if (dependents.length > 0)
@@ -71,6 +71,6 @@ export default defineCommand({
       consola.warn(`Files that still reference ${targetPath}:\n  ${references.join("\n  ")}`)
     }
 
-    consola.info("Remove the references above, run bun install, then bun template doctor.")
+    consola.info("Remove the references above, run pnpm install, then pnpm template doctor.")
   },
 })

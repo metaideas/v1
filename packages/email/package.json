@@ -11,7 +11,7 @@
     "./transports": "./src/transports.ts"
   },
   "scripts": {
-    "bump:deps": "bun update --interactive",
+    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "email dev --dir src/templates --port ${PORT:-4001}",
     "export": "email export --dir src/templates",
