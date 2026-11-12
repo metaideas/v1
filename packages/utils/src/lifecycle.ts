@@ -12,9 +12,10 @@ const CRASHES = {
   unhandledRejection: "Unhandled promise rejection",
 } as const satisfies Record<NodeJS.UncaughtExceptionOrigin, string>
 
-// @sanely/try wraps an error that it does not map, which hides the original in the log.
+// @sanely/try wraps an error that it does not map, which hides the original in the log. A thrown
+// value that is not an Error stays wrapped, so the log still gets a stack.
 function unwrap(error: Error) {
-  return isUnhandledException(error) ? error.cause : error
+  return isUnhandledException(error) && error.cause instanceof Error ? error.cause : error
 }
 
 /**
@@ -30,7 +31,7 @@ function unwrap(error: Error) {
  * Resolves once `run` settles.
  */
 export async function lifecycle(
-  run: () => unknown,
+  run: () => Promise<void>,
   { close, onError, timeoutMs = DEFAULT_TIMEOUT_MS }: LifecycleOptions
 ) {
   async function stop() {
@@ -75,10 +76,10 @@ type LifecycleOptions = {
   /**
    * Releases the process's services, such as servers, workers, and connections.
    */
-  close: () => Promise<unknown>
+  close: () => Promise<void>
   /**
    * Reports an error that the lifecycle catches, with a message that describes when it happened.
    */
-  onError: (error: unknown, message: string) => void
+  onError: (error: Error, message: string) => void
   timeoutMs?: number
 }

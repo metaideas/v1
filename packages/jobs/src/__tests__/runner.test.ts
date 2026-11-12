@@ -5,7 +5,7 @@ const { processors, redis, worker } = mockQueues()
 
 const { createJobsRunner } = await import("#runner.ts")
 
-const greetUser = vi.fn((_payload: { userId: string }) => Promise.resolve("hi"))
+const greetUser = vi.fn((_payload: { userId: string }) => Promise.resolve())
 
 const jobRunner = createJobsRunner({
   handlers: { default: { "greet-user": greetUser } },
@@ -22,14 +22,8 @@ function processJob(job: { attemptsMade: number; data: unknown; id: string; name
 
 describe("createJobsRunner", () => {
   test("passes the parsed payload and the attempt to the job's handler", async () => {
-    const result = await processJob({
-      attemptsMade: 1,
-      data: { userId: "user_1" },
-      id: "1",
-      name: "greet-user",
-    })
+    await processJob({ attemptsMade: 1, data: { userId: "user_1" }, id: "1", name: "greet-user" })
 
-    expect(result).toBe("hi")
     expect(greetUser).toHaveBeenLastCalledWith({ userId: "user_1" }, { attempt: 2, id: "1" })
   })
 

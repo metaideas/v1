@@ -58,8 +58,9 @@ export const auth = createServerAuth({
   secret: ENV.AUTH_SECRET,
   // The mailer logs a failed send. The reset response stays the same either way, so it does not
   // reveal whether the email went out.
-  sendPasswordReset: ({ email, url }) =>
-    mailer.send("password-reset", { appName: AUTH_APP_NAME, resetUrl: url }, { to: [email] }),
+  sendPasswordReset: async ({ email, url }) => {
+    await mailer.send("password-reset", { appName: AUTH_APP_NAME, resetUrl: url }, { to: [email] })
+  },
   socialProviders: {
     github: { clientId: ENV.GITHUB_CLIENT_ID, clientSecret: ENV.GITHUB_CLIENT_SECRET },
     google: { clientId: ENV.GOOGLE_CLIENT_ID, clientSecret: ENV.GOOGLE_CLIENT_SECRET },

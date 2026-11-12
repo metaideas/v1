@@ -50,7 +50,7 @@ type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = {
   /**
    * Delivers a password reset link. Without it, password reset is unavailable.
    */
-  sendPasswordReset?: (input: { email: string; url: string }) => Promise<unknown>
+  sendPasswordReset?: (input: { email: string; url: string }) => Promise<void>
   socialProviders?: SocialProviders
   trustedOrigins: string[]
 }

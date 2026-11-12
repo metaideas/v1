@@ -121,10 +121,7 @@ export type { JobName, JobPayload, QueueName } from "#catalog.ts"
  * that consumes the queue until it handles the job.
  */
 type QueueHandlers<Queue extends QueueName> = {
-  [Name in JobName<Queue>]: (
-    payload: JobPayload<Queue, Name>,
-    context: JobContext
-  ) => Promise<unknown>
+  [Name in JobName<Queue>]: (payload: JobPayload<Queue, Name>, context: JobContext) => Promise<void>
 }
 
 type JobContext = {
