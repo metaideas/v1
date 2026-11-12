@@ -154,6 +154,7 @@ function ChartTooltipContent({
     const itemConfig = item && getPayloadConfigFromPayload(config, item, key)
 
     const value =
+      // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Narrows a declared union, not unparsed input. Remove after adelrodriguez/adamantite#740 is fixed.
       !labelKey && typeof label === "string" ? (config[label]?.label ?? label) : itemConfig?.label
 
     if (labelFormatter) {
@@ -246,6 +247,7 @@ function ChartTooltipContent({
                       {/* oxlint-disable-next-line typescript/no-unnecessary-condition -- Recharts can pass null with filterNull=false despite its payload types. */}
                       {item.value !== undefined && item.value !== null && (
                         <span className="font-mono font-medium text-foreground tabular-nums">
+                          {/* oxlint-disable-next-line anti-slop/no-runtime-typeof -- Narrows a declared union, not unparsed input. Remove after adelrodriguez/adamantite#740 is fixed. */}
                           {typeof item.value === "number"
                             ? item.value.toLocaleString()
                             : String(item.value)}

@@ -451,6 +451,7 @@ function SidebarMenuButton({
     return menuButton
   }
 
+  // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Narrows a declared union, not unparsed input. Remove after adelrodriguez/adamantite#740 is fixed.
   const tooltipProps = typeof tooltip === "string" ? { children: tooltip } : tooltip
 
   return (
