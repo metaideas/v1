@@ -43,17 +43,17 @@ export async function lifecycle(
     process.exit(closed instanceof Error ? 1 : 0)
   }
 
-  function onSignal() {
+  function handleSignal() {
     // Without these listeners, a second signal gets Node's default and ends the process at once.
     for (const signal of SIGNALS) {
-      process.off(signal, onSignal)
+      process.off(signal, handleSignal)
     }
 
     void stop()
   }
 
   for (const signal of SIGNALS) {
-    process.on(signal, onSignal)
+    process.on(signal, handleSignal)
   }
 
   // A monitor reports the crash and leaves Node's default in place, which exits with code 1.
