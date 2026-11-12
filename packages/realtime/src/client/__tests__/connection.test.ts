@@ -3,12 +3,17 @@ import * as z from "@v1/utils/schema/mini"
 import { describe, expect, test } from "vitest"
 import { waitUntil } from "#__tests__/wait-until.ts"
 import { createConnection } from "#client/connection.ts"
-import { type SubscribeRequest, SubscribeRequestSchema } from "#protocol/messages.ts"
+import {
+  type ServerMessage,
+  type ServerMessageType,
+  type SubscribeRequest,
+  SubscribeRequestSchema,
+} from "#protocol/messages.ts"
 
 type Request = {
   body: SubscribeRequest
   close: () => void
-  send: (type: string, data: Record<string, unknown>) => void
+  send: <Type extends ServerMessageType>(type: Type, data: ServerMessage<Type>) => void
 }
 
 function createServer() {

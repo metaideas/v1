@@ -7,7 +7,7 @@ import { fromWire } from "@sanely/rpc/wire"
  * The preload exposes this on `globalThis.bridge`. It forwards each call to the shell unchanged.
  */
 export type Bridge = {
-  send: (path: string, payload: unknown) => Promise<unknown>
+  send: Transport
 }
 
 declare global {
@@ -38,6 +38,6 @@ export const transport: Transport = async (path, payload) =>
  * Faults that features define reach the renderer with their message. Every other failure, such as a
  * file system error, crosses as `internal`.
  */
-export function isExposedError(error: unknown) {
+export function isExposedError(error: unknown): error is Fault.Base {
   return Fault.isFault(error)
 }

@@ -5,6 +5,8 @@ import { InvalidWebhookError } from "#errors.ts"
 
 const webhookSecret = "whsec_test_secret"
 
+const event = { data: { object: {} }, id: "evt_1", object: "event", type: "invoice.paid" }
+
 function createTestPayments() {
   const storage = createStorage()
   const payments = createPayments({ secretKey: "sk_test_key", storage, webhookSecret })
@@ -12,7 +14,7 @@ function createTestPayments() {
   return { payments, storage }
 }
 
-async function createWebhookRequest(payload: object, signature?: string) {
+async function createWebhookRequest(payload: typeof event, signature?: string) {
   const body = JSON.stringify(payload)
   const { payments } = createTestPayments()
 
@@ -29,8 +31,6 @@ async function createWebhookRequest(payload: object, signature?: string) {
     method: "POST",
   })
 }
-
-const event = { data: { object: {} }, id: "evt_1", object: "event", type: "invoice.paid" }
 
 describe("parseWebhook", () => {
   test("returns the event for a signed request with a handled type", async () => {

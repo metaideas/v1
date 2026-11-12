@@ -10,7 +10,10 @@ const message = {
   to: ["ada@example.com"],
 }
 
-function stubResendResponse(status: number, body: object) {
+// The error body Resend's API answers with. Its `name` can be a code that the SDK does not list.
+type ResendErrorBody = { message: string; name: string; statusCode: number }
+
+function stubResendResponse(status: number, body: ResendErrorBody) {
   const fetch = vi.spyOn(globalThis, "fetch")
   fetch.mockResolvedValue(Response.json(body, { status }))
 }

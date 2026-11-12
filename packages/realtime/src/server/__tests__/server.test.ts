@@ -42,6 +42,9 @@ function setup({ isAllowed = true } = {}) {
   }
 }
 
+// A server that listens on a TCP port has an address with a port, not a pipe path.
+const TcpAddress = z.object({ port: z.number() })
+
 // Serves the handler the way `apps/api` does, including closing keep-alive connections on stop.
 async function listen(handler: { handle: (request: Request) => Promise<Response> }) {
   const handleRequest = getRequestListener((request) => handler.handle(request))
@@ -59,13 +62,9 @@ async function listen(handler: { handle: (request: Request) => Promise<Response>
   })
   server.listen(0)
   await once(server, "listening")
-  const address = server.address()
+  const { port } = z.parse(TcpAddress, server.address())
 
-  if (typeof address !== "object" || address === null) {
-    throw new Error("The test server is not listening on a TCP port")
-  }
-
-  return { stop: () => once(server.close(), "close"), url: `http://localhost:${address.port}` }
+  return { stop: () => once(server.close(), "close"), url: `http://localhost:${port}` }
 }
 
 const CursorData = z.object({ cursor: z.string() })

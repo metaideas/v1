@@ -103,7 +103,8 @@ export function createServerAuth<const Plugins extends BetterAuthPlugin[] = []>(
       disabled: logger === undefined,
       level: "warn",
       log: (level, message, ...details) => {
-        logger?.[level]({ message, scope: "auth", ...(details.length > 0 ? { details } : {}) })
+        const event = { message, scope: "auth" }
+        logger?.[level](details.length > 0 ? { ...event, details } : event)
       },
     },
     plugins: options.plugins,

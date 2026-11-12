@@ -86,8 +86,8 @@ export async function signInWithPasswordForm(
   request: Request
 ): Promise<{ response: Response } | { formState: SignInFormState }> {
   const formData = await request.formData()
-  const email = formData.get("email")
-  const values = { email: typeof email === "string" ? email : "", password: "" }
+  const email = z.string().safeParse(formData.get("email"))
+  const values = { email: email.success ? email.data : "", password: "" }
   const result = SignInWithPasswordFormSchema.safeParse(Object.fromEntries(formData))
 
   if (!result.success) {

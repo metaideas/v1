@@ -67,9 +67,11 @@ export default defineCommand({
       terms.map((term) => findTextReferences(rootDir, term))
     )
 
-    const references = [...new Set(referencingFiles.flat())]
+    const references = new Set(referencingFiles.flat())
+      .values()
       .map((path) => relative(rootDir, path))
       .filter((path) => !isProse(path) && path !== "pnpm-lock.yaml")
+      .toArray()
       .toSorted()
 
     if (dependents.length > 0)

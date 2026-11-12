@@ -75,7 +75,7 @@ type Subscription = {
 }
 
 function onBrowserResume(resume: () => void) {
-  if (typeof document === "undefined" || typeof globalThis.addEventListener !== "function") return
+  if (typeof document === "undefined" || !("addEventListener" in globalThis)) return
 
   function handleVisibilityChange() {
     if (document.visibilityState === "visible") resume()

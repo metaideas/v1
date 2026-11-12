@@ -50,7 +50,7 @@ const MODULE_EXTENSIONS = new Set([
   ".tsx",
 ])
 
-function isBoundaryMap(value: unknown): value is Readonly<Record<string, Boundaries>> {
+export function isBoundaryMap(value: unknown): value is Readonly<Record<string, Boundaries>> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
@@ -62,10 +62,6 @@ export function findSourceRoot(filename: string) {
   }
 
   return { app: groups.app, path: groups.root }
-}
-
-export function selectBoundaries(options: unknown, app: string): Boundaries {
-  return isBoundaryMap(options) ? (options[app] ?? {}) : {}
 }
 
 export function resolveImport(root: SourceRoot, importer: string, specifier: string) {

@@ -23,7 +23,7 @@ type Edit = {
 
 type PostHogSetup = {
   sdk: string
-  install: (appPath: string) => Promise<unknown>
+  install: (appPath: string) => Promise<void>
   files: ReadonlyArray<{ path: string; templateFile: string }>
   environment: string
   edits: readonly Edit[]
@@ -233,9 +233,11 @@ EXPO_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 }
 
 export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI) {
-  const apps = [...globSync("*/package.json", { cwd: `${process.cwd()}/apps` })]
+  const apps = globSync("*/package.json", { cwd: `${process.cwd()}/apps` })
+    .values()
     .map((entry) => entry.split("/")[0])
     .filter((app): app is PostHogApp => POSTHOG_APPS.some((posthogApp) => posthogApp === app))
+    .toArray()
     .toSorted()
 
   plop.setGenerator("posthog", {

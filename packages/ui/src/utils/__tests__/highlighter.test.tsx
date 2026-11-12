@@ -4,9 +4,9 @@ import { describe, expect, test } from "vitest"
 import { loadHighlighter } from "#utils/highlighter.tsx"
 
 function getStyles(line: ReactNode) {
-  return (Array.isArray(line) ? line : [line]).map((token: unknown) =>
-    isValidElement<{ style?: unknown }>(token) ? token.props.style : undefined
-  )
+  return [line]
+    .flat()
+    .map((token) => (isValidElement<{ style?: unknown }>(token) ? token.props.style : undefined))
 }
 
 describe("loadHighlighter", () => {

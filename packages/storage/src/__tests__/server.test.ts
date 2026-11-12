@@ -1,4 +1,5 @@
 import { setTimeout as sleep } from "node:timers/promises"
+import * as z from "@v1/utils/schema"
 import { ValidationError } from "files-sdk/validation"
 import { describe, expect, test, vi } from "vitest"
 import type { UploadRecord } from "#server.ts"
@@ -12,6 +13,10 @@ import {
 
 const PDF = new TextEncoder().encode("%PDF-1.4\n%v1\n")
 const PDF_OPTIONS = { contentType: "application/pdf" }
+
+const PresignResponse = z.object({
+  uploads: z.array(z.object({ target: z.object({ url: z.string() }) })),
+})
 
 function createLogger() {
   return { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() }
@@ -42,7 +47,7 @@ async function presignUpload(type: string) {
     })
   )
 
-  const body = (await response.json()) as { uploads: Array<{ target: { url: string } }> }
+  const body = PresignResponse.parse(await response.json())
 
   return body.uploads[0]?.target.url ?? ""
 }
@@ -125,7 +130,9 @@ describe("createUploadStorage", () => {
 
     const storage = createUploadStorage({
       adapter: createMemoryAdapter(),
-      onUploadStored: () => write.promise,
+      onUploadStored: async () => {
+        await write.promise
+      },
     })
 
     const pending = Symbol("pending")

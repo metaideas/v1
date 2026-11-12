@@ -1,5 +1,6 @@
 import type { LogEvent, Logger } from "@v1/core/services/logging"
-import { Inngest, type Logger as InngestLogger } from "inngest"
+import * as z from "@v1/utils/schema"
+import { Inngest, type LogArg, type Logger as InngestLogger } from "inngest"
 
 type WorkflowsOptions = {
   /**
@@ -17,28 +18,39 @@ type WorkflowsOptions = {
   logger?: Logger
 }
 
-// Inngest logs Pino-style: an optional object, then a message.
-function toEvent(args: unknown[]): LogEvent {
-  const [first, ...rest] = args
+const LogMessage = z.string()
 
-  if (typeof first === "string") {
-    return { message: first, scope: "workflows" }
+// Inngest reports failures as `{ err }`, and other packages log them under `error`.
+const LogFields = z.looseObject({ err: z.unknown().optional() })
+
+// Inngest logs Pino-style: an optional object, then a message.
+function toEvent([first, ...rest]: LogArg[]): LogEvent {
+  const text = LogMessage.safeParse(first)
+
+  if (text.success) {
+    return { message: text.data, scope: "workflows" }
   }
 
-  const message = rest.find((value) => typeof value === "string")
+  const message = rest
+    .values()
+    .map((value) => LogMessage.safeParse(value))
+    .find((parsed) => parsed.success)?.data
 
   if (first instanceof Error) {
     return { error: first, message, scope: "workflows" }
   }
 
-  if (typeof first !== "object" || first === null) {
+  const parsed = LogFields.safeParse(first)
+
+  if (!parsed.success) {
     return { details: first, message, scope: "workflows" }
   }
 
-  // Inngest reports failures as `{ err }`, and other packages log them under `error`.
-  const { err, ...fields }: LogEvent = { ...first }
+  const { err, ...fields } = parsed.data
 
-  return { ...fields, ...(err === undefined ? {} : { error: err }), message, scope: "workflows" }
+  return err === undefined
+    ? { ...fields, message, scope: "workflows" }
+    : { ...fields, error: err, message, scope: "workflows" }
 }
 
 function toInngestLogger(log: Logger): InngestLogger {
@@ -74,9 +86,8 @@ function toInternalLogger(log: Logger): InngestLogger {
 export function createWorkflows({ logger, ...options }: WorkflowsOptions) {
   return new Inngest({
     ...options,
-    ...(logger
-      ? { internalLogger: toInternalLogger(logger), logger: toInngestLogger(logger) }
-      : {}),
+    internalLogger: logger && toInternalLogger(logger),
+    logger: logger && toInngestLogger(logger),
   })
 }
 

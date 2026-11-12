@@ -113,14 +113,23 @@ function expandWorkspaceSelection(
 
   return {
     autoKept,
-    keepApps: kept.filter((workspace) => workspace.kind === "app").map(({ name }) => name),
-    keepPackages: kept.filter((workspace) => workspace.kind === "package").map(({ name }) => name),
+    keepApps: kept
+      .values()
+      .filter((workspace) => workspace.kind === "app")
+      .map(({ name }) => name)
+      .toArray(),
+    keepPackages: kept
+      .values()
+      .filter((workspace) => workspace.kind === "package")
+      .map(({ name }) => name)
+      .toArray(),
   }
 }
 
 async function pruneWorkspaces(rootDir: string, workspaces: Workspace[], selectedNames: string[]) {
   await Promise.all(
     workspaces
+      .values()
       .filter((workspace) => !selectedNames.includes(workspace.name))
       .map((workspace) => removePath(rootDir, relative(rootDir, workspace.directory)))
   )

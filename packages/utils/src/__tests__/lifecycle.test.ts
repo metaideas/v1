@@ -28,6 +28,8 @@ beforeEach(() => {
   exit = vi.spyOn(process, "exit").mockImplementation((code) => {
     resolveExit(code === undefined || code === null ? undefined : Number(code))
 
+    // SAFETY: the real process.exit never returns. The test keeps the process alive and reads the
+    // code from `exited` instead.
     return undefined as never
   })
 })

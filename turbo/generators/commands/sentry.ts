@@ -24,7 +24,7 @@ type Edit = {
 
 type SentrySetup = {
   sdk: string
-  install: (appPath: string) => Promise<unknown>
+  install: (appPath: string) => Promise<void>
   file: { path: string; templateFile: string }
   environment: string
   edits: readonly Edit[]
@@ -265,9 +265,11 @@ SENTRY_AUTH_TOKEN=
 }
 
 export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI) {
-  const apps = [...globSync("*/package.json", { cwd: `${process.cwd()}/apps` })]
+  const apps = globSync("*/package.json", { cwd: `${process.cwd()}/apps` })
+    .values()
     .map((entry) => entry.split("/")[0])
     .filter((app): app is SentryApp => SENTRY_APPS.some((sentryApp) => sentryApp === app))
+    .toArray()
     .toSorted()
 
   plop.setGenerator("sentry", {

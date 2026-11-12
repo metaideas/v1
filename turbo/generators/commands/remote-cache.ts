@@ -277,8 +277,10 @@ function insertLines(lines: readonly string[], index: number, additions: readonl
 
 function envAssignments(indent: string, findings: readonly AssignmentFinding[]) {
   return findings
+    .values()
     .filter((finding) => finding.kind === "absent")
     .map((finding) => `${indent}${finding.name}: ${finding.expression}`)
+    .toArray()
 }
 
 function insertEnvBlock(lines: readonly string[], index: number) {

@@ -1,5 +1,5 @@
 module.exports = (api) => {
-  // oxlint-disable-next-line no-unsafe-call
+  // oxlint-disable-next-line no-unsafe-call -- Babel passes this JavaScript config an untyped API
   api.cache(true)
 
   return {

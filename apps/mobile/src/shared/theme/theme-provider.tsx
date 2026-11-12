@@ -7,9 +7,10 @@ import {
 } from "expo-router"
 import { type ColorValue, StatusBar } from "react-native"
 import { useCSSVariable, useUniwind } from "uniwind"
+import { isColor } from "#shared/theme/colors.ts"
 
 function toColor(value: string | number | undefined, fallback: ColorValue) {
-  return typeof value === "string" ? value : fallback
+  return isColor(value) ? value : fallback
 }
 
 function useNavigationTheme(baseTheme: Theme): Theme {

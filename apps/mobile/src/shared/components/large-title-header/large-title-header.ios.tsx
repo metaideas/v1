@@ -9,6 +9,7 @@ import type {
   NativeStackNavigationOptions,
 } from "#shared/components/large-title-header/types.ts"
 import { useLargeTitleSearch } from "#shared/components/large-title-header/use-large-title-search.ts"
+import { isColor } from "#shared/theme/colors.ts"
 import { isLiquidGlassSupported } from "#shared/utils.ts"
 
 function propsToScreenOptions(
@@ -78,7 +79,7 @@ export default function LargeTitleHeader(props: LargeTitleHeaderProps) {
 
   const screenOptions = propsToScreenOptions(
     props,
-    typeof headerBackground === "string" ? headerBackground : undefined,
+    isColor(headerBackground) ? headerBackground : undefined,
     search
   )
 

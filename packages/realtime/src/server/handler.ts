@@ -6,6 +6,7 @@ import { getHistory, isChannelName } from "#channels/lookup.ts"
 import { addressChannel, compareCursors } from "#protocol/address.ts"
 import {
   HEARTBEAT_INTERVAL_MS,
+  type ServerMessage,
   type ServerMessageType,
   SubscribeRequestSchema,
 } from "#protocol/messages.ts"
@@ -117,7 +118,7 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
             if (!isClosed) controller.enqueue(encoder.encode(chunk))
           }
 
-          function send(type: ServerMessageType, message: Record<string, unknown>) {
+          function send<Type extends ServerMessageType>(type: Type, message: ServerMessage<Type>) {
             write(`event: ${type}\ndata: ${JSON.stringify(message)}\n\n`)
           }
 
@@ -209,7 +210,8 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
           }
 
           Promise.all(
-            [...subscriptions.values()]
+            subscriptions
+              .values()
               .filter(({ isAllowed }) => isAllowed)
               .map((subscription) => follow(subscription))
           ).catch((error: unknown) => {

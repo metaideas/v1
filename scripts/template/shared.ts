@@ -49,7 +49,7 @@ export async function readPackageJson(path: string) {
   return value
 }
 
-export async function writeJson(path: string, value: unknown) {
+export async function writeJson(path: string, value: PackageJson | TemplateStamp) {
   await writeFile(path, `${stringifyJSON(value).trimEnd()}\n`)
 }
 

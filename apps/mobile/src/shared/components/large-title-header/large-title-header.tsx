@@ -20,6 +20,7 @@ import type {
   NativeStackNavigationSearchBarOptions,
 } from "#shared/components/large-title-header/types.ts"
 import { useLargeTitleSearch } from "#shared/components/large-title-header/use-large-title-search.ts"
+import { isColor } from "#shared/theme/colors.ts"
 
 const SCREEN_OPTIONS = {
   headerShown: false,
@@ -120,8 +121,8 @@ export default function LargeTitleHeader(props: LargeTitleHeaderProps) {
     "--color-muted-foreground",
   ])
 
-  const foregroundColor = typeof foreground === "string" ? foreground : undefined
-  const mutedForegroundColor = typeof mutedForeground === "string" ? mutedForeground : undefined
+  const foregroundColor = isColor(foreground) ? foreground : undefined
+  const mutedForegroundColor = isColor(mutedForeground) ? mutedForeground : undefined
 
   const search = useLargeTitleSearch(props.searchBar)
 

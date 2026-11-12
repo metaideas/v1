@@ -1,6 +1,6 @@
 import type { ErrorResponse } from "resend"
 import * as try$ from "@sanely/try"
-import { createTransport } from "nodemailer"
+import { createTransport, type NodemailerError } from "nodemailer"
 import { Resend } from "resend"
 import { EmailDeliveryError, EmailFault } from "#errors.ts"
 
@@ -38,14 +38,8 @@ const RETRYABLE_RESEND_ERRORS = new Set<ErrorResponse["name"]>([
   "rate_limit_exceeded",
 ])
 
-// SMTP reply codes from 500 to 599 reject the message for good. Codes from 400 to 499 and
-// connection errors without a reply code are temporary.
-function isPermanentSmtpFailure(error: unknown) {
-  if (!(error instanceof Error) || !("responseCode" in error)) {
-    return false
-  }
-
-  return typeof error.responseCode === "number" && error.responseCode >= 500
+function hasSmtpReplyCode(error: unknown): error is NodemailerError & { responseCode: number } {
+  return error instanceof Error && "responseCode" in error && typeof error.responseCode === "number"
 }
 
 export function resendTransport(apiKey: string): EmailTransport {
@@ -83,7 +77,9 @@ export function smtpTransport(url: string): EmailTransport {
       const result = await try$.run({
         catch: (error) =>
           EmailFault.wrap(error).as("EmailDeliveryError", {
-            isRetryable: !isPermanentSmtpFailure(error),
+            // SMTP reply codes from 500 to 599 reject the message for good. Codes from 400 to 499
+            // and connection errors without a reply code are temporary.
+            isRetryable: !(hasSmtpReplyCode(error) && error.responseCode >= 500),
             transport: "smtp",
           }),
         try: () => smtp.sendMail(message),

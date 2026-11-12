@@ -86,9 +86,11 @@ const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
 }
 
 export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
-  const apps = [...globSync("*/package.json", { cwd: `${process.cwd()}/apps` })]
+  const apps = globSync("*/package.json", { cwd: `${process.cwd()}/apps` })
+    .values()
     .map((entry) => entry.split("/")[0])
     .filter((app): app is RealtimeApp => REALTIME_APPS.some((realtimeApp) => realtimeApp === app))
+    .toArray()
     .toSorted()
 
   plop.setGenerator("realtime", {

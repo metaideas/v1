@@ -49,11 +49,11 @@ type SyncCallbacks = {
    * Records a file after an upload or `head` succeeds. The operation waits for it, and a failure is
    * logged without failing the operation.
    */
-  onUploadStored?: (file: UploadRecord) => Promise<unknown>
+  onUploadStored?: (file: UploadRecord) => Promise<void>
   /**
    * Removes the record of a deleted key. A bulk delete calls it once for each key.
    */
-  onUploadDeleted?: (key: string) => Promise<unknown>
+  onUploadDeleted?: (key: string) => Promise<void>
 }
 
 type UploadStorageOptions = SyncCallbacks & {
@@ -179,7 +179,7 @@ function createSyncPlugin({
   async function sync(
     operation: StorageSyncError["fields"]["operation"],
     key: string,
-    write: () => Promise<unknown>
+    write: () => Promise<void>
   ) {
     const result = await try$.run({
       catch: (error) => StorageFault.wrap(error).as("StorageSyncError", { key, operation }),

@@ -48,12 +48,15 @@ const FEATURE_ROLES: ReadonlyArray<{
 function listRoles(app: string) {
   const isKnownApp = KNOWN_APPS.has(app)
 
-  return FEATURE_ROLES.filter(
-    (role) =>
-      role.apps === undefined
-      || role.apps.includes(app)
-      || (!isKnownApp && role.apps !== HANDLER_APPS)
-  ).map((role) => ({ checked: role.isChecked ?? false, name: role.name, value: role.value }))
+  return FEATURE_ROLES.values()
+    .filter(
+      (role) =>
+        role.apps === undefined
+        || role.apps.includes(app)
+        || (!isKnownApp && role.apps !== HANDLER_APPS)
+    )
+    .map((role) => ({ checked: role.isChecked ?? false, name: role.name, value: role.value }))
+    .toArray()
 }
 
 function templateFor(app: string, file: string) {
@@ -140,7 +143,11 @@ export async function serveDesktopRouter(handlers: DesktopHandlers) {
     return `[MANUAL] ${bridgePath} changed since generation. ${manual}`
   }
 
-  const listed = [...routers.split(","), router].map((name) => name.trim()).filter(Boolean)
+  const listed = [...routers.split(","), router]
+    .values()
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .toArray()
 
   const updated = addImports(
     source.replace(DESKTOP_ROUTERS, `mergeRouters(${listed.join(", ")})`),
@@ -157,9 +164,11 @@ export async function serveDesktopRouter(handlers: DesktopHandlers) {
 }
 
 export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
-  const apps = [...globSync("*/package.json", { cwd: `${process.cwd()}/apps` })]
+  const apps = globSync("*/package.json", { cwd: `${process.cwd()}/apps` })
+    .values()
     .map((entry) => entry.split("/")[0])
     .filter((app): app is string => app !== undefined && !APPS_WITHOUT_FEATURES.has(app))
+    .toArray()
     .toSorted()
 
   plop.setGenerator("new-feature", {

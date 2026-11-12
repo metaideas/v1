@@ -25,7 +25,7 @@ export function useHideSplashScreen() {
   }, [])
 }
 
-export function useLogRenderError(error: unknown) {
+export function useLogRenderError(error: Error) {
   useEffect(() => {
     log.error({ error, message: "Route rendering failed" })
   }, [error])

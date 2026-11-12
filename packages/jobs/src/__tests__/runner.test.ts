@@ -5,7 +5,7 @@ const { processors, redis, worker } = mockQueues()
 
 const { createJobsRunner } = await import("#runner.ts")
 
-const greetUser = vi.fn((_payload: { userId: string }, _context: unknown) => Promise.resolve("hi"))
+const greetUser = vi.fn((_payload: { userId: string }) => Promise.resolve("hi"))
 
 const jobRunner = createJobsRunner({
   handlers: { default: { "greet-user": greetUser } },

@@ -13,7 +13,7 @@ const CRASHES = {
 } as const satisfies Record<NodeJS.UncaughtExceptionOrigin, string>
 
 // @sanely/try wraps an error that it does not map, which hides the original in the log.
-function unwrap(error: unknown) {
+function unwrap(error: Error) {
   return isUnhandledException(error) ? error.cause : error
 }
 

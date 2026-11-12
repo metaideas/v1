@@ -83,11 +83,11 @@ async function collectEnvFiles(rootDir: string) {
 }
 
 function matchDirectives(contents: string, directive: string) {
-  return [
-    ...contents.matchAll(new RegExp(`@${directive}\\(path=([^,)]+)|@${directive}\\(([^,)]+)`, "g")),
-  ]
+  return contents
+    .matchAll(new RegExp(`@${directive}\\(path=([^,)]+)|@${directive}\\(([^,)]+)`, "g"))
     .map((match) => match[1] ?? match[2])
     .filter((path): path is string => path !== undefined)
+    .toArray()
 }
 
 async function checkEnvPaths(context: Context, directive: string, label: string) {

@@ -20,6 +20,11 @@ import { Textarea } from "#components/textarea.tsx"
 
 const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts()
 
+// The form context has no form type, so the server error that it holds is `any`.
+function isErrorMessage(error: unknown): error is string {
+  return typeof error === "string"
+}
+
 function FieldInput(props: React.ComponentProps<typeof Input>) {
   const field = useFieldContext<string>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
@@ -100,10 +105,13 @@ function FormServerError({
   const form = useFormContext()
 
   return (
-    // oxlint-disable-next-line no-unsafe-return
-    <form.Subscribe selector={(formState) => [formState.errorMap.onServer ?? []]}>
-      {([error]) => {
-        if (!error || typeof error !== "string") {
+    <form.Subscribe
+      selector={({ errorMap }) =>
+        isErrorMessage(errorMap.onServer) ? errorMap.onServer : undefined
+      }
+    >
+      {(error) => {
+        if (!error) {
           return null
         }
 

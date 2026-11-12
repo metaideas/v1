@@ -1,32 +1,30 @@
-function getProperty(value: unknown, key: string): unknown {
-  return (typeof value === "object" && value !== null) || typeof value === "function"
-    ? Reflect.get(value, key)
-    : undefined
-}
+import * as z from "@v1/utils/schema"
 
-function getStatusCode(value: unknown, key: string) {
-  const property = getProperty(value, key)
+// A status of another type counts as absent, like a missing one.
+const StatusCode = z.union([z.string(), z.number()]).nullish().catch(null)
 
-  return typeof property === "string" || typeof property === "number" ? property : undefined
-}
+const StatusFields = z.object({ status: StatusCode, statusCode: StatusCode })
+
+/**
+ * The status fields of a thrown value and of its cause. A value without them, such as a thrown
+ * string, parses to no fields.
+ */
+export const ThrownStatus = StatusFields.extend({
+  cause: StatusFields.nullish().catch(null),
+}).catch({})
 
 /**
  * The status Start answers an uncaught error with, mirroring `resolveErrorStatus` in
  * `@tanstack/start-server-core`: an error status set through a response helper, else the first of
  * `status`, `statusCode`, `cause.status`, and `cause.statusCode` when it is an error status, else 500.
  */
-export function resolveErrorStatus(error: unknown, helperStatus: number) {
+export function resolveErrorStatus(thrown: z.infer<typeof ThrownStatus>, helperStatus: number) {
   if (helperStatus >= 400) {
     return helperStatus
   }
 
-  const cause = getProperty(error, "cause")
-
   const status = Number(
-    getStatusCode(error, "status")
-      ?? getStatusCode(error, "statusCode")
-      ?? getStatusCode(cause, "status")
-      ?? getStatusCode(cause, "statusCode")
+    thrown.status ?? thrown.statusCode ?? thrown.cause?.status ?? thrown.cause?.statusCode
   )
 
   return Number.isInteger(status) && status >= 400 && status <= 599 ? status : 500
