@@ -159,7 +159,9 @@ PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
         templateFile: "templates/posthog/app-analytics-provider.tsx.hbs",
       },
     ],
-    install: (appPath) => runCommand(["pnpm", "add", "posthog-js"], appPath),
+    // posthog-js depends on core-js, whose install script only prints a funding message.
+    install: (appPath) =>
+      runCommand(["pnpm", "add", "--allow-build=!core-js", "posthog-js"], appPath),
     nextSteps: [
       "Call `usePostHog().identify(user.id)` from posthog-js/react once a session loads.",
     ],
