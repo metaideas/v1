@@ -1,4 +1,3 @@
-import { setTimeout as sleep } from "node:timers/promises"
 import { afterEach, beforeEach, describe, expect, type Mock, test, vi } from "vitest"
 import { lifecycle } from "#lifecycle.ts"
 
@@ -8,15 +7,10 @@ const hang = () => Promise.withResolvers<undefined>().promise
 
 const idle = () => Promise.resolve()
 
-const fail = () => Promise.reject(new Error("failed"))
+const EVENTS = ["SIGINT", "SIGTERM", "uncaughtExceptionMonitor"] as const
 
 function countListeners() {
-  return {
-    SIGINT: process.listenerCount("SIGINT"),
-    SIGTERM: process.listenerCount("SIGTERM"),
-    uncaughtException: process.listenerCount("uncaughtException"),
-    unhandledRejection: process.listenerCount("unhandledRejection"),
-  }
+  return Object.fromEntries(EVENTS.map((event) => [event, process.listenerCount(event)]))
 }
 
 let counts: ReturnType<typeof countListeners>
@@ -42,23 +36,16 @@ afterEach(() => {
   exit.mockRestore()
 
   // Removes the listeners that the test added, and keeps the test runner's own.
-  for (const listener of process.listeners("SIGINT").slice(counts.SIGINT)) {
-    process.off("SIGINT", listener)
-  }
-  for (const listener of process.listeners("SIGTERM").slice(counts.SIGTERM)) {
-    process.off("SIGTERM", listener)
-  }
-  for (const listener of process.listeners("uncaughtException").slice(counts.uncaughtException)) {
-    process.off("uncaughtException", listener)
-  }
-  for (const listener of process.listeners("unhandledRejection").slice(counts.unhandledRejection)) {
-    process.off("unhandledRejection", listener)
+  for (const event of EVENTS) {
+    for (const listener of process.listeners(event).slice(counts[event])) {
+      process.off(event, listener)
+    }
   }
 })
 
 describe("lifecycle", () => {
   test("closes and exits with code 0 on SIGTERM", async () => {
-    const close = vi.fn(() => Promise.resolve())
+    const close = vi.fn(idle)
     await lifecycle(idle, { close, onError })
 
     process.emit("SIGTERM")
@@ -67,13 +54,14 @@ describe("lifecycle", () => {
     expect(close).toHaveBeenCalledTimes(1)
   })
 
-  test("exits with code 1 when closing fails", async () => {
-    await lifecycle(idle, { close: fail, onError })
+  test("logs the original error and exits with code 1 when closing fails", async () => {
+    const error = new Error("failed")
+    await lifecycle(idle, { close: () => Promise.reject(error), onError })
 
     process.emit("SIGINT")
 
     expect(await exited).toBe(1)
-    expect(onError).toHaveBeenCalledTimes(1)
+    expect(onError).toHaveBeenCalledWith(error, "Process did not stop cleanly")
   })
 
   test("exits with code 1 when closing runs out of time", async () => {
@@ -84,100 +72,71 @@ describe("lifecycle", () => {
     expect(await exited).toBe(1)
   })
 
-  test("closes and exits with code 1 after an uncaught exception", async () => {
-    const close = vi.fn(() => Promise.resolve())
-    await lifecycle(idle, { close, onError })
-
-    process.emit("uncaughtException", new Error("thrown"))
-
-    expect(await exited).toBe(1)
-    expect(close).toHaveBeenCalledTimes(1)
-  })
-
-  test("closes and exits with code 1 when run fails", async () => {
-    const close = vi.fn(() => Promise.resolve())
-
-    await lifecycle(fail, { close, onError })
-
-    expect(await exited).toBe(1)
-    expect(close).toHaveBeenCalledTimes(1)
-    expect(onError).toHaveBeenCalledTimes(1)
-  })
-
-  test("keeps running after run returns", async () => {
-    const close = vi.fn(() => Promise.resolve())
-
-    await lifecycle(idle, { close, onError })
-
-    expect(close).not.toHaveBeenCalled()
-    expect(exit).not.toHaveBeenCalled()
-  })
-
-  test("logs an unhandled rejection and keeps running", async () => {
-    const close = vi.fn(() => Promise.resolve())
-    await lifecycle(idle, { close, onError })
-
-    process.emit("unhandledRejection", new Error("rejected"), Promise.resolve())
-
-    expect(onError).toHaveBeenCalledTimes(1)
-    expect(close).not.toHaveBeenCalled()
-    expect(exit).not.toHaveBeenCalled()
-  })
-
-  test("closes once when it stops more than once", async () => {
-    const close = vi.fn(() => Promise.resolve())
-    await lifecycle(idle, { close, onError })
-
-    process.emit("uncaughtException", new Error("thrown"))
-    process.emit("SIGTERM")
-
-    expect(await exited).toBe(1)
-    expect(close).toHaveBeenCalledTimes(1)
-  })
-  test("exits with code 1 when an uncaught exception arrives while it closes", async () => {
-    const closing = Promise.withResolvers<boolean>()
-    await lifecycle(idle, { close: () => closing.promise, onError })
-
-    process.emit("SIGTERM")
-    process.emit("uncaughtException", new Error("thrown"))
-    closing.resolve(true)
-
-    expect(await exited).toBe(1)
-  })
-
-  test("exits with code 1 when run fails while it closes", async () => {
-    const closing = Promise.withResolvers<boolean>()
-    const running = Promise.withResolvers<undefined>()
-    const started = lifecycle(() => running.promise, {
-      close: () => closing.promise,
-      onError,
-    })
-
-    process.emit("SIGTERM")
-    running.reject(new Error("failed"))
-    await sleep(0)
-    closing.resolve(true)
-    await started
-
-    expect(await exited).toBe(1)
-  })
-
-  test("exits at once with code 1 on a second signal of another kind", async () => {
+  test("leaves a second signal to Node's default and closes once", async () => {
     const close = vi.fn(hang)
     await lifecycle(idle, { close, onError })
 
     process.emit("SIGTERM")
     process.emit("SIGINT")
 
-    expect(await exited).toBe(1)
+    expect(process.listenerCount("SIGINT")).toBe(counts.SIGINT)
+    expect(process.listenerCount("SIGTERM")).toBe(counts.SIGTERM)
     expect(close).toHaveBeenCalledTimes(1)
   })
 
-  test("logs the original error when run fails", async () => {
+  test.each([
+    ["uncaughtException", "Uncaught exception"],
+    ["unhandledRejection", "Unhandled promise rejection"],
+  ] as const)("logs a crash from %s and leaves the exit to Node", async (origin, message) => {
+    const close = vi.fn(idle)
+    const error = new Error("crashed")
+    await lifecycle(idle, { close, onError })
+
+    process.emit("uncaughtExceptionMonitor", error, origin)
+
+    expect(onError).toHaveBeenCalledWith(error, message)
+    expect(close).not.toHaveBeenCalled()
+    expect(exit).not.toHaveBeenCalled()
+  })
+
+  test("logs the original error and exits with code 1 without closing when run fails", async () => {
+    const close = vi.fn(idle)
     const error = new Error("failed")
 
-    await lifecycle(() => Promise.reject(error), { close: idle, onError })
+    await lifecycle(() => Promise.reject(error), { close, onError })
 
+    expect(await exited).toBe(1)
     expect(onError).toHaveBeenCalledWith(error, "Process failed")
+    expect(close).not.toHaveBeenCalled()
+  })
+
+  test("exits with code 1 when run fails while it closes", async () => {
+    const running = Promise.withResolvers<undefined>()
+    const started = lifecycle(() => running.promise, { close: hang, onError })
+
+    process.emit("SIGTERM")
+    running.reject(new Error("failed"))
+    await started
+
+    expect(await exited).toBe(1)
+  })
+
+  test("keeps running after run returns", async () => {
+    const close = vi.fn(idle)
+
+    await lifecycle(idle, { close, onError })
+
+    expect(close).not.toHaveBeenCalled()
+    expect(exit).not.toHaveBeenCalled()
+  })
+
+  test("closes on a signal while run is still running", async () => {
+    const close = vi.fn(idle)
+    void lifecycle(hang, { close, onError })
+
+    process.emit("SIGTERM")
+
+    expect(await exited).toBe(0)
+    expect(close).toHaveBeenCalledTimes(1)
   })
 })
