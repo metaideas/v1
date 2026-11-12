@@ -29,6 +29,9 @@ export default defineConfig(({ command }) => ({
       preset: "node-server",
     }),
   ],
+  preview: {
+    port: ENV.PORT,
+  },
   server: {
     port: ENV.PORT,
   },
