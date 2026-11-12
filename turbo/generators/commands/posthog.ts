@@ -99,8 +99,8 @@ const SETUPS: Record<PostHogApp, PostHogSetup> = {
         path: "src/index.ts",
         replacements: [
           [
-            "    },\n    logger: log,\n",
-            "      await analytics?.shutdown()\n    },\n    logger: log,\n",
+            "    database.$client.end(),\n  ])\n",
+            "    database.$client.end(),\n  ])\n  await analytics?.shutdown()\n",
           ],
         ],
       },

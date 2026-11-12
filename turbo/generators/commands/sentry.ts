@@ -130,7 +130,10 @@ const SETUPS: Record<SentryApp, SentrySetup> = {
         marker: "drain?.flush()",
         path: "src/index.ts",
         replacements: [
-          ["    },\n    logger: log,\n", "      await drain?.flush()\n    },\n    logger: log,\n"],
+          [
+            "    database.$client.end(),\n  ])\n",
+            "    database.$client.end(),\n  ])\n  await drain?.flush()\n",
+          ],
         ],
       },
       {

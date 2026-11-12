@@ -28,26 +28,28 @@ server.on("request", (_request, response) => {
   })
 })
 
+// The server stops taking requests and finishes the ones in progress before the services close.
+// Realtime streams never finish on their own, so they end once the server stops taking requests.
+async function close() {
+  const stopped = server.listening && once(server.close(), "close")
+  realtimeHandler.close()
+  await stopped
+  await Promise.all([
+    dispatcher.close(),
+    kv.dispose(),
+    realtime.close(),
+    closeRedis(),
+    database.$client.end(),
+  ])
+}
+
 await lifecycle(
   async () => {
     server.listen(ENV.PORT)
     await once(server, "listening")
   },
   {
-    // The server stops taking requests and finishes the ones in progress before the services close.
-    // Realtime streams never finish on their own, so they end once the server stops taking requests.
-    close: async () => {
-      const stopped = server.listening && once(server.close(), "close")
-      realtimeHandler.close()
-      await stopped
-      await Promise.all([
-        dispatcher.close(),
-        kv.dispose(),
-        realtime.close(),
-        closeRedis(),
-        database.$client.end(),
-      ])
-    },
+    close,
     onError: (error, message) => {
       log.error({ error, message, scope: "api" })
     },
