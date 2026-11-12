@@ -100,7 +100,7 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
         async () => {
           if (!existsSync(`${REALTIME_PATH}/package.json`)) {
             throw new Error(
-              `The realtime client needs ${REALTIME_PATH}. Add it with bun template add.`
+              `The realtime client needs ${REALTIME_PATH}. Add it with pnpm template add.`
             )
           }
 
@@ -119,7 +119,7 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
           }
 
           const dependency = `${name}@workspace:*`
-          await runCommand(["bun", "add", dependency], appPath)
+          await runCommand(["pnpm", "add", dependency], appPath)
           return `${appPath}: added ${name}`
         },
         {
@@ -131,7 +131,7 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
         () =>
           "Subscribe with `useRealtime` from #shared/realtime.ts, passing `enabled` only once a session loads. `POST /v1/demo/realtime` on the API sends a `greeted` event to the signed-in user's `demo` channel.",
         () =>
-          "Run `bun run fix`, then `bun template doctor` once a component calls `useRealtime`; until then, the doctor reports it as unused.",
+          "Run `pnpm run fix`, then `pnpm template doctor` once a component calls `useRealtime`; until then, the doctor reports it as unused.",
       ]
     },
     description: "Add the realtime client to an application workspace",

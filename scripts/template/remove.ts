@@ -71,6 +71,6 @@ export default defineCommand({
       consola.warn(`Files that still reference ${targetPath}:\n  ${references.join("\n  ")}`)
     }
 
-    consola.info("Remove the references above, run bun install, then bun template doctor.")
+    consola.info("Remove the references above, run pnpm install, then pnpm template doctor.")
   },
 })

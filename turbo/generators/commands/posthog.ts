@@ -117,7 +117,7 @@ POSTHOG_HOST=https://us.i.posthog.com
     files: [
       { path: "src/shared/analytics.ts", templateFile: "templates/posthog/api-analytics.ts.hbs" },
     ],
-    install: (appPath) => runCommand(["bun", "add", "--exact", "posthog-node"], appPath),
+    install: (appPath) => runCommand(["pnpm", "add", "posthog-node"], appPath),
     nextSteps: ["Capture server events with `analytics?.capture()` from #shared/analytics.ts."],
     sdk: "posthog-node",
   },
@@ -159,7 +159,7 @@ PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
         templateFile: "templates/posthog/app-analytics-provider.tsx.hbs",
       },
     ],
-    install: (appPath) => runCommand(["bun", "add", "--exact", "posthog-js"], appPath),
+    install: (appPath) => runCommand(["pnpm", "add", "posthog-js"], appPath),
     nextSteps: [
       "Call `usePostHog().identify(user.id)` from posthog-js/react once a session loads.",
     ],
@@ -216,11 +216,11 @@ EXPO_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
           async (name) => `${name}@${await getExpoCompatibleVersion(appPath, name)}`
         )
       )
-      return runCommand(["bun", "add", "--exact", "posthog-react-native", ...modules], appPath)
+      return runCommand(["pnpm", "add", "posthog-react-native", ...modules], appPath)
     },
     nextSteps: [
       "Call `usePostHog()?.identify(user.id)` from posthog-react-native once a session loads. The hook returns undefined when no project key is set.",
-      "Run `bun run --filter mobile prebuild` to add the Expo modules to the native iOS and Android projects.",
+      "Run `pnpm run --filter mobile prebuild` to add the Expo modules to the native iOS and Android projects.",
     ],
     sdk: "posthog-react-native",
   },
@@ -275,7 +275,7 @@ export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI) {
         },
         ...setup.edits.map((edit) => () => applyEdit(`${appPath}/${edit.path}`, edit)),
         ...setup.nextSteps.map((step) => () => step),
-        () => "Run `bun run codegen` and `bun run fix`, then `bun template doctor`.",
+        () => "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm template doctor`.",
       ]
     },
     description: "Add optional PostHog product analytics to an application workspace",

@@ -5,7 +5,7 @@ import template from "./template/index.ts"
 const main = defineCommand({
   meta: {
     description: "Run project and template commands",
-    name: "bun scripts",
+    name: "pnpm scripts",
   },
   subCommands: {
     template,

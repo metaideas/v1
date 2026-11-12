@@ -4,18 +4,12 @@ import { existsSync, globSync } from "node:fs"
 import { readFile, writeFile } from "node:fs/promises"
 import { createRequire } from "node:module"
 import { join } from "node:path"
-import { stringifyJSON } from "confbox"
 
 import type * as z from "zod"
 
 import { addImports } from "../imports"
 import { runCommand } from "../run-command"
-import {
-  BundledModulesSchema,
-  readPackageJson,
-  SentryAnswersSchema,
-  TrustedDependenciesSchema,
-} from "../schemas"
+import { BundledModulesSchema, readPackageJson, SentryAnswersSchema } from "../schemas"
 
 type SentryApp = z.infer<typeof SentryAnswersSchema>["app"]
 
@@ -101,18 +95,6 @@ async function getDependencyVersion(appPath: string, packageName: string, depend
   return version.replace(/^[~^]/, "")
 }
 
-async function trustSentryCli() {
-  const manifest = await readPackageJson("package.json")
-  const trusted = TrustedDependenciesSchema.parse(manifest.trustedDependencies) ?? []
-
-  if (trusted.includes("@sentry/cli")) {
-    return
-  }
-
-  manifest.trustedDependencies = [...trusted, "@sentry/cli"].toSorted()
-  await writeFile("package.json", `${stringifyJSON(manifest).trimEnd()}\n`)
-}
-
 const SETUPS: Record<SentryApp, SentrySetup> = {
   api: {
     edits: [
@@ -159,7 +141,7 @@ SENTRY_DEBUG=false
       path: "src/shared/monitoring.ts",
       templateFile: "templates/sentry/api-monitoring.ts.hbs",
     },
-    install: (appPath) => runCommand(["bun", "add", "--exact", "@sentry/node"], appPath),
+    install: (appPath) => runCommand(["pnpm", "add", "@sentry/node"], appPath),
     nextSteps: [],
     sdk: "@sentry/node",
   },
@@ -192,7 +174,7 @@ PUBLIC_SENTRY_DEBUG=false
       path: "src/shared/monitoring.ts",
       templateFile: "templates/sentry/app-monitoring.ts.hbs",
     },
-    install: (appPath) => runCommand(["bun", "add", "--exact", "@sentry/browser"], appPath),
+    install: (appPath) => runCommand(["pnpm", "add", "@sentry/browser"], appPath),
     nextSteps: [],
     sdk: "@sentry/browser",
   },
@@ -258,17 +240,20 @@ SENTRY_AUTH_TOKEN=
 `,
     file: { path: "src/instrument.ts", templateFile: "templates/sentry/mobile-instrument.ts.hbs" },
     install: async (appPath) => {
-      await trustSentryCli()
       const version = await getExpoCompatibleVersion(appPath, "@sentry/react-native")
-      await runCommand(["bun", "add", "--exact", `@sentry/react-native@${version}`], appPath)
+      // @sentry/cli downloads its binary in an install script, which pnpm runs only when allowed.
+      await runCommand(
+        ["pnpm", "add", "--allow-build=@sentry/cli", `@sentry/react-native@${version}`],
+        appPath
+      )
 
-      // Bun's isolated linker does not expose the SDK's own @sentry/cli to the workspace, and the
+      // pnpm's isolated linker does not expose the SDK's own @sentry/cli to the workspace, and the
       // native build hooks resolve the CLI from the workspace.
       const cliVersion = await getDependencyVersion(appPath, "@sentry/react-native", "@sentry/cli")
-      return runCommand(["bun", "add", "--dev", "--exact", `@sentry/cli@${cliVersion}`], appPath)
+      return runCommand(["pnpm", "add", "--save-dev", `@sentry/cli@${cliVersion}`], appPath)
     },
     nextSteps: [
-      "Run `bun run --filter mobile prebuild` to add Sentry to the native iOS and Android projects. Set SENTRY_ORG, SENTRY_PROJECT, and SENTRY_AUTH_TOKEN before prebuild to upload source maps and debug symbols from release builds.",
+      "Run `pnpm run --filter mobile prebuild` to add Sentry to the native iOS and Android projects. Set SENTRY_ORG, SENTRY_PROJECT, and SENTRY_AUTH_TOKEN before prebuild to upload source maps and debug symbols from release builds.",
     ],
     sdk: "@sentry/react-native",
   },
@@ -323,7 +308,7 @@ export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI) {
         },
         ...setup.edits.map((edit) => () => applyEdit(`${appPath}/${edit.path}`, edit)),
         ...setup.nextSteps.map((step) => () => step),
-        () => "Run `bun run codegen` and `bun run fix`, then `bun template doctor`.",
+        () => "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm template doctor`.",
       ]
     },
     description: "Add optional Sentry error monitoring to an application workspace",

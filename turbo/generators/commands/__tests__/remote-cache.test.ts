@@ -16,7 +16,7 @@ const scripts = turboScriptNames({
   clean: "turbo clean && git clean -xdf .cache .turbo dist node_modules",
   codegen: "turbo run codegen --continue --ui=stream",
   "env:scan": "turbo run env:scan --continue",
-  test: "bun test",
+  test: "turbo run test test:template",
 })
 
 const testsWorkflow = `name: tests
@@ -32,14 +32,14 @@ on:
 jobs:
   environment:
     steps:
-      - run: bun run env:scan
+      - run: pnpm run env:scan
         env:
           VARLOCK_ENV: development
 
   unit:
     steps:
-      - run: bun run codegen
-      - run: bun test apps packages tooling scripts turbo
+      - run: pnpm run codegen
+      - run: pnpm vitest run apps packages tooling scripts turbo
 `
 
 function wiredTestsWorkflow() {
@@ -56,14 +56,16 @@ describe("commandRunsTurbo", () => {
     )
     expect(commandRunsTurbo("git clean -xdf .cache .turbo dist node_modules")).toBe(false)
     expect(commandRunsTurbo("echo turbo build")).toBe(false)
-    expect(commandRunsTurbo("bunx turbo run build")).toBe(true)
-    expect(commandRunsTurbo("bun --bun turbo generate")).toBe(true)
+    expect(commandRunsTurbo("pnpm exec turbo run build")).toBe(true)
+    expect(commandRunsTurbo("pnpm dlx turbo run build")).toBe(true)
+    expect(commandRunsTurbo("pnpm --filter=@v1/app turbo generate")).toBe(true)
+    expect(commandRunsTurbo("pnpm turbo-ignore")).toBe(false)
   })
 })
 
 describe("turboScriptNames", () => {
   test("keeps root scripts whose command runs Turbo", () => {
-    expect([...scripts].toSorted()).toEqual(["boundaries", "clean", "codegen", "env:scan"])
+    expect([...scripts].toSorted()).toEqual(["boundaries", "clean", "codegen", "env:scan", "test"])
   })
 })
 
@@ -73,18 +75,21 @@ describe("workflowRunsTurbo", () => {
     expect(workflowRunsTurbo("run: turbo build\n", scripts)).toBe(true)
     expect(
       workflowRunsTurbo(
-        "run: bun run --filter @v1/app build\n",
+        "run: pnpm run --filter @v1/app build\n",
         turboScriptNames({
           build: "turbo build",
         })
       )
     ).toBe(true)
-    expect(workflowRunsTurbo("command: bun run codegen\n", scripts)).toBe(true)
+    expect(workflowRunsTurbo("command: pnpm run codegen\n", scripts)).toBe(true)
+    expect(workflowRunsTurbo("run: pnpm codegen\n", scripts)).toBe(true)
+    expect(workflowRunsTurbo("run: pnpm --filter @v1/app run codegen\n", scripts)).toBe(true)
+    expect(workflowRunsTurbo("run: pnpm install --frozen-lockfile\n", scripts)).toBe(false)
   })
 
   test("ignores a workflow that only mentions the turbo directory", () => {
     const source =
-      "jobs:\n  unit:\n    steps:\n      - run: bun test apps packages tooling scripts turbo\n"
+      "jobs:\n  unit:\n    steps:\n      - run: pnpm vitest run apps packages tooling scripts turbo\n"
     expect(workflowRunsTurbo(source, scripts)).toBe(false)
   })
 
@@ -123,17 +128,17 @@ describe("wireRemoteCacheEnv", () => {
   })
 
   test("appends missing names to a workflow env block", () => {
-    const source = `env:\n  CI: true\n  TURBO_TOKEN: ${token}\n\njobs:\n  unit:\n    steps:\n      - run: bun run codegen\n`
+    const source = `env:\n  CI: true\n  TURBO_TOKEN: ${token}\n\njobs:\n  unit:\n    steps:\n      - run: pnpm run codegen\n`
     const result = wireRemoteCacheEnv(source)
 
     expect(result.status).toBe("updated")
     expect(result.source).toBe(
-      `env:\n  CI: true\n  TURBO_TOKEN: ${token}\n  TURBO_TEAM: ${team}\n\njobs:\n  unit:\n    steps:\n      - run: bun run codegen\n`
+      `env:\n  CI: true\n  TURBO_TOKEN: ${token}\n  TURBO_TEAM: ${team}\n\njobs:\n  unit:\n    steps:\n      - run: pnpm run codegen\n`
     )
   })
 
   test("adds a workflow env block when only a step sets the names", () => {
-    const source = `jobs:\n  unit:\n    steps:\n      - run: bun run codegen\n        env:\n          TURBO_TOKEN: ${token}\n          TURBO_TEAM: ${team}\n`
+    const source = `jobs:\n  unit:\n    steps:\n      - run: pnpm run codegen\n        env:\n          TURBO_TOKEN: ${token}\n          TURBO_TEAM: ${team}\n`
     const result = wireRemoteCacheEnv(source)
 
     expect(result.status).toBe("added")

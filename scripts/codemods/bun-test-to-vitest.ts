@@ -1,7 +1,7 @@
 /**
  * Moves test files from `bun:test` to Vitest.
  *
- * Run `bun scripts/codemods/bun-test-to-vitest.ts [file...]`. Without arguments, it rewrites every
+ * Run `node scripts/codemods/bun-test-to-vitest.ts [file...]`. Without arguments, it rewrites every
  * tracked file that imports from `bun:test`.
  *
  * - `import { ..., mock, spyOn } from "bun:test"` imports the same names from `vitest`, with `vi` in

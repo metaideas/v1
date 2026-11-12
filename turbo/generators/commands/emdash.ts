@@ -23,7 +23,7 @@ const MIGRATIONS_PATH = `${DATABASE_PATH}/migrations`
 const SCHEMA_SQL = 'CREATE SCHEMA IF NOT EXISTS "blog";\n'
 
 const ENVIRONMENT = `
-# Key that encrypts EmDash plugin secrets. Generate one with \`bunx emdash secrets generate\`.
+# Key that encrypts EmDash plugin secrets. Generate one with \`pnpm dlx emdash secrets generate\`.
 # @optional @sensitive
 EMDASH_ENCRYPTION_KEY=
 `
@@ -197,7 +197,7 @@ async function addSchemaMigration() {
 
   // drizzle.config.ts loads DATABASE_URL through Varlock, which reads .env.development only for the
   // development environment. Generating the file never connects to the database.
-  await promisify(execFile)("bun", ["run", "generate", "--custom", "--name=blog-schema"], {
+  await promisify(execFile)("pnpm", ["run", "generate", "--custom", "--name=blog-schema"], {
     cwd: DATABASE_PATH,
     env: { ...process.env, VARLOCK_ENV: process.env.VARLOCK_ENV ?? "development" },
   })
@@ -217,12 +217,12 @@ export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
     actions: () => [
       async () => {
         if (!existsSync(`${WEB_PATH}/package.json`)) {
-          throw new Error(`EmDash needs ${WEB_PATH}. Add it with bun template add.`)
+          throw new Error(`EmDash needs ${WEB_PATH}. Add it with pnpm template add.`)
         }
 
         if (!existsSync(`${DATABASE_PATH}/package.json`)) {
           throw new Error(
-            `EmDash stores content in ${DATABASE_PATH}. Add it with bun template add.`
+            `EmDash stores content in ${DATABASE_PATH}. Add it with pnpm template add.`
           )
         }
 
@@ -232,7 +232,7 @@ export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
           return `[SKIPPED] ${WEB_PATH} already contains EmDash`
         }
 
-        await runCommand(["bun", "add", "--exact", "emdash", "@astrojs/node"], WEB_PATH)
+        await runCommand(["pnpm", "add", "emdash", "@astrojs/node"], WEB_PATH)
         return `${WEB_PATH}: installed EmDash and the Astro Node adapter`
       },
       {
@@ -253,14 +253,14 @@ export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
       ...EDITS.map((edit) => () => applyEdit(`${WEB_PATH}/${edit.path}`, edit)),
       addSchemaMigration,
       async () =>
-        `Run \`bun run --filter ${await readPackageName(`${DATABASE_PATH}/package.json`)} migrate\` to create the blog schema.`,
+        `Run \`pnpm run --filter ${await readPackageName(`${DATABASE_PATH}/package.json`)} migrate\` to create the blog schema.`,
       () =>
-        "Run `bun run --filter web dev`, open /_emdash/admin/, and finish the setup wizard. Commit the emdash-env.d.ts it writes.",
+        "Run `pnpm run --filter web dev`, open /_emdash/admin/, and finish the setup wizard. Commit the emdash-env.d.ts it writes.",
       () =>
         'Query content with `getEmDashCollection()` from "emdash" in a page that sets `export const prerender = false`.',
       () =>
-        `Uploaded media live in ${WEB_PATH}/uploads, so the server needs a persistent disk. Run \`bun run --filter web build\`, then \`bun run --filter web start\`, and remove ${WEB_PATH}/vercel.json if you no longer deploy to Vercel.`,
-      () => "Run `bun run codegen` and `bun run fix`, then `bun template doctor`.",
+        `Uploaded media live in ${WEB_PATH}/uploads, so the server needs a persistent disk. Run \`pnpm run --filter web build\`, then \`pnpm run --filter web start\`, and remove ${WEB_PATH}/vercel.json if you no longer deploy to Vercel.`,
+      () => "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm template doctor`.",
     ],
     description: "Add the EmDash CMS to apps/web",
     prompts: [],

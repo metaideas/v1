@@ -13,14 +13,15 @@ const REMOTE_CACHE_ENV = [
   { expression: TEAM_EXPRESSION, name: TEAM_NAME },
 ] as const
 
-// Bun flags that consume the next argv token. Boolean flags stay out of this set.
-const BUN_VALUE_FLAGS = new Set([
-  "--config",
-  "--cwd",
-  "--env-file",
+// pnpm flags that consume the next argv token. Boolean flags stay out of this set.
+const PNPM_VALUE_FLAGS = new Set([
+  "--dir",
   "--filter",
-  "--preload",
-  "-c",
+  "--filter-prod",
+  "--loglevel",
+  "--reporter",
+  "--workspace-concurrency",
+  "-C",
   "-F",
 ])
 
@@ -46,8 +47,8 @@ export function commandRunsTurbo(command: string) {
   return splitShell(command).some((segment) => {
     const trimmed = segment.trim()
     return (
-      /^(?:bunx\s+|npx\s+|pnpm\s+exec\s+|yarn\s+)?turbo\b/u.test(trimmed)
-      || /^bun(?:\s+--[\w.-]+)*\s+turbo\b/u.test(trimmed)
+      /^(?:npx\s+|pnpx\s+|yarn\s+)?turbo(?![\w-])/u.test(trimmed)
+      || /^pnpm(?:\s+--?[\w.-]+(?:=\S+)?)*\s+(?:exec\s+|dlx\s+)?turbo(?![\w-])/u.test(trimmed)
     )
   })
 }
@@ -60,8 +61,9 @@ export function turboScriptNames(scripts: Readonly<Record<string, string>>) {
   )
 }
 
-function firstBunScript(command: string) {
-  const rest = /^bun run\b(.*)$/u.exec(command)?.[1] ?? ""
+// pnpm runs a script with `pnpm run <script>` or the shorthand `pnpm <script>`.
+function firstPnpmScript(command: string) {
+  const rest = /^pnpm\b(.*)$/u.exec(command)?.[1] ?? ""
   const tokens = rest.match(/[^\s]+/gu) ?? []
   let script: string | undefined
   let done = false
@@ -74,8 +76,8 @@ function firstBunScript(command: string) {
       script = tokens[index + 1]?.replaceAll(/^["']|["']$/gu, "")
       done = true
     } else if (token.startsWith("-")) {
-      if (!token.includes("=") && BUN_VALUE_FLAGS.has(token)) index += 1
-    } else {
+      if (!token.includes("=") && PNPM_VALUE_FLAGS.has(token)) index += 1
+    } else if (token !== "run") {
       script = token.replaceAll(/^["']|["']$/gu, "")
       done = true
     }
@@ -92,8 +94,8 @@ function lineInvokesTurbo(line: string, turboScripts: ReadonlySet<string>) {
 
   if (commandRunsTurbo(command)) return true
 
-  for (const match of command.matchAll(/\bbun run\b/gu)) {
-    const script = firstBunScript(command.slice(match.index))
+  for (const match of command.matchAll(/\bpnpm\b/gu)) {
+    const script = firstPnpmScript(command.slice(match.index))
     if (script !== undefined && turboScripts.has(script)) return true
   }
 

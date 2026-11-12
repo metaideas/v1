@@ -332,7 +332,7 @@ const checks: Check[] = [
 ]
 
 function runTool(rootDir: string, command: readonly string[]) {
-  const result = spawnSync("bun", ["run", ...command], {
+  const result = spawnSync("pnpm", ["run", ...command], {
     cwd: rootDir,
     encoding: "utf8",
     env: { ...process.env, VARLOCK_ENV: process.env.VARLOCK_ENV ?? "development" },
@@ -340,7 +340,7 @@ function runTool(rootDir: string, command: readonly string[]) {
   })
   if (result.status === 0) return []
 
-  return [`bun run ${command.join(" ")} failed:\n${result.stdout}${result.stderr}`]
+  return [`pnpm run ${command.join(" ")} failed:\n${result.stdout}${result.stderr}`]
 }
 
 function report(name: string, failures: string[]) {
@@ -378,7 +378,7 @@ export default defineCommand({
     const tools = TOOL_COMMANDS.filter((command) => !(args.fast && command[0] === "build"))
     const steps = [
       ...checks.map((check) => async () => report(check.name, await check.run(context))),
-      ...tools.map((command) => () => report(`bun run ${command[0]}`, runTool(rootDir, command))),
+      ...tools.map((command) => () => report(`pnpm run ${command[0]}`, runTool(rootDir, command))),
     ]
     const failed = await steps.reduce(async (previous, step) => {
       const previousFailed = await previous
@@ -387,7 +387,7 @@ export default defineCommand({
     }, Promise.resolve(false))
 
     if (failed) {
-      consola.error("The doctor found problems. Fix them and run bun template doctor again.")
+      consola.error("The doctor found problems. Fix them and run pnpm template doctor again.")
       process.exitCode = 1
       return
     }
