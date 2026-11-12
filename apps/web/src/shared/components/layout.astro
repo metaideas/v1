@@ -35,7 +35,9 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE_URL)
       const storedTheme = localStorage.getItem("v1-theme")
       const prefersDark = globalThis.matchMedia("(prefers-color-scheme: dark)").matches
       const theme = storedTheme === "dark" || storedTheme === "light" ? storedTheme : prefersDark ? "dark" : "light"
+
       document.documentElement.classList.add(theme)
+
       export default theme
     </script>
     <script>

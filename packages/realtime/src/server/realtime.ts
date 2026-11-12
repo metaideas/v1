@@ -20,6 +20,7 @@ const internals = new WeakMap<object, RealtimeInternals>()
  */
 export function getInternals(realtime: Realtime) {
   const runtime = internals.get(realtime)
+
   if (!runtime) throw new Error("Expected a service from createRealtime")
 
   return runtime
@@ -63,16 +64,19 @@ export function createRealtime({ logger, url }: RealtimeOptions) {
 
           if ("error" in address || !encoded.success) {
             const cause = "error" in address ? address.error : encoded.error
+
             const error = RealtimeFault.wrap(cause).as("RealtimePayloadError", {
               channel,
               event,
             })
+
             logger?.error({ channel, error, event, message: "Event is invalid", scope: "realtime" })
 
             return error
           }
 
           const { expireAfter, maxLength } = getHistory(channel)
+
           const result = await try$.run({
             catch: (error) => RealtimeFault.wrap(error).as("PublishEventError", { channel, event }),
             try: async () => {

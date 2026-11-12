@@ -17,11 +17,13 @@ function createServer() {
 
   function fetch(_url: string, init: { body: string; signal: AbortSignal }) {
     let stream: ReadableStreamDefaultController<Uint8Array> | undefined
+
     const body = new ReadableStream<Uint8Array>({
       start(controller) {
         stream = controller
       },
     })
+
     init.signal.addEventListener("abort", () => stream?.error(init.signal.reason))
     requests.push({
       body: z.parse(SubscribeRequestSchema, JSON.parse(init.body)),
@@ -42,11 +44,13 @@ const KEY = 'demo:{"userId":"user_1"}'
 describe("createConnection", () => {
   test("reconnects from the cursor its channel reached, skipping events it already delivered", async () => {
     const server = createServer()
+
     const connection = createConnection({
       endpoint: "http://localhost/realtime",
       fetch: server.fetch,
       getToken: () => Promise.resolve("token"),
     })
+
     const received: string[] = []
 
     connection.subscribe(
@@ -88,11 +92,13 @@ describe("createConnection", () => {
 
   test("delivers events and resets to every listener when another listener throws", async () => {
     const server = createServer()
+
     const connection = createConnection({
       endpoint: "http://localhost/realtime",
       fetch: server.fetch,
       getToken: () => Promise.resolve("token"),
     })
+
     const received: string[] = []
     let resets = 0
 
@@ -136,11 +142,13 @@ describe("createConnection", () => {
     const server = createServer()
     const token = Promise.withResolvers<string>()
     let tokenRequests = 0
+
     const connection = createConnection({
       endpoint: "http://localhost/realtime",
       fetch: server.fetch,
       getToken: () => {
         tokenRequests += 1
+
         return token.promise
       },
     })
@@ -150,6 +158,7 @@ describe("createConnection", () => {
       { userId: "user_1" },
       { onMessage: (message) => message }
     )
+
     await waitUntil(() => tokenRequests === 1)
     unsubscribe()
     await sleep(50)
@@ -170,6 +179,7 @@ describe("createConnection", () => {
         fetch: server.fetch,
         getToken: () => Promise.resolve("token"),
       })
+
       connection.subscribe("demo", { userId: "user_1" }, { onMessage: (message) => message })
 
       await waitUntil(() => server.requests.length === 1)

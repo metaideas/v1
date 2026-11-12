@@ -8,8 +8,11 @@ import { Icon } from "#components/icon.tsx"
 import { useCarouselState } from "#hooks/use-carousel-state.ts"
 
 type CarouselApi = UseEmblaCarouselType[1]
+
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
+
 type CarouselOptions = UseCarouselParameters[0]
+
 type CarouselPlugin = UseCarouselParameters[1]
 
 type CarouselProps = {
@@ -48,6 +51,7 @@ function Carousel({
   ...props
 }: React.ComponentProps<"div"> & CarouselProps) {
   const { className, children, ...divProps } = props
+
   const contextValue = useCarouselState({
     opts,
     orientation,

@@ -19,6 +19,7 @@ import { signIn } from "#shared/auth.ts"
  */
 export default function SignInWithPasswordForm({ state }: { state: SignInFormState | null }) {
   const navigate = useNavigate()
+
   const form = useForm({
     defaultValues: { email: "", password: "" },
     onSubmit: async ({ value }) => {

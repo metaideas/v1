@@ -26,10 +26,12 @@ type TemplateWorkspace = {
 
 async function copyTemplateWorkspace(rootDir: string, ref: string, workspace: TemplateWorkspace) {
   const workspacePath = getWorkspacePath(workspace)
+
   const archive = spawnSync("git", ["archive", "--format=tar", ref, workspacePath], {
     cwd: rootDir,
     maxBuffer: Number.POSITIVE_INFINITY,
   })
+
   if (archive.status !== 0) {
     throw new Error(
       `${workspacePath} does not exist in ${TEMPLATE_REPO}@${ref.slice(0, 12)}: ${archive.stderr.toString().trim()}`
@@ -47,6 +49,7 @@ function getMissingTemplateDependencies(
   visited: Set<string>
 ) {
   const prefix = getScopePrefix(TEMPLATE_SCOPE)
+
   const candidates = getDependencyNames(packageJson)
     .filter((dependencyName) => dependencyName.startsWith(prefix))
     .map((dependencyName): TemplateWorkspace => ({
@@ -55,11 +58,14 @@ function getMissingTemplateDependencies(
     }))
     .filter((workspace) => {
       const workspacePath = getWorkspacePath(workspace)
+
       if (visited.has(workspacePath)) return false
 
       visited.add(workspacePath)
+
       return true
     })
+
   return candidates.filter(
     (workspace) => !existsSync(join(rootDir, getWorkspacePath(workspace), "package.json"))
   )
@@ -73,6 +79,7 @@ async function addWorkspaces(
   visited: Set<string>
 ): Promise<string[]> {
   const [workspace, ...remaining] = queue
+
   if (!workspace) return []
 
   const workspacePath = getWorkspacePath(workspace)
@@ -120,6 +127,7 @@ export default defineCommand({
     if (args.kind !== "app" && args.kind !== "package") {
       consola.error(`Unknown workspace type: ${args.kind}. Use app or package.`)
       process.exitCode = 1
+
       return
     }
 
@@ -131,6 +139,7 @@ export default defineCommand({
     if (existsSync(join(rootDir, targetPath, "package.json"))) {
       consola.error(`The ${targetPath} workspace already exists in this project.`)
       process.exitCode = 1
+
       return
     }
 
@@ -141,6 +150,7 @@ export default defineCommand({
     consola.success(
       `Added ${copiedPaths.join(", ")} from ${TEMPLATE_REPO}@${ref.slice(0, 12)}. Run pnpm install, then pnpm template doctor.`
     )
+
     if (copiedPaths.includes("apps/mobile"))
       consola.warn(
         "Run `pnpm run --filter mobile prebuild` on macOS to rename the native iOS and Android projects."

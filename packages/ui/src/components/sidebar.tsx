@@ -38,6 +38,7 @@ const SidebarContext = React.createContext<SidebarContextProps | null>(null)
 
 function useSidebar() {
   const context = React.useContext(SidebarContext)
+
   if (!context) {
     throw new Error("useSidebar must be used within a SidebarProvider.")
   }
@@ -58,6 +59,7 @@ function SidebarProvider({
 }) {
   const { className, children, ...props } = rest
   const contextValue = useSidebarState({ defaultOpen, onOpenChange, open })
+
   const wrapperStyle: React.CSSProperties
     & Record<"--sidebar-width" | "--sidebar-width-icon", string> = {
     "--sidebar-width": SIDEBAR_WIDTH,
@@ -427,6 +429,7 @@ function SidebarMenuButton({
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const { variant = "default", size = "default", className, ...props } = rest
   const { isMobile, state } = useSidebar()
+
   const menuButton = useRender({
     defaultTagName: "button",
     props: mergeProps<"button">(
@@ -515,6 +518,7 @@ function SidebarMenuSkeleton({
   showIcon?: boolean
 }) {
   const width = useSkeletonWidth()
+
   const skeletonStyle: React.CSSProperties & Record<"--skeleton-width", string> = {
     "--skeleton-width": width,
   }

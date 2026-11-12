@@ -20,6 +20,7 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
         rawAnswers ?? {},
         NewPackageAnswersSchema.parse(rawAnswers)
       )
+
       const name = plop.renderString("{{kebabCase value}}", { value: answers.name })
       const packagePath = `packages/${name}`
 
@@ -32,6 +33,7 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
           for await (const packageJsonPath of glob("{apps,packages}/*/package.json")) {
             const packageJson = await readPackageJson(packageJsonPath)
             const match = packageJson.name?.match(/^@([^/]+)\//)
+
             if (match?.[1]) {
               packageScope = match[1]
               break
@@ -39,9 +41,11 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
           }
 
           packageScope ??= rootPackageJson.name
+
           if (!packageScope) throw new Error("Could not determine the project package scope.")
 
           const typescriptVersion = rootPackageJson.devDependencies?.typescript
+
           if (!typescriptVersion)
             throw new Error("The root package.json must declare TypeScript in devDependencies.")
 
@@ -51,6 +55,7 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
             toolingPackage: toolingPackageName,
             typescriptVersion,
           })
+
           return `Prepared ${packagePath}`
         },
         {
@@ -73,6 +78,7 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
         },
         async () => {
           await runCommand(["pnpm", "install"])
+
           return `Created ${answers.packageScope}/${name}`
         },
       ]

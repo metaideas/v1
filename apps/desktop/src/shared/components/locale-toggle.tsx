@@ -12,6 +12,7 @@ function selectLocale(nextLocale: Locale) {
 
 export default function LocaleToggle() {
   const locale = getLocale()
+
   return (
     <fieldset className="flex gap-2">
       <legend className="sr-only">{m.shared_locale_switch()}</legend>

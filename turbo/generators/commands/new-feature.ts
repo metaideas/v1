@@ -96,6 +96,7 @@ export async function addDesktopContract(handlers: DesktopHandlers) {
 
   const source = existsSync(schemasPath) ? await readFile(schemasPath, "utf8") : ""
   const declaration = `export const ${contract} = defineContract({\n  ${key}: {\n    ping: channel({ input: z.void(), output: z.string() }),\n  },\n})\n`
+
   const updated = addImports([source.trimEnd(), declaration].filter(Boolean).join("\n\n"), [
     { from: "@sanely/rpc", imported: "channel" },
     { from: "@sanely/rpc", imported: "defineContract" },
@@ -107,6 +108,7 @@ export async function addDesktopContract(handlers: DesktopHandlers) {
   }
 
   await writeFile(schemasPath, updated)
+
   return `${schemasPath}: declared ${contract}`
 }
 
@@ -139,6 +141,7 @@ export async function serveDesktopRouter(handlers: DesktopHandlers) {
   }
 
   const listed = [...routers.split(","), router].map((name) => name.trim()).filter(Boolean)
+
   const updated = addImports(
     source.replace(DESKTOP_ROUTERS, `mergeRouters(${listed.join(", ")})`),
     [{ from: `#features/${feature}/handlers.ts`, imported: router }]
@@ -149,6 +152,7 @@ export async function serveDesktopRouter(handlers: DesktopHandlers) {
   }
 
   await writeFile(bridgePath, updated)
+
   return `${bridgePath}: served ${router}`
 }
 
@@ -165,11 +169,14 @@ export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
         files: selectedFiles,
         name,
       } = Object.assign(rawAnswers ?? {}, NewFeatureAnswersSchema.parse(rawAnswers))
+
       const hasDesktopHandlers = app === "desktop" && selectedFiles.includes("handlers")
+
       const files =
         hasDesktopHandlers && !selectedFiles.includes("schemas")
           ? [...selectedFiles, "schemas"]
           : selectedFiles
+
       const featurePath = "apps/{{kebabCase app}}/src/features/{{kebabCase name}}"
       const actions: PlopTypes.Actions = []
 
@@ -195,6 +202,7 @@ export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
       if (hasDesktopHandlers) {
         const feature = plop.renderString("{{kebabCase name}}", { name })
         const key = plop.renderString("{{camelCase name}}", { name })
+
         const handlers: DesktopHandlers = {
           bridgePath: DESKTOP_BRIDGE_PATH,
           contract: `${key}Contract`,

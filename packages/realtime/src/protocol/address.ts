@@ -11,6 +11,7 @@ export function compareCursors(left: string, right: string) {
 
 function sortKeys(value: unknown): unknown {
   if (Array.isArray(value)) return value.map((item) => sortKeys(item))
+
   if (typeof value !== "object" || value === null) return value
 
   return Object.fromEntries(
@@ -26,6 +27,7 @@ function sortKeys(value: unknown): unknown {
  */
 export function addressChannel<Channel extends ChannelName>(channel: Channel, params: unknown) {
   const parsed = z.safeParse(getChannel(channel).params, params)
+
   if (!parsed.success) return { error: parsed.error }
 
   return { key: `${channel}:${JSON.stringify(sortKeys(parsed.data))}`, params: parsed.data }

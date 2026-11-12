@@ -1,6 +1,7 @@
 const APP_ID = "v1"
 const APP_NAME = "v1"
 const APP_OWNER = "metaideas"
+
 // Android package names cannot contain dashes.
 const APP_BUNDLE_IDENTIFIER = `app.${APP_OWNER}.${APP_ID.replaceAll("-", "")}`
 const VERSION = "1.0.0"

@@ -61,6 +61,7 @@ async function applyEdit(path: string, edit: Edit) {
 
   if (edit.imports) {
     const sourceWithImports = addImports(source, edit.imports)
+
     if (sourceWithImports === undefined) {
       return `[MANUAL] ${path} already binds a name this edit imports. ${edit.manual}`
     }
@@ -69,6 +70,7 @@ async function applyEdit(path: string, edit: Edit) {
   }
 
   await writeFile(path, source)
+
   return `${path}: connected PostHog`
 }
 
@@ -78,6 +80,7 @@ async function getExpoCompatibleVersion(appPath: string, name: string) {
   const path = createRequire(join(process.cwd(), appPath, "package.json")).resolve(
     "expo/bundledNativeModules.json"
   )
+
   const versions = BundledModulesSchema.parse(JSON.parse(await readFile(path, "utf8")))
   const range = versions[name]
 
@@ -218,6 +221,7 @@ EXPO_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
           async (name) => `${name}@${await getExpoCompatibleVersion(appPath, name)}`
         )
       )
+
       return runCommand(["pnpm", "add", "posthog-react-native", ...modules], appPath)
     },
     nextSteps: [
@@ -249,6 +253,7 @@ export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI) {
           }
 
           await setup.install(appPath)
+
           return `${appPath}: installed the PostHog SDK`
         },
         ...setup.files.map((file) => ({
@@ -260,11 +265,13 @@ export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI) {
         async () => {
           const schemaPath = `${appPath}/.env.schema`
           const schema = await readFile(schemaPath, "utf8")
+
           const missing = setup.environment
             .trim()
             .split("\n\n")
             .filter((declaration) => {
               const key = /^([A-Z0-9_]+)=/m.exec(declaration)?.[1]
+
               return key !== undefined && !new RegExp(`^${key}=`, "m").test(schema)
             })
 
@@ -273,6 +280,7 @@ export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI) {
           }
 
           await writeFile(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
+
           return `${schemaPath}: added the optional PostHog variables`
         },
         ...setup.edits.map((edit) => () => applyEdit(`${appPath}/${edit.path}`, edit)),

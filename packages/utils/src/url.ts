@@ -7,6 +7,7 @@ import { cleanDoubleSlashes, joinURL, normalizeURL, withQuery, withTrailingSlash
  */
 export function createUrlBuilder(baseUrl: string, protocol: "http" | "https" = "https") {
   const trimmedBaseUrl = baseUrl.trim()
+
   const base = /^https?:\/\//i.test(trimmedBaseUrl)
     ? trimmedBaseUrl.replace(/^https?:\/\//i, `${protocol}://`)
     : `${protocol}://${trimmedBaseUrl}`
@@ -30,6 +31,7 @@ export function createUrlBuilder(baseUrl: string, protocol: "http" | "https" = "
     }
 
     const filteredQuery: Record<string, string | number | boolean> = {}
+
     for (const [key, value] of Object.entries(options.query)) {
       if (value !== undefined) filteredQuery[key] = value
     }

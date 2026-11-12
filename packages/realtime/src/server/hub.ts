@@ -19,6 +19,7 @@ export function createHub({
     string,
     { listeners: Set<Listener>; subscribed: Promise<unknown> }
   >()
+
   const streams = new Set<() => void>()
   let subscriber: RedisClientType | undefined
 
@@ -39,6 +40,7 @@ export function createHub({
       if (hasConnected) {
         for (const close of streams) close()
       }
+
       hasConnected = true
     })
     // The client reconnects on its own, so connecting rejects only once it stops reconnecting.
@@ -51,6 +53,7 @@ export function createHub({
 
   function deliver(key: string, message: string) {
     const entry = parsePublished(message)
+
     if (!entry) return
 
     for (const listener of subscriptions.get(key)?.listeners ?? []) listener(entry)
@@ -63,14 +66,17 @@ export function createHub({
      */
     async join(key: string, listener: Listener) {
       const existing = subscriptions.get(key)
+
       if (existing) {
         existing.listeners.add(listener)
+
         return existing.subscribed
       }
 
       const subscribed = openSubscriber().subscribe(key, (message) => {
         deliver(key, message)
       })
+
       subscriptions.set(key, { listeners: new Set([listener]), subscribed })
 
       return subscribed
@@ -78,9 +84,11 @@ export function createHub({
 
     leave(key: string, listener: Listener) {
       const subscription = subscriptions.get(key)
+
       if (!subscription) return
 
       subscription.listeners.delete(listener)
+
       if (subscription.listeners.size > 0) return
 
       subscriptions.delete(key)
@@ -95,6 +103,7 @@ export function createHub({
      */
     track(close: () => void) {
       streams.add(close)
+
       return () => {
         streams.delete(close)
       }

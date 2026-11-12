@@ -16,6 +16,7 @@ const CREDENTIAL_WORDS = [
   "api_key",
   "api-key",
 ] as const
+
 const CREDENTIAL_PATHS = [
   ...new Set(
     CREDENTIAL_WORDS.flatMap((word) => [

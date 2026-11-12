@@ -11,6 +11,7 @@ export function useCopyState() {
     const timeout = setTimeout(() => {
       setCopied(false)
     }, 2000)
+
     return () => {
       clearTimeout(timeout)
     }

@@ -7,6 +7,7 @@ import { EmailSchema, ForgotPasswordFormSchema } from "#features/auth/schemas.ts
 
 export default function ForgotPasswordForm() {
   const requestPasswordReset = useServerFn(forgotPassword)
+
   const form = useForm({
     defaultValues: { email: "" },
     onSubmit: async ({ value }) => {

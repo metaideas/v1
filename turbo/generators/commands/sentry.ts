@@ -54,6 +54,7 @@ async function applyEdit(path: string, edit: Edit) {
 
   if (edit.imports) {
     const sourceWithImports = addImports(source, edit.imports)
+
     if (sourceWithImports === undefined) {
       return `[MANUAL] ${path} already binds a name this edit imports. ${edit.manual}`
     }
@@ -62,6 +63,7 @@ async function applyEdit(path: string, edit: Edit) {
   }
 
   await writeFile(path, edit.append ? `${source.trimEnd()}\n${edit.append}` : source)
+
   return `${path}: connected Sentry`
 }
 
@@ -71,6 +73,7 @@ async function getExpoCompatibleVersion(appPath: string, name: string) {
   const path = createRequire(join(process.cwd(), appPath, "package.json")).resolve(
     "expo/bundledNativeModules.json"
   )
+
   const versions = BundledModulesSchema.parse(JSON.parse(await readFile(path, "utf8")))
   const range = versions[name]
 
@@ -85,6 +88,7 @@ async function getDependencyVersion(appPath: string, packageName: string, depend
   const path = createRequire(join(process.cwd(), appPath, "package.json")).resolve(
     `${packageName}/package.json`
   )
+
   const manifest = await readPackageJson(path)
   const version = manifest.dependencies?.[dependency]
 
@@ -250,6 +254,7 @@ SENTRY_AUTH_TOKEN=
       // pnpm's isolated linker does not expose the SDK's own @sentry/cli to the workspace, and the
       // native build hooks resolve the CLI from the workspace.
       const cliVersion = await getDependencyVersion(appPath, "@sentry/react-native", "@sentry/cli")
+
       return runCommand(["pnpm", "add", "--save-dev", `@sentry/cli@${cliVersion}`], appPath)
     },
     nextSteps: [
@@ -280,6 +285,7 @@ export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI) {
           }
 
           await setup.install(appPath)
+
           return `${appPath}: installed the Sentry SDK`
         },
         {
@@ -291,11 +297,13 @@ export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI) {
         async () => {
           const schemaPath = `${appPath}/.env.schema`
           const schema = await readFile(schemaPath, "utf8")
+
           const missing = setup.environment
             .trim()
             .split("\n\n")
             .filter((declaration) => {
               const key = /^([A-Z0-9_]+)=/m.exec(declaration)?.[1]
+
               return key !== undefined && !new RegExp(`^${key}=`, "m").test(schema)
             })
 
@@ -304,6 +312,7 @@ export function registerSentryGenerator(plop: PlopTypes.NodePlopAPI) {
           }
 
           await writeFile(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
+
           return `${schemaPath}: added the optional Sentry variables`
         },
         ...setup.edits.map((edit) => () => applyEdit(`${appPath}/${edit.path}`, edit)),

@@ -35,6 +35,7 @@ const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
   app: {
     check: async (appPath) => {
       const environmentPath = `${appPath}/.env.development`
+
       const isRemote =
         existsSync(environmentPath)
         && /^PUBLIC_API_URL=\S+/m.test(await readFile(environmentPath, "utf8"))
@@ -109,6 +110,7 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
           }
 
           const problem = await setup.check(appPath)
+
           if (problem) throw new Error(problem)
 
           const name = await readPackageName(`${REALTIME_PATH}/package.json`)
@@ -120,6 +122,7 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
 
           const dependency = `${name}@workspace:*`
           await runCommand(["pnpm", "add", dependency], appPath)
+
           return `${appPath}: added ${name}`
         },
         {

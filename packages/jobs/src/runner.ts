@@ -38,6 +38,7 @@ export function createJobsRunner<Subscribed extends QueueName>({
     }
 
     const { concurrency, limiter } = queues[queue]
+
     const worker = new Worker(queue, processJob, {
       autorun: false,
       concurrency,

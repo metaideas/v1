@@ -24,9 +24,11 @@ export const kv = createStorage({ driver: redisDriver({ url: ENV.REDIS_URL }) })
 // Without the offline queue, a rate limit check fails at once while Redis is down. Queued checks
 // would replay on reconnect and spend the new window after their requests already failed.
 export const redis = createClient({ disableOfflineQueue: true, url: ENV.REDIS_URL })
+
 redis.on("error", (error) => {
   log.error({ error, message: "Redis connection error", scope: "api" })
 })
+
 // The client reconnects on its own, so connecting rejects only once it stops reconnecting.
 redis.connect().catch((error: unknown) => {
   log.error({ error, message: "Redis connection closed", scope: "api" })
@@ -89,4 +91,5 @@ export const workflows = createWorkflows({
 })
 
 export type Auth = typeof auth
+
 export type Session = Auth["$Infer"]["Session"]

@@ -15,6 +15,7 @@ function createTestPayments() {
 async function createWebhookRequest(payload: object, signature?: string) {
   const body = JSON.stringify(payload)
   const { payments } = createTestPayments()
+
   const header =
     signature
     ?? (await payments.stripe.webhooks.generateTestHeaderStringAsync({
@@ -42,6 +43,7 @@ describe("parseWebhook", () => {
 
   test("returns InvalidWebhookError without a signature header", async () => {
     const { payments } = createTestPayments()
+
     const request = new Request("https://example.com/webhooks/stripe", {
       body: "{}",
       method: "POST",

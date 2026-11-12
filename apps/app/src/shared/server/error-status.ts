@@ -21,6 +21,7 @@ export function resolveErrorStatus(error: unknown, helperStatus: number) {
   }
 
   const cause = getProperty(error, "cause")
+
   const status = Number(
     getStatusCode(error, "status")
       ?? getStatusCode(error, "statusCode")

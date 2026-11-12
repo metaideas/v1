@@ -41,5 +41,7 @@ export const uploads = storageSchema.table(
 )
 
 export type Upload = typeof uploads.$inferSelect
+
 export type NewUpload = typeof uploads.$inferInsert
+
 export type UploadId = Upload["id"]

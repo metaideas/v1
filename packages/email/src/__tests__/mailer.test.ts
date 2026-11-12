@@ -13,6 +13,7 @@ describe("createMailer", () => {
     const send = vi.fn((_message: EmailMessage, _context: SendContext) =>
       Promise.resolve({ id: "sent" })
     )
+
     const mailer = createMailer({ from, transport: { send } })
 
     const result = await mailer.send("password-reset", props, { to })
@@ -34,6 +35,7 @@ describe("createMailer", () => {
         ? Promise.reject(new EmailDeliveryError({ isRetryable: true, transport: "test" }))
         : Promise.resolve({ id: "sent" })
     )
+
     const mailer = createMailer({ from, transport: { send } })
 
     const result = await mailer.send("password-reset", props, { to })

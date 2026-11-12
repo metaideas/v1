@@ -30,6 +30,7 @@ async function close() {
   const stopped = server.listening && once(server.close(), "close")
   realtimeHandler.close()
   await stopped
+
   // A reconnecting Redis client may never answer the commands that `close()` waits for, so it is
   // destroyed instead. A client that is not open throws on both.
   if (redis.isOpen && !redis.isReady) redis.destroy()

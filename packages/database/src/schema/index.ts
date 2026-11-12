@@ -18,6 +18,7 @@ export {
   type UserId,
   type Verification,
 } from "#schema/auth.ts"
+
 export {
   documents,
   profiles,
@@ -25,6 +26,7 @@ export {
   type Profile,
   type ProfileId,
 } from "#schema/public.ts"
+
 export {
   storageSchema,
   uploads,

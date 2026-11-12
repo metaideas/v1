@@ -61,6 +61,7 @@ function parsePnpmCall(command: string): PnpmCall | undefined {
 
   for (let index = 0; index < tokens.length && !done; index += 1) {
     const token = tokens[index] ?? ""
+
     if (SHELL_OPERATORS.has(token)) {
       done = true
     } else if (token === "--") {
@@ -86,6 +87,7 @@ export function commandRunsTurbo(command: string) {
   return splitShell(command).some((segment) => {
     const trimmed = segment.trim()
     const call = parsePnpmCall(trimmed)
+
     return (
       /^(?:npx\s+|pnpx\s+|yarn\s+)?turbo(?![\w-])/u.test(trimmed)
       || (call?.kind !== "script" && call?.name === "turbo")
@@ -111,6 +113,7 @@ function lineInvokesTurbo(line: string, turboScripts: ReadonlySet<string>) {
 
   for (const match of command.matchAll(/\bpnpm\b/gu)) {
     const call = parsePnpmCall(command.slice(match.index))
+
     if (call && call.kind !== "binary" && turboScripts.has(call.name)) return true
   }
 
@@ -123,10 +126,13 @@ export function workflowRunsTurbo(source: string, turboScripts: ReadonlySet<stri
 
 function topLevelKeys(lines: readonly string[]) {
   const keys: Array<{ line: number; name: string }> = []
+
   for (const [index, line] of lines.entries()) {
     const name = /^([A-Za-z_][\w-]*):/u.exec(line)?.[1]
+
     if (name) keys.push({ line: index, name })
   }
+
   return keys
 }
 
@@ -139,6 +145,7 @@ function splitSource(source: string) {
 
 function joinSource(lines: readonly string[], newline: boolean) {
   const source = lines.join("\n")
+
   return newline ? `${source}\n` : source
 }
 
@@ -151,11 +158,13 @@ function stripYamlValue(value: string) {
 
 function expressionMatches(value: string, expression: string) {
   const open = ["$", "{{ "].join("")
+
   const normalized = stripYamlValue(value)
     .replaceAll(/\$\{\{\s*/gu, open)
     .replaceAll(/\s*\}\}/gu, " }}")
     .replaceAll(/\s+/gu, " ")
     .trim()
+
   return normalized === expression
 }
 
@@ -166,6 +175,7 @@ function isBlockScalar(value: string) {
 function parseMappingEntry(line: string) {
   const match = /^( *)(?:"([^"]*)"|'([^']*)'|([A-Za-z_][\w.-]*))\s*:(.*)$/u.exec(line)
   const name = match?.[2] ?? match?.[3] ?? match?.[4]
+
   if (!match || !name) return null
 
   return { indent: match[1] ?? "", name, value: match[5] ?? "" }
@@ -180,10 +190,12 @@ function readEnvMapping(lines: readonly string[], start: number, end: number) {
     if (line.trim() === "") continue
 
     const indent = /^( *)/u.exec(line)?.[1] ?? ""
+
     if (scalarIndent !== undefined && indent.length > scalarIndent) continue
     scalarIndent = undefined
 
     if (line.trim().startsWith("#")) continue
+
     if (/^\t|^\s*\t/u.test(line)) {
       return {
         detail:
@@ -192,9 +204,12 @@ function readEnvMapping(lines: readonly string[], start: number, end: number) {
     }
 
     const entry = parseMappingEntry(line)
+
     if (!entry) {
       const nested = mappingIndent !== undefined && indent.length > mappingIndent.length
+
       if (nested) continue
+
       return {
         detail:
           "env is not a flat mapping. Add TURBO_TOKEN from secrets.TURBO_TOKEN and TURBO_TEAM from vars.TURBO_TEAM by hand.",
@@ -213,6 +228,7 @@ function readEnvMapping(lines: readonly string[], start: number, end: number) {
     }
 
     entries.push({ name: entry.name, value: entry.value })
+
     if (isBlockScalar(entry.value)) scalarIndent = entry.indent.length
   }
 
@@ -225,6 +241,7 @@ function findingFor(
 ) {
   const matches = entries.filter((entry) => entry.name === assignment.name)
   const entry = matches[0]
+
   if (matches.length > 1 || !entry) {
     return {
       expression: assignment.expression,
@@ -244,14 +261,17 @@ function withBlankLineBefore(lines: readonly string[], index: number) {
   if (index > 0 && lines[index - 1]?.trim() !== "") {
     return [...lines.slice(0, index), "", ...lines.slice(index)]
   }
+
   return [...lines]
 }
 
 function insertLines(lines: readonly string[], index: number, additions: readonly string[]) {
   const next = [...lines.slice(0, index), ...additions, ...lines.slice(index)]
+
   if (next[index + additions.length]?.trim()) {
     next.splice(index + additions.length, 0, "")
   }
+
   return next
 }
 
@@ -263,17 +283,21 @@ function envAssignments(indent: string, findings: readonly AssignmentFinding[]) 
 
 function insertEnvBlock(lines: readonly string[], index: number) {
   const padded = withBlankLineBefore(lines, index)
+
   const additions = [
     "env:",
     `  ${TOKEN_NAME}: ${TOKEN_EXPRESSION}`,
     `  ${TEAM_NAME}: ${TEAM_EXPRESSION}`,
   ]
+
   return insertLines(padded, index + padded.length - lines.length, additions)
 }
 
 function bodyEnd(lines: readonly string[], start: number, end: number) {
   let index = end
+
   while (index > start && lines[index - 1]?.trim() === "") index -= 1
+
   return index
 }
 
@@ -285,6 +309,7 @@ export function wireRemoteCacheEnv(source: string) {
   if (!env) {
     const jobs = keys.find((key) => key.name === "jobs")
     const inserted = insertEnvBlock(lines, jobs?.line ?? lines.length)
+
     return {
       detail: "set TURBO_TOKEN and TURBO_TEAM for Vercel Remote Cache",
       source: joinSource(inserted, newline),
@@ -293,6 +318,7 @@ export function wireRemoteCacheEnv(source: string) {
   }
 
   const header = lines[env.line] ?? ""
+
   if (!/^env:\s*(?:#.*)?$/u.test(header)) {
     return {
       detail:
@@ -304,6 +330,7 @@ export function wireRemoteCacheEnv(source: string) {
 
   const end = keys.find((key) => key.line > env.line)?.line ?? lines.length
   const mapping = readEnvMapping(lines, env.line + 1, end)
+
   if ("detail" in mapping) {
     return { detail: mapping.detail, source, status: "manual" }
   }
@@ -319,6 +346,7 @@ export function wireRemoteCacheEnv(source: string) {
   }
 
   const missing = findings.filter((finding) => finding.kind === "absent")
+
   if (missing.length === 0) {
     return {
       detail: "already sets the remote cache environment",
@@ -329,6 +357,7 @@ export function wireRemoteCacheEnv(source: string) {
 
   const additions = envAssignments(mapping.indent, findings)
   const inserted = insertLines(lines, bodyEnd(lines, env.line + 1, end), additions)
+
   return {
     detail: `added ${missing.map((finding) => finding.name).join(" and ")} for Vercel Remote Cache`,
     source: joinSource(inserted, newline),
@@ -338,29 +367,36 @@ export function wireRemoteCacheEnv(source: string) {
 
 export async function readTurboScriptNames() {
   const manifest = RootScriptsSchema.parse(parseJSON(await readFile("package.json", "utf8")))
+
   return turboScriptNames(manifest.scripts ?? {})
 }
 
 async function listWorkflowPaths() {
   const directory = ".github/workflows"
   const paths: string[] = []
+
   for await (const name of glob("*.{yml,yaml}", { cwd: directory })) {
     paths.push(`${directory}/${name}`)
   }
+
   return paths.toSorted()
 }
 
 async function wireWorkflow(path: string, turboScripts: ReadonlySet<string>) {
   const source = await readFile(path, "utf8")
+
   if (!workflowRunsTurbo(source, turboScripts)) return
 
   const result = wireRemoteCacheEnv(source)
+
   if (result.status === "manual") return `[MANUAL] ${path} ${result.detail}`
+
   if (result.status === "skipped") {
     return `[SKIPPED] ${path} already sets the remote cache environment`
   }
 
   await writeFile(path, result.source)
+
   return `${path}: ${result.detail}`
 }
 

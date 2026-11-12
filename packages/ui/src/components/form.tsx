@@ -38,6 +38,7 @@ function FieldInput(props: React.ComponentProps<typeof Input>) {
     />
   )
 }
+
 FieldInput.displayName = "FieldInput"
 
 function FieldTextarea(props: React.ComponentProps<typeof Textarea>) {
@@ -58,6 +59,7 @@ function FieldTextarea(props: React.ComponentProps<typeof Textarea>) {
     />
   )
 }
+
 FieldTextarea.displayName = "FieldTextarea"
 
 function FormSubmit({
@@ -116,6 +118,7 @@ function FormServerError({
     </form.Subscribe>
   )
 }
+
 FormServerError.displayName = "FormServerError"
 
 export const { useAppForm: useForm, withForm } = createFormHook({

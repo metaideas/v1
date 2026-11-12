@@ -22,6 +22,7 @@ export default defineRule({
     function check(source: ESTree.StringLiteral) {
       const target = resolveImport(sourceRoot, context.filename, source.value)
       const to = target === undefined ? undefined : locate(sourceRoot, boundaries, target)
+
       const violation =
         target === undefined || to === undefined ? undefined : findViolation(importer, to, target)
 

@@ -64,6 +64,7 @@ function createClient() {
     duplicate() {
       const subscriber = createClient()
       server.subscribers.add(subscriber)
+
       return subscriber
     },
 
@@ -74,6 +75,7 @@ function createClient() {
     eval(_script: string, { arguments: args, keys }: { arguments: string[]; keys: string[] }) {
       const error = server.emitError
       server.emitError = undefined
+
       if (error) return Promise.reject(error)
 
       return Promise.resolve(append(String(keys[0]), String(args[2]), String(args[3])))
@@ -81,22 +83,26 @@ function createClient() {
 
     on(event: string, handler: Handler) {
       handlers.set(event, [...(handlers.get(event) ?? []), handler])
+
       return client
     },
 
     time() {
       server.beforeTime?.()
       const now = server.now ?? Date.now()
+
       return Promise.resolve([String(Math.floor(now / 1000)), String((now % 1000) * 1000)])
     },
 
     subscribe(key: string, listener: Listener) {
       channels.set(key, listener)
+
       return Promise.resolve()
     },
 
     unsubscribe(key: string) {
       channels.delete(key)
+
       return Promise.resolve()
     },
 
@@ -140,6 +146,7 @@ export function mockRedis() {
 export function readEvents(body: ReadableStream<Uint8Array> | null) {
   const events: Array<{ data: unknown; type: string }> = []
   const decoder = new TextDecoder()
+
   const parser = createParser({
     onEvent: ({ data, event }) => {
       events.push({ data: JSON.parse(data), type: event ?? "message" })
@@ -160,6 +167,7 @@ export function readEvents(body: ReadableStream<Uint8Array> | null) {
     events,
     async waitFor(count: number) {
       await waitUntil(() => events.length >= count)
+
       return events
     },
   }

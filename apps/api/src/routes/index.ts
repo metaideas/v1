@@ -19,13 +19,17 @@ import { allowedOrigins, factory, toContentfulStatusCode } from "#shared/utils.t
 const app = factory.createApp()
 
 app.use(requestLogger())
+
 app.use(withLanguageDetection)
+
 app.use(contextStorage())
+
 app.use(
   secureHeaders({
     crossOriginResourcePolicy: "cross-origin",
   })
 )
+
 app.use(
   cors({
     allowHeaders: ["Content-Type", "Authorization", "Range", "trpc-accept"],

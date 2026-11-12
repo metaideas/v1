@@ -22,6 +22,7 @@ function setup({ isAllowed = true } = {}) {
 
   async function subscribe(subscriptions: unknown[]) {
     const controller = new AbortController()
+
     const response = await handler.handle(
       new Request("http://localhost/realtime", {
         body: JSON.stringify({ subscriptions }),
@@ -44,9 +45,11 @@ function setup({ isAllowed = true } = {}) {
 // Serves the handler the way `apps/api` does, including closing keep-alive connections on stop.
 async function listen(handler: { handle: (request: Request) => Promise<Response> }) {
   const handleRequest = getRequestListener((request) => handler.handle(request))
+
   const server = createServer((request, response) => {
     void handleRequest(request, response)
   })
+
   server.on("request", (_request, response) => {
     response.on("close", () => {
       if (!server.listening) {
@@ -105,6 +108,7 @@ describe("createRealtimeHandler", () => {
     const stream = await subscribe([
       { channel: "demo", cursor: first, params: { userId: "user_1" } },
     ])
+
     await stream.waitFor(2)
     await channel.emit("greeted", { message: "three" })
 
@@ -137,6 +141,7 @@ describe("createRealtimeHandler", () => {
     const stream = await subscribe([
       { channel: "demo", cursor: first, params: { userId: "user_1" } },
     ])
+
     await stream.waitFor(2)
     await sleep(20)
 
@@ -219,12 +224,14 @@ describe("createRealtimeHandler", () => {
       redis.append(REDIS_KEY, "greeted", greeting("between"))
       redis.server.now = startedAt + 100
     }
+
     const first = await subscribe([{ channel: "demo", params: { userId: "user_1" } }])
     const [ready] = await first.waitFor(1)
     first.controller.abort()
 
     redis.server.streams.clear()
     redis.server.now = startedAt + ms("1d") + 50
+
     const stream = await subscribe([
       {
         channel: "demo",
@@ -232,6 +239,7 @@ describe("createRealtimeHandler", () => {
         params: { userId: "user_1" },
       },
     ])
+
     const events = await stream.waitFor(1)
 
     expect(events.map(({ type }) => type)).toEqual(["reset"])
@@ -272,10 +280,12 @@ describe("createRealtimeHandler", () => {
   test("ends open streams on close, so the server can stop", async () => {
     const { channel, handler } = setup()
     const server = await listen(handler)
+
     const response = await fetch(server.url, {
       body: JSON.stringify({ subscriptions: [{ channel: "demo", params: { userId: "user_1" } }] }),
       method: "POST",
     })
+
     const stream = readEvents(response.body)
     await stream.waitFor(1)
 
@@ -291,20 +301,25 @@ describe("createRealtimeHandler", () => {
     const realtime = createRealtime({ url: "redis://localhost:6379" })
     const authorizing = Promise.withResolvers<boolean>()
     const authorization = Promise.withResolvers<boolean>()
+
     const handler = createRealtimeHandler({
       authorize: {
         demo: () => {
           authorizing.resolve(true)
+
           return authorization.promise
         },
       },
       realtime,
     })
+
     const server = await listen(handler)
+
     const pending = fetch(server.url, {
       body: JSON.stringify({ subscriptions: [{ channel: "demo", params: { userId: "user_1" } }] }),
       method: "POST",
     })
+
     // The server stops only once the handler holds the request, so the request isn't refused.
     await authorizing.promise
 

@@ -37,6 +37,7 @@ export function usePersistedLocale() {
   useEffect(() => {
     async function hydrateLocale() {
       const storedLocale = await AsyncStorage.getItem(LOCALE_STORAGE_KEY)
+
       if (!isLocale(storedLocale)) return
 
       void setParaglideLocale(storedLocale, { reload: false })

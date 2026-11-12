@@ -17,11 +17,15 @@ describe("withTransaction", () => {
         const [row] = await transaction.execute<{ id: string }>(
           sql`SELECT txid_current()::text AS id`
         )
+
         openCount += 1
+
         if (openCount === 2) {
           bothOpen.resolve(true)
         }
+
         await bothOpen.promise
+
         return row?.id
       })
     }
@@ -45,6 +49,7 @@ describe("withTransaction", () => {
         await withTransaction(first, async (outer) => {
           await withTransaction(first, (inner) => {
             expect(inner).toBe(outer)
+
             return Promise.resolve()
           })
 
@@ -53,6 +58,7 @@ describe("withTransaction", () => {
 
             await withTransaction(first, (revisited) => {
               expect(revisited).toBe(outer)
+
               return Promise.resolve()
             })
           })

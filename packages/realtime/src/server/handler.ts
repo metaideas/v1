@@ -59,25 +59,30 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
   // Whether Redis still holds every event after the cursor.
   async function isCursorKept(channel: ChannelName, cursor: string, history: StreamEntry[]) {
     const [time, emptySince = 0] = cursor.split("-").map(Number)
+
     if (time !== 0) return history[0]?.cursor === cursor
 
     // The channel was empty at the cursor, so the history holds every event since, unless Redis
     // trimmed or expired some. Trimming never leaves fewer than `maxLength` events, and the stream
     // expires `expireAfter` after its last event, which came after the cursor.
     const { expireAfter, maxLength } = getHistory(channel)
+
     return history.length < maxLength && (await readTime(connection)) - emptySince < ms(expireAfter)
   }
 
   return {
     async handle(request: Request) {
       const body = z.safeParse(SubscribeRequestSchema, await request.json().catch(() => null))
+
       if (!body.success) return invalid("The subscription request is invalid")
 
       const addresses = []
+
       for (const { channel, cursor, params } of body.data.subscriptions) {
         if (!isChannelName(channel)) return invalid(`The channel "${channel}" does not exist`)
 
         const address = addressChannel(channel, params)
+
         if ("error" in address) return invalid(`The params do not match the "${channel}" channel`)
 
         addresses.push({ ...address, channel, cursor })
@@ -87,10 +92,12 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
         await Promise.all(
           addresses.map(async ({ channel, cursor, key, params }) => {
             const isAllowed = await getAuthorize(authorize, channel)({ params, request })
+
             return [key, { channel, cursor, isAllowed, key }] as const
           })
         )
       )
+
       // A request that arrives after close, or was still parsing or authorizing when it ran, must not
       // open a stream, which would hold the server open after `close` ended the others.
       if (isClosing) return unavailable()
@@ -122,7 +129,9 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
             untrack()
             served.delete(handleInterruption)
             request.signal.removeEventListener("abort", handleAbort)
+
             for (const [key, listener] of joined) hub.leave(key, listener)
+
             if (!isCancelled) controller.close()
           }
 
@@ -160,6 +169,7 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
               if (last === undefined) buffered.push(entry)
               else deliver(entry)
             }
+
             joined.push([redisKey, listener])
             await hub.join(redisKey, listener)
 
@@ -169,8 +179,10 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
             } else {
               const stored = await connection.xRange(redisKey, cursor, "+")
               const history = stored.map((entry) => parseStored(entry))
+
               if (await isCursorKept(channel, cursor, history)) {
                 last = cursor
+
                 for (const entry of history) deliver(entry)
                 send("ready", { cursor: last, key })
               } else {
@@ -223,6 +235,7 @@ export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOp
      */
     close() {
       isClosing = true
+
       for (const close of served) close()
     },
   }

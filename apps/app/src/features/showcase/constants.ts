@@ -133,6 +133,7 @@ export const SHOWCASE_GROUPS = [
 ] as const
 
 export type ShowcaseGroupId = (typeof SHOWCASE_GROUPS)[number]["id"]
+
 export type ShowcaseSectionId = (typeof SHOWCASE_GROUPS)[number]["sections"][number]["id"]
 
 export const BUTTON_VARIANTS = [
@@ -143,8 +144,10 @@ export const BUTTON_VARIANTS = [
   "destructive",
   "link",
 ] as const
+
 export const BUTTON_SIZES = ["xs", "sm", "default", "lg"] as const
 export const BUTTON_ICON_SIZES = ["icon-xs", "icon-sm", "icon", "icon-lg"] as const
+
 export const BADGE_VARIANTS = [
   "default",
   "secondary",
@@ -153,8 +156,10 @@ export const BADGE_VARIANTS = [
   "destructive",
   "link",
 ] as const
+
 export const TOGGLE_SIZES = ["sm", "default", "lg"] as const
 export const SIDES = ["top", "right", "bottom", "left"] as const
+
 export const BUBBLE_VARIANTS = [
   "default",
   "secondary",
@@ -164,9 +169,11 @@ export const BUBBLE_VARIANTS = [
   "ghost",
   "destructive",
 ] as const
+
 export const ATTACHMENT_STATES = ["idle", "uploading", "processing", "error", "done"] as const
 export const ATTACHMENT_SIZES = ["default", "sm", "xs"] as const
 export const PROGRESS_VALUES = [0, 33, 66, 100] as const
+
 export const ASPECT_RATIOS = [
   { label: "16 / 9", value: 16 / 9 },
   { label: "4 / 3", value: 4 / 3 },
@@ -209,6 +216,7 @@ export const TAKEN_EMAIL = "taken@example.com"
 
 export const CALENDAR_DEFAULT_MONTH = new Date(2026, 5, 1)
 export const CALENDAR_SELECTED_DATE = new Date(2026, 5, 12)
+
 export const CALENDAR_SELECTED_RANGE = {
   from: new Date(2026, 5, 8),
   to: new Date(2026, 5, 17),

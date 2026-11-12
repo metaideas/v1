@@ -14,6 +14,7 @@ import { auth, database } from "#shared/server/services.ts"
 export const withLogger = createMiddleware({ type: "function" }).server(
   async ({ next, method, serverFnMeta }) => {
     const request = getRequest()
+
     const log = createRequestLogger({
       method,
       path: new URL(request.url).pathname,

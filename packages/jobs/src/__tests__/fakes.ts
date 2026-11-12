@@ -16,18 +16,22 @@ export function mockQueues() {
   const add = vi.fn((name: string, data: unknown, options: { jobId?: string }) =>
     Promise.resolve({ data, id: options.jobId ?? "1", name })
   )
+
   const processors = new Map<string, Processor>()
+
   const redis = {
     disconnect: vi.fn(),
     on: vi.fn(),
     quit: vi.fn(() => Promise.resolve("OK")),
     status: "ready",
   }
+
   const worker = {
     close: vi.fn((_force?: boolean) => Promise.resolve()),
     on: () => worker,
     run: () => Promise.resolve(),
   }
+
   const queue = { add, close: () => Promise.resolve(), on: vi.fn() }
 
   // The package calls `new Queue()` and `new Worker()`, and an arrow function can't be constructed.

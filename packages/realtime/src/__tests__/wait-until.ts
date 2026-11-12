@@ -4,6 +4,7 @@
 export function waitUntil(condition: () => boolean) {
   return new Promise<void>((resolve, reject) => {
     const started = Date.now()
+
     const timer = setInterval(() => {
       if (condition()) {
         clearInterval(timer)

@@ -33,6 +33,9 @@ export const TurboJsonSchema = z.object({
 })
 
 export type KnipConfig = z.infer<typeof KnipConfigModuleSchema>["default"]
+
 export type PackageJson = z.infer<typeof PackageJsonSchema>
+
 export type TemplateCleanup = z.infer<typeof TemplateCleanupSchema>
+
 export type TemplateStamp = z.infer<typeof TemplateStampSchema>

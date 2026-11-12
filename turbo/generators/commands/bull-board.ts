@@ -175,6 +175,7 @@ async function applyEdit(path: string, edit: Edit) {
   }
 
   const sourceWithImports = addImports(source, edit.imports)
+
   if (sourceWithImports === undefined) {
     return `[MANUAL] ${path} already binds a name this edit imports. ${edit.manual}`
   }
@@ -182,16 +183,19 @@ async function applyEdit(path: string, edit: Edit) {
   source = sourceWithImports
 
   await writeFile(path, source)
+
   return `${path}: connected bull-board`
 }
 
 async function addEnvironment() {
   const schemaPath = `${API_PATH}/.env.schema`
   const schema = await readFile(schemaPath, "utf8")
+
   const missing = ENVIRONMENT.trim()
     .split("\n\n")
     .filter((declaration) => {
       const key = /^([A-Z0-9_]+)=/m.exec(declaration)?.[1]
+
       return key !== undefined && !new RegExp(`^${key}=`, "m").test(schema)
     })
 
@@ -200,6 +204,7 @@ async function addEnvironment() {
   }
 
   await writeFile(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
+
   return `${schemaPath}: added the optional jobs dashboard variables`
 }
 
@@ -241,6 +246,7 @@ export function registerBullBoardGenerator(plop: PlopTypes.NodePlopAPI) {
             ],
             API_PATH
           )
+
           return `${API_PATH}: installed bull-board`
         },
         async () => {
@@ -249,6 +255,7 @@ export function registerBullBoardGenerator(plop: PlopTypes.NodePlopAPI) {
           }
 
           answers.theme = JSON.stringify(readTheme(await readFile(UI_STYLES_PATH, "utf8")), null, 2)
+
           return `Matched the dashboard to the shadcn theme in ${UI_STYLES_PATH}`
         },
         {

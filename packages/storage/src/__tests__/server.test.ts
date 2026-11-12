@@ -33,6 +33,7 @@ async function presignUpload(type: string) {
       }),
     }),
   })
+
   const response = await router.handle(
     new Request("http://localhost/files", {
       body: JSON.stringify({ files: [{ name: "file", size: 16, type }], op: "presign" }),
@@ -40,7 +41,9 @@ async function presignUpload(type: string) {
       method: "POST",
     })
   )
+
   const body = (await response.json()) as { uploads: Array<{ target: { url: string } }> }
+
   return body.uploads[0]?.target.url ?? ""
 }
 
@@ -62,6 +65,7 @@ describe("createUploadStorage", () => {
 
   test("records a file read with head, including its metadata", async () => {
     const onUploadStored = vi.fn((_file: UploadRecord) => Promise.resolve())
+
     const storage = createUploadStorage({
       adapter: createMemoryAdapter({
         initial: {
@@ -87,6 +91,7 @@ describe("createUploadStorage", () => {
 
   test("removes the record of a deleted file", async () => {
     const onUploadDeleted = vi.fn((_key: string) => Promise.resolve())
+
     const storage = createUploadStorage({
       adapter: createMemoryAdapter({ initial: { "users/u1/report.pdf": PDF } }),
       onUploadDeleted,
@@ -99,6 +104,7 @@ describe("createUploadStorage", () => {
 
   test("removes one record for each key of a bulk delete", async () => {
     const onUploadDeleted = vi.fn((_key: string) => Promise.resolve())
+
     const storage = createUploadStorage({
       adapter: createMemoryAdapter({
         initial: { "users/u1/a.pdf": PDF, "users/u1/b.pdf": PDF },
@@ -116,10 +122,12 @@ describe("createUploadStorage", () => {
 
   test("waits for the record write before the operation resolves", async () => {
     const write = Promise.withResolvers<boolean>()
+
     const storage = createUploadStorage({
       adapter: createMemoryAdapter(),
       onUploadStored: () => write.promise,
     })
+
     const pending = Symbol("pending")
 
     const upload = storage.upload("users/u1/report.pdf", PDF, PDF_OPTIONS)
@@ -132,6 +140,7 @@ describe("createUploadStorage", () => {
 
   test("logs a failed record write and keeps the successful storage result", async () => {
     const logger = createLogger()
+
     const storage = createUploadStorage({
       adapter: createMemoryAdapter(),
       logger,
@@ -200,9 +209,11 @@ describe("createUploadStorage", () => {
   test("deletes a directly uploaded file of a disallowed type when it is completed", async () => {
     const onUploadStored = vi.fn((_file: UploadRecord) => Promise.resolve())
     const onUploadDeleted = vi.fn((_key: string) => Promise.resolve())
+
     const adapter = createMemoryAdapter({
       initial: { "users/u1/page.html": { body: "<p>hi</p>", contentType: "text/html" } },
     })
+
     const storage = createUploadStorage({ adapter, onUploadDeleted, onUploadStored })
 
     const error = await storage.head("users/u1/page.html").catch((error: unknown) => error)

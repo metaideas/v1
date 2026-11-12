@@ -31,18 +31,22 @@ export default defineCommand({
   },
   run: async ({ args }) => {
     const kind = parseKind(args.kind)
+
     if (!kind) {
       consola.error(`Unknown workspace type: ${args.kind}. Use app or package.`)
       process.exitCode = 1
+
       return
     }
 
     const rootDir = process.cwd()
     const workspaces = await getWorkspaceGraph(rootDir)
     const target = workspaces.find((entry) => entry.kind === kind && entry.name === args.name)
+
     if (!target) {
       consola.error(`The ${getWorkspacePath({ kind, name: args.name })} workspace does not exist.`)
       process.exitCode = 1
+
       return
     }
 
@@ -53,13 +57,16 @@ export default defineCommand({
     const dependents = workspaces
       .filter((entry) => entry.dependencies.includes(target.packageName))
       .map((entry) => getWorkspacePath(entry))
+
     const terms =
       target.kind === "app"
         ? [`"${target.packageName}"`, `"${target.packageName}/`, targetPath]
         : [target.packageName, targetPath]
+
     const referencingFiles = await Promise.all(
       terms.map((term) => findTextReferences(rootDir, term))
     )
+
     const references = [...new Set(referencingFiles.flat())]
       .map((path) => relative(rootDir, path))
       .filter((path) => !isProse(path) && path !== "pnpm-lock.yaml")
@@ -67,6 +74,7 @@ export default defineCommand({
 
     if (dependents.length > 0)
       consola.warn(`Workspaces that depended on it: ${dependents.join(", ")}`)
+
     if (references.length > 0) {
       consola.warn(`Files that still reference ${targetPath}:\n  ${references.join("\n  ")}`)
     }

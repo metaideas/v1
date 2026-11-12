@@ -33,18 +33,23 @@ async function renameExpoApps(rootDir: string, scope: string) {
     "app.config.js",
     ...(await Array.fromAsync(glob("apps/*/app.config.js", { cwd: rootDir }))),
   ]
+
   const changedFiles = await Promise.all(
     configs.map(async (relativePath) => {
       const path = join(rootDir, relativePath)
+
       if (!existsSync(path)) return null
 
       const contents = await readFile(path, "utf8")
+
       const renamed = contents
         .replace(/^const APP_ID = ".*"$/m, `const APP_ID = "${getExpoAppId(scope)}"`)
         .replace(/^const APP_NAME = ".*"$/m, `const APP_NAME = "${scope}"`)
+
       if (renamed === contents) return null
 
       await writeFile(path, renamed)
+
       return path
     })
   )
@@ -66,6 +71,7 @@ export async function renameProject({ rootDir, projectName, scope, sourceScope }
 
   const packageJsonPath = join(rootDir, "package.json")
   const packageJson = await readPackageJson(packageJsonPath)
+
   if (packageJson.name !== projectName) {
     packageJson.name = projectName
     await writeJson(packageJsonPath, packageJson)

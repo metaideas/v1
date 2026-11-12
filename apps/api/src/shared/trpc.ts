@@ -38,6 +38,7 @@ export const t = initTRPC.context<TRPCContext>().create({
 export const createRouter = t.router
 
 export const publicProcedure = t.procedure
+
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   const session = await ctx.auth.api.getSession({ headers: ctx.req.headers })
 

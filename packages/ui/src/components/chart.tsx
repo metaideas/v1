@@ -54,6 +54,7 @@ ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color = itemConfig.theme?.[theme] ?? itemConfig.color
+
     return color ? `  --color-${key}: ${color};` : null
   })
   .join("\n")}
@@ -157,6 +158,7 @@ function ChartTooltipContent({
     const [item] = payload
     const key = String(labelKey ?? item?.dataKey ?? item?.name ?? "value")
     const itemConfig = getPayloadConfigFromPayload(config, item, key)
+
     const value =
       !labelKey && typeof label === "string" ? (config[label]?.label ?? label) : itemConfig?.label
 
@@ -196,6 +198,7 @@ function ChartTooltipContent({
             const key = String(nameKey ?? item.name ?? item.dataKey ?? "value")
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
             const indicatorColor = color ?? item.payload?.fill ?? item.color
+
             const indicatorStyle: React.CSSProperties
               & Record<"--color-bg" | "--color-border", typeof indicatorColor> = {
               "--color-bg": indicatorColor,

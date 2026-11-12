@@ -60,6 +60,7 @@ function searchBarAutoCapitalizeToTextInput(
 
 function customEntering() {
   "worklet"
+
   return {
     animations: {
       transform: [{ scale: withTiming(3, { duration: 400 }) }],
@@ -72,6 +73,7 @@ function customEntering() {
 
 function customExiting() {
   "worklet"
+
   return {
     animations: {
       opacity: withTiming(0),
@@ -112,10 +114,12 @@ export default function LargeTitleHeader(props: LargeTitleHeaderProps) {
   const navigation = useNavigation()
   const route = useRoute()
   const id = React.useId()
+
   const [foreground, mutedForeground] = useCSSVariable([
     "--color-foreground",
     "--color-muted-foreground",
   ])
+
   const foregroundColor = typeof foreground === "string" ? foreground : undefined
   const mutedForegroundColor = typeof mutedForeground === "string" ? mutedForeground : undefined
 

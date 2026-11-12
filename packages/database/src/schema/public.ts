@@ -27,6 +27,9 @@ export const profiles = pg.snakeCase.table("profiles", {
     })
     .$type<UserId>(),
 })
+
 export type Profile = typeof profiles.$inferSelect
+
 export type NewProfile = typeof profiles.$inferInsert
+
 export type ProfileId = Profile["id"]

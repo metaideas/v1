@@ -36,16 +36,19 @@ export async function runRecipe(
     process.chdir(projectDir)
 
     let config: Partial<PlopTypes.PlopGeneratorConfig> | undefined
+
     // A recipe only registers its generator, so the fake implements `setGenerator` alone.
     const plop = {
       setGenerator: (_name: string, generatorConfig: Partial<PlopTypes.PlopGeneratorConfig>) => {
         config = generatorConfig
       },
     } as unknown as PlopTypes.NodePlopAPI
+
     register(plop)
 
     const actions =
       typeof config?.actions === "function" ? config.actions(answers) : (config?.actions ?? [])
+
     const reports: string[] = []
 
     for (const action of actions) {

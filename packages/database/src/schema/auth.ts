@@ -22,8 +22,11 @@ export const users = authSchema.table(
   },
   (table) => [pg.index("users_email_idx").on(table.email)]
 )
+
 export type User = typeof users.$inferSelect
+
 export type NewUser = typeof users.$inferInsert
+
 export type UserId = User["id"]
 
 export const accounts = authSchema.table(
@@ -65,8 +68,11 @@ export const accounts = authSchema.table(
       .on(table.providerId, table.accountId),
   ]
 )
+
 export type Account = typeof accounts.$inferSelect
+
 export type NewAccount = typeof accounts.$inferInsert
+
 export type AccountId = Account["id"]
 
 export const verifications = authSchema.table(
@@ -86,7 +92,9 @@ export const verifications = authSchema.table(
     pg.uniqueIndex("auth_verifications_value_unique_idx").on(table.value),
   ]
 )
+
 export type Verification = typeof verifications.$inferSelect
+
 export type NewVerification = typeof verifications.$inferInsert
 
 export const sessions = authSchema.table(
@@ -118,7 +126,9 @@ export const sessions = authSchema.table(
     pg.index("auth_sessions_ip_address_idx").on(table.ipAddress),
   ]
 )
+
 export type Session = typeof sessions.$inferSelect
+
 export type NewSession = typeof sessions.$inferInsert
 
 export const jwks = authSchema.table("jwks", {
@@ -133,5 +143,7 @@ export const jwks = authSchema.table("jwks", {
   alg: pg.text(),
   crv: pg.text(),
 })
+
 export type Jwk = typeof jwks.$inferSelect
+
 export type NewJwk = typeof jwks.$inferInsert

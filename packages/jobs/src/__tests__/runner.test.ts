@@ -14,6 +14,7 @@ const jobRunner = createJobsRunner({
 
 function processJob(job: { attemptsMade: number; data: unknown; id: string; name: string }) {
   const processor = processors.get("default")
+
   if (!processor) throw new Error("The runner did not subscribe to the default queue")
 
   return processor(job)
