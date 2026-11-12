@@ -7,7 +7,7 @@
         "name": "@astrojs/ts-plugin"
       }
     ],
-    "types": ["bun"]
+    "types": ["node"]
   },
   "include": [".astro/types.d.ts", "src", "reset.d.ts", "astro.config.ts"]
 }

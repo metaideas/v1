@@ -11,9 +11,6 @@ import { defineConfig } from "vite"
 import { ENV } from "#shared/env.generated.ts"
 
 export default defineConfig(({ command }) => ({
-  optimizeDeps: {
-    exclude: ["bun"],
-  },
   plugins: [
     devtools(),
     varlock(),
@@ -29,7 +26,7 @@ export default defineConfig(({ command }) => ({
       strategy: ["cookie", "baseLocale"],
     }),
     nitro({
-      preset: "bun",
+      preset: "node-server",
     }),
   ],
   server: {

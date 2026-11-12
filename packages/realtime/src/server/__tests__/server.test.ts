@@ -289,12 +289,12 @@ describe("createRealtimeHandler", () => {
 
   test("refuses a stream whose authorization finishes after close", async () => {
     const realtime = createRealtime({ url: "redis://localhost:6379" })
-    const authorizing = Promise.withResolvers<undefined>()
+    const authorizing = Promise.withResolvers<boolean>()
     const authorization = Promise.withResolvers<boolean>()
     const handler = createRealtimeHandler({
       authorize: {
         demo: () => {
-          authorizing.resolve()
+          authorizing.resolve(true)
           return authorization.promise
         },
       },

@@ -7,17 +7,17 @@
     "#*": "./src/*"
   },
   "scripts": {
-    "build": "bun --bun vite build",
+    "build": "vite build",
     "bump:deps": "bun update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "codegen": "bun run --parallel \"codegen:*\"",
     "codegen:env": "varlock codegen",
     "codegen:i18n": "paraglide-js compile --project ../../tooling/internationalization/project.inlang --outdir ./src/shared/internationalization",
-    "dev": "bun --bun vite dev",
+    "dev": "vite dev",
     "env:check": "varlock load",
     "env:scan": "test -d .output/public && varlock scan --path .env.schema --path .env.development .output/public",
-    "preview": "bun --bun vite preview",
-    "start": "varlock run -- bun --no-env-file --bun .output/server/index.mjs",
+    "preview": "vite preview",
+    "start": "varlock run -- node .output/server/index.mjs",
     "test": "vitest run"
   },
   "dependencies": {

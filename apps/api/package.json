@@ -1,7 +1,7 @@
 {
   "name": "api",
   "private": true,
-  "description": "Hono API running on Bun",
+  "description": "Hono API running on Node",
   "type": "module",
   "imports": {
     "#*": "./src/*"
@@ -15,13 +15,14 @@
     "codegen": "bun run --parallel \"codegen:*\"",
     "codegen:env": "varlock codegen",
     "codegen:i18n": "paraglide-js compile --project ../../tooling/internationalization/project.inlang --outdir ./src/shared/internationalization",
-    "dev": "varlock run -- bun --no-env-file --watch src/index.ts",
+    "dev": "varlock run -- node --import @oxc-node/core/register --watch src/index.ts",
     "env:check": "varlock load",
-    "start": "varlock run -- bun --no-env-file --bun src/index.ts"
+    "start": "varlock run -- node --import @oxc-node/core/register src/index.ts"
   },
   "dependencies": {
     "@hono/node-server": "2.1.6",
     "@hono/trpc-server": "0.4.2",
+    "@oxc-node/core": "1.0.1",
     "@sanely/duration": "0.1.0",
     "@sanely/ratelimit": "0.1.0",
     "@sanely/request": "0.1.0",
@@ -49,7 +50,7 @@
     "@inlang/paraglide-js": "2.25.4",
     "@tooling/internationalization": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
-    "@types/bun": "1.4.4",
+    "@types/node": "26.6.4",
     "typescript": "7.0.2"
   }
 }

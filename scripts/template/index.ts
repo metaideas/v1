@@ -1,10 +1,10 @@
 import { defineCommand } from "citty"
 
-import add from "./add"
-import diff from "./diff"
-import doctor from "./doctor"
-import remove from "./remove"
-import setup from "./setup"
+import add from "./add.ts"
+import diff from "./diff.ts"
+import doctor from "./doctor.ts"
+import remove from "./remove.ts"
+import setup from "./setup.ts"
 
 export default defineCommand({
   meta: {

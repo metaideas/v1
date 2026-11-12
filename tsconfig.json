@@ -4,7 +4,8 @@
     "target": "esnext",
     "erasableSyntaxOnly": true,
     "moduleResolution": "bundler",
-    "types": ["bun"]
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
   },
   "include": ["scripts", "turbo", "tooling"],
   "exclude": [".packref"]

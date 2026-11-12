@@ -12,7 +12,7 @@
     "clean": "git clean -xdf .cache .turbo .expo dist node_modules",
     "codegen": "bun run --parallel \"codegen:*\"",
     "codegen:env": "varlock codegen",
-    "codegen:i18n": "bun run scripts/codegen.ts",
+    "codegen:i18n": "node scripts/codegen.mts",
     "dev": "varlock run -- expo start --port ${PORT:-3002}",
     "dev:android": "varlock run -- expo start --android",
     "dev:ios": "varlock run -- expo start --ios",

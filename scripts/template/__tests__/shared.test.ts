@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import { checkIsRemovedByCleanup, findUnknownKnipWorkspaces } from "../shared"
+import { checkIsRemovedByCleanup, findUnknownKnipWorkspaces } from "../shared.ts"
 
 const ROOT_DIR = "/project"
 

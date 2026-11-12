@@ -1,7 +1,7 @@
 {
   "name": "worker",
   "private": true,
-  "description": "Background worker for jobs and workflows running on Bun",
+  "description": "Background worker for jobs and workflows running on Node",
   "type": "module",
   "imports": {
     "#*": "./src/*"
@@ -10,9 +10,9 @@
     "bump:deps": "bun update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "codegen": "varlock codegen",
-    "dev": "varlock run -- bun --no-env-file --watch src/index.ts",
+    "dev": "varlock run -- node --watch src/index.ts",
     "env:check": "varlock load",
-    "start": "varlock run -- bun --no-env-file --bun src/index.ts"
+    "start": "varlock run -- node src/index.ts"
   },
   "dependencies": {
     "@v1/jobs": "workspace:*",
@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",
-    "@types/bun": "1.4.4",
+    "@types/node": "26.6.4",
     "typescript": "7.0.2"
   }
 }

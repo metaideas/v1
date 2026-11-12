@@ -16,7 +16,7 @@ The template has the following folders:
 root
   ├── apps                # Cross-platform applications
   │   ├── app               # TanStack Start web application
-  │   ├── api               # Hono API with RPC client running on Bun
+  │   ├── api               # Hono API with RPC client running on Node
   │   ├── desktop           # Electron desktop application with TanStack Router
   │   ├── docs              # Astro Starlight documentation site
   │   ├── extension         # WXT browser extension
@@ -111,7 +111,7 @@ Each application workspace below follows the layout above. The trees show the fo
 
 ### API
 
-A Hono server on Bun. It serves tRPC, versioned REST routes, and the file storage gateway from `@v1/storage`. `src/client.ts` is the only module that other application workspaces can import.
+A Hono server on Node. It serves tRPC, versioned REST routes, and the file storage gateway from `@v1/storage`. `src/client.ts` is the only module that other application workspaces can import. Node loads the server through `@oxc-node/core`, because the email templates it imports from `@v1/email` use JSX, and Node strips TypeScript types but does not compile JSX. The loader compiles each file with the tsconfig of the workspace that owns it.
 
 ```sh
 apps/api/src
@@ -124,7 +124,7 @@ apps/api/src
 
 ### Worker
 
-A Bun process that consumes `@v1/jobs` queues and runs `@v1/workflows` functions over a WebSocket to Inngest. It serves no HTTP. Run more than one to share the load; each job or workflow step goes to one of them.
+A Node process that consumes `@v1/jobs` queues and runs `@v1/workflows` functions over a WebSocket to Inngest. It serves no HTTP. Run more than one to share the load; each job or workflow step goes to one of them.
 
 ```sh
 apps/worker/src

@@ -9,7 +9,7 @@ const url = process.env.DATABASE_URL ?? ""
 describe("withTransaction", () => {
   test.skipIf(url === "")("gives concurrent operations their own transactions", async () => {
     const database = createDatabase({ url })
-    const bothOpen = Promise.withResolvers<undefined>()
+    const bothOpen = Promise.withResolvers<boolean>()
     let openCount = 0
 
     function readTransactionId() {
@@ -19,7 +19,7 @@ describe("withTransaction", () => {
         )
         openCount += 1
         if (openCount === 2) {
-          bothOpen.resolve()
+          bothOpen.resolve(true)
         }
         await bothOpen.promise
         return row?.id

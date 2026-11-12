@@ -1,6 +1,7 @@
 {
   "extends": "@tooling/tsconfig/internal-package.json",
   "compilerOptions": {
-    "types": ["bun"]
+    "jsx": "react-jsx",
+    "types": ["node"]
   }
 }

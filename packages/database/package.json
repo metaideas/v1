@@ -17,13 +17,13 @@
     "bump:deps": "bun update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "codegen": "varlock codegen",
-    "dev": "varlock run -- bun --bun drizzle-kit studio --port ${PORT:-4000}",
+    "dev": "varlock run -- drizzle-kit studio --port ${PORT:-4000}",
     "env:check": "varlock load",
-    "generate": "varlock run -- bun --bun drizzle-kit generate",
-    "migrate": "varlock run -- bun --bun drizzle-kit migrate",
-    "push": "varlock run -- bun --bun drizzle-kit push",
-    "reset": "varlock run -- bun --bun run ./scripts/reset.ts",
-    "seed": "varlock run -- bun --bun run ./scripts/seed.ts",
+    "generate": "varlock run -- drizzle-kit generate",
+    "migrate": "varlock run -- drizzle-kit migrate",
+    "push": "varlock run -- drizzle-kit push",
+    "reset": "varlock run -- node ./scripts/reset.ts",
+    "seed": "varlock run -- node ./scripts/seed.ts",
     "test": "vitest run"
   },
   "dependencies": {
@@ -36,7 +36,7 @@
   "devDependencies": {
     "@tooling/testing": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
-    "@types/bun": "1.4.4",
+    "@types/node": "26.6.4",
     "drizzle-kit": "1.0.0-rc.5",
     "drizzle-seed": "1.0.0-rc.5",
     "typescript": "7.0.2",
