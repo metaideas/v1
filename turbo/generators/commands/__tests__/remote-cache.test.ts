@@ -61,6 +61,13 @@ describe("commandRunsTurbo", () => {
     expect(commandRunsTurbo("pnpm --filter=@v1/app turbo generate")).toBe(true)
     expect(commandRunsTurbo("pnpm turbo-ignore")).toBe(false)
   })
+
+  test("skips the values of pnpm flags before a Turbo call", () => {
+    expect(commandRunsTurbo("pnpm --filter app exec turbo run build")).toBe(true)
+    expect(commandRunsTurbo("pnpm -F app exec turbo build")).toBe(true)
+    expect(commandRunsTurbo("pnpm --dir apps/app turbo build")).toBe(true)
+    expect(commandRunsTurbo("pnpm --filter app exec turbo-ignore")).toBe(false)
+  })
 })
 
 describe("turboScriptNames", () => {
