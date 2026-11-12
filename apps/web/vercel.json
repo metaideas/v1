@@ -1,4 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "bunVersion": "1.4.x"
+  "installCommand": "pnpm install --frozen-lockfile && pnpm run codegen"
 }
