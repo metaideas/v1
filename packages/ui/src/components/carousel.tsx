@@ -19,7 +19,6 @@ type CarouselProps = {
   opts?: CarouselOptions
   plugins?: CarouselPlugin
   orientation?: "horizontal" | "vertical"
-  setApi?: (api: CarouselApi) => void
 }
 
 type CarouselContextProps = {
@@ -46,7 +45,6 @@ function useCarousel() {
 function Carousel({
   orientation = "horizontal",
   opts,
-  setApi,
   plugins,
   ...props
 }: React.ComponentProps<"div"> & CarouselProps) {
@@ -56,7 +54,6 @@ function Carousel({
     opts,
     orientation,
     plugins,
-    setApi,
   })
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
