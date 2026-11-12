@@ -1486,11 +1486,7 @@ importers:
         specifier: workspace:*
         version: link:../tsconfig
 
-  tooling/tsconfig:
-    devDependencies:
-      '@total-typescript/ts-reset':
-        specifier: 0.6.1
-        version: 0.6.1
+  tooling/tsconfig: {}
 
 packages:
 
@@ -6832,9 +6828,6 @@ packages:
   '@topcli/prompts@4.0.0':
     resolution: {integrity: sha512-kkKYPb4k/6kRdnESt77B5vJrrYnYHIYczwv0P1c+tfN/IWEx3KZeKEHoUq7sImIyBEXWdA2uakIroD9pmRJziQ==}
     engines: {node: '>=22.0.0'}
-
-  '@total-typescript/ts-reset@0.6.1':
-    resolution: {integrity: sha512-cka47fVSo6lfQDIATYqb/vO1nvFfbPw7uWLayIXIhGETj0wcOOlrlkobOMDNQOFr9QOafegUPq13V2+6vtD7yg==}
 
   '@traceloop/ai-semantic-conventions@0.20.0':
     resolution: {integrity: sha512-bvivhZU6U8TW4TKktYnjdTi+7GE4WxI8epaGjawalSKDunmxaA+4UVFQ+4tSCBvp2Scby+gnYNaTZSrtABfOlQ==}
@@ -19141,8 +19134,6 @@ snapshots:
   '@tanstack/virtual-file-routes@1.162.0': {}
 
   '@topcli/prompts@4.0.0': {}
-
-  '@total-typescript/ts-reset@0.6.1': {}
 
   '@traceloop/ai-semantic-conventions@0.20.0':
     dependencies:

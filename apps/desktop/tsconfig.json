@@ -1,7 +1,6 @@
 {
   "extends": "@tooling/tsconfig/app.json",
   "include": [
-    "reset.d.ts",
     "src",
     "forge.config.ts",
     "vite.main.config.ts",

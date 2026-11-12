@@ -6,7 +6,7 @@
   "include": [
     "src",
     "app.config.ts",
-    "reset.d.ts",
+    "expo-types.d.ts",
     "src/uniwind-types.d.ts",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"

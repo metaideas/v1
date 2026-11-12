@@ -3,14 +3,10 @@
   "private": true,
   "description": "Shared TypeScript configurations",
   "files": [
-    "*.json",
-    "reset.d.ts"
+    "*.json"
   ],
   "scripts": {
     "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules"
-  },
-  "devDependencies": {
-    "@total-typescript/ts-reset": "0.6.1"
   }
 }

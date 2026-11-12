@@ -6,5 +6,5 @@
     "noEmit": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["src", "reset.d.ts"]
+  "include": ["src"]
 }
