@@ -106,28 +106,22 @@ function ChartContainer({
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
-function getStringProperty(value: object, key: string) {
-  const property: unknown = Reflect.get(value, key)
+/**
+ * Finds the config entry for a tooltip or legend item. The field at `key` on the item, or on its
+ * data row, can name the entry, as a Pie's `nameKey` does. Recharts leaves the data row untyped, so
+ * a field counts only when `config` has an entry with its value.
+ */
+function getPayloadConfigFromPayload(
+  config: ChartConfig,
+  // Recharts types a tooltip item's data row as `any` and a legend item's as `object`.
+  item: { payload?: object },
+  key: string
+) {
+  const field = [item, item.payload ?? {}]
+    .flatMap((source) => Object.entries(source))
+    .find(([name, value]) => name === key && Object.hasOwn(config, String(value)))
 
-  return typeof property === "string" ? property : undefined
-}
-
-function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key: string) {
-  if (typeof payload !== "object" || payload === null) {
-    return
-  }
-
-  const payloadPayload =
-    "payload" in payload && typeof payload.payload === "object" && payload.payload !== null
-      ? payload.payload
-      : undefined
-
-  const configLabelKey =
-    getStringProperty(payload, key)
-    ?? (payloadPayload ? getStringProperty(payloadPayload, key) : undefined)
-    ?? key
-
-  return configLabelKey in config ? config[configLabelKey] : config[key]
+  return config[field ? String(field[1]) : key]
 }
 
 function ChartTooltipContent({
@@ -157,7 +151,7 @@ function ChartTooltipContent({
 
     const [item] = payload
     const key = String(labelKey ?? item?.dataKey ?? item?.name ?? "value")
-    const itemConfig = getPayloadConfigFromPayload(config, item, key)
+    const itemConfig = item && getPayloadConfigFromPayload(config, item, key)
 
     const value =
       !labelKey && typeof label === "string" ? (config[label]?.label ?? label) : itemConfig?.label
