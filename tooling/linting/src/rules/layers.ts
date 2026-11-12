@@ -1,4 +1,4 @@
-import { defineRule, type ESTree } from "adamantite/rules"
+import { defineRule, type ESTree } from "adamantite/rules/plugin"
 import { findSourceRoot, findViolation, locate, resolveImport, selectBoundaries } from "#layers.ts"
 
 export default defineRule({

@@ -1,4 +1,4 @@
-import { defineRule } from "adamantite/rules"
+import { defineRule } from "adamantite/rules/plugin"
 import { findSourceRoot, findStrayFolder, listLayerFolders, selectBoundaries } from "#layers.ts"
 
 export default defineRule({

@@ -1,5 +1,5 @@
 import core from "adamantite/lint"
-import custom from "adamantite/lint/custom"
+import custom from "adamantite/rules"
 import node from "adamantite/lint/node"
 import react from "adamantite/lint/react"
 import reactStrict from "adamantite/lint/react-strict"
