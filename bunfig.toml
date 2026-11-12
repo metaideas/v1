@@ -1,6 +1,0 @@
-# Varlock is the only repository-owned dotenv loader.
-env = false
-
-[install]
-exact = true
-linker = "isolated"

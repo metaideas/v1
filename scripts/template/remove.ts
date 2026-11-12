@@ -62,7 +62,7 @@ export default defineCommand({
     )
     const references = [...new Set(referencingFiles.flat())]
       .map((path) => relative(rootDir, path))
-      .filter((path) => !isProse(path) && path !== "bun.lock")
+      .filter((path) => !isProse(path) && path !== "pnpm-lock.yaml")
       .toSorted()
 
     if (dependents.length > 0)

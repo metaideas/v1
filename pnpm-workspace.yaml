@@ -1,0 +1,29 @@
+packages:
+  - apps/*
+  - packages/*
+  - tooling/*
+
+saveExact: true
+
+# Repeats pnpm's default so `electron-forge package` accepts isolated installs. Forge's system
+# check rejects pnpm unless `node-linker` is "hoisted" or a hoist pattern is set, although the
+# Vite plugin bundles the desktop app and packages no `node_modules`. Remove this setting when
+# https://github.com/electron/forge/issues/4188 lands.
+hoistPattern:
+  - "*"
+
+overrides:
+  "@types/react": 19.2.4
+  "@types/react-dom": 19.2.4
+  react: 19.2.3
+  react-dom: 19.2.3
+  sharp: 0.35.5
+
+patchedDependencies:
+  evlog@2.30.0: patches/evlog@2.30.0.patch
+
+allowBuilds:
+  electron-winstaller: true
+  esbuild: false
+  msgpackr-extract: false
+  protobufjs: false

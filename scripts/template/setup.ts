@@ -135,7 +135,6 @@ async function cleanupTemplateFiles(
     })
   )
 
-  delete packageJson["bun-create"]
   delete packageJson.v1
   await writeJson(packageJsonPath, packageJson)
 }

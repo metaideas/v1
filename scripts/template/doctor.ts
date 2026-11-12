@@ -270,7 +270,6 @@ const checks: Check[] = [
       return [
         ...(stamp.commit ? [] : [`${TEMPLATE_STAMP_FILE} does not record the template commit`]),
         ...("v1" in packageJson ? ["package.json still has the v1 field"] : []),
-        ...("bun-create" in packageJson ? ["package.json still has the bun-create field"] : []),
         ...markedFiles.map((path) => `${relative(rootDir, path)} still has TEMPLATE:START markers`),
       ]
     },
