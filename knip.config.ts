@@ -38,7 +38,7 @@ export default {
       project: "src/**/*.{js,jsx,ts,tsx}",
     },
     "apps/app": {
-      entry: "src/routeTree.gen.{ts,js}",
+      entry: ["src/routeTree.gen.{ts,js}", "vite.config.ts"],
       vite: false,
       vitest,
     },
