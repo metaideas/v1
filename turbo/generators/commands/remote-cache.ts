@@ -43,12 +43,52 @@ function splitShell(command: string) {
   return command.split(/&&|\|\||[;&|]/u)
 }
 
+type PnpmCall = { kind: "binary" | "either" | "script"; name: string }
+
+function unquote(token: string) {
+  return token.replaceAll(/^["']|["']$/gu, "")
+}
+
+/**
+ * Reads what a `pnpm` command runs: a binary through `exec` or `dlx`, a script through `run`, or
+ * either one through the `pnpm <name>` shorthand.
+ */
+function parsePnpmCall(command: string): PnpmCall | undefined {
+  const tokens = /^pnpm\b(.*)$/u.exec(command)?.[1]?.match(/\S+/gu) ?? []
+  let kind: PnpmCall["kind"] = "either"
+  let call: PnpmCall | undefined
+  let done = false
+
+  for (let index = 0; index < tokens.length && !done; index += 1) {
+    const token = tokens[index] ?? ""
+    if (SHELL_OPERATORS.has(token)) {
+      done = true
+    } else if (token === "--") {
+      const name = tokens[index + 1]
+      call = name === undefined ? undefined : { kind, name: unquote(name) }
+      done = true
+    } else if (token.startsWith("-")) {
+      if (!token.includes("=") && PNPM_VALUE_FLAGS.has(token)) index += 1
+    } else if (kind === "either" && (token === "exec" || token === "dlx")) {
+      kind = "binary"
+    } else if (kind === "either" && token === "run") {
+      kind = "script"
+    } else {
+      call = { kind, name: unquote(token) }
+      done = true
+    }
+  }
+
+  return call
+}
+
 export function commandRunsTurbo(command: string) {
   return splitShell(command).some((segment) => {
     const trimmed = segment.trim()
+    const call = parsePnpmCall(trimmed)
     return (
       /^(?:npx\s+|pnpx\s+|yarn\s+)?turbo(?![\w-])/u.test(trimmed)
-      || /^pnpm(?:\s+--?[\w.-]+(?:=\S+)?)*\s+(?:exec\s+|dlx\s+)?turbo(?![\w-])/u.test(trimmed)
+      || (call?.kind !== "script" && call?.name === "turbo")
     )
   })
 }
@@ -61,31 +101,6 @@ export function turboScriptNames(scripts: Readonly<Record<string, string>>) {
   )
 }
 
-// pnpm runs a script with `pnpm run <script>` or the shorthand `pnpm <script>`.
-function firstPnpmScript(command: string) {
-  const rest = /^pnpm\b(.*)$/u.exec(command)?.[1] ?? ""
-  const tokens = rest.match(/[^\s]+/gu) ?? []
-  let script: string | undefined
-  let done = false
-
-  for (let index = 0; index < tokens.length && !done; index += 1) {
-    const token = tokens[index]
-    if (!token || SHELL_OPERATORS.has(token)) {
-      done = true
-    } else if (token === "--") {
-      script = tokens[index + 1]?.replaceAll(/^["']|["']$/gu, "")
-      done = true
-    } else if (token.startsWith("-")) {
-      if (!token.includes("=") && PNPM_VALUE_FLAGS.has(token)) index += 1
-    } else if (token !== "run") {
-      script = token.replaceAll(/^["']|["']$/gu, "")
-      done = true
-    }
-  }
-
-  return script
-}
-
 function lineInvokesTurbo(line: string, turboScripts: ReadonlySet<string>) {
   const command = line
     .trim()
@@ -95,8 +110,8 @@ function lineInvokesTurbo(line: string, turboScripts: ReadonlySet<string>) {
   if (commandRunsTurbo(command)) return true
 
   for (const match of command.matchAll(/\bpnpm\b/gu)) {
-    const script = firstPnpmScript(command.slice(match.index))
-    if (script !== undefined && turboScripts.has(script)) return true
+    const call = parsePnpmCall(command.slice(match.index))
+    if (call && call.kind !== "binary" && turboScripts.has(call.name)) return true
   }
 
   return false
