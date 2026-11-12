@@ -9,10 +9,10 @@
   "scripts": {
     "astro": "astro",
     "build": "astro build",
-    "bump:deps": "bun update --interactive",
+    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "codegen": "bun run --parallel codegen:env codegen:astro",
-    "codegen:astro": "bun run --sequential codegen:i18n codegen:types",
+    "codegen": "pnpm run \"/^codegen:(env|astro)$/\"",
+    "codegen:astro": "pnpm run codegen:i18n && pnpm run codegen:types",
     "codegen:env": "varlock codegen",
     "codegen:i18n": "paraglide-js compile --project ../../tooling/internationalization/project.inlang --outdir ./src/shared/internationalization --strategy url globalVariable baseLocale",
     "codegen:types": "astro sync",

@@ -10,9 +10,9 @@
     "./client": "./src/client.ts"
   },
   "scripts": {
-    "bump:deps": "bun update --interactive",
+    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "codegen": "bun run --parallel \"codegen:*\"",
+    "codegen": "pnpm run \"/^codegen:/\"",
     "codegen:env": "varlock codegen",
     "codegen:i18n": "paraglide-js compile --project ../../tooling/internationalization/project.inlang --outdir ./src/shared/internationalization",
     "dev": "varlock run -- node --import @oxc-node/core/register --watch src/index.ts",

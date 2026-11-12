@@ -15,7 +15,7 @@
     "./client/auth/*": "./src/client/auth/*.ts"
   },
   "scripts": {
-    "bump:deps": "bun update --interactive",
+    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "convex dev",
     "env:set": "convex env set",

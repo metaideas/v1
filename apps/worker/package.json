@@ -7,7 +7,7 @@
     "#*": "./src/*"
   },
   "scripts": {
-    "bump:deps": "bun update --interactive",
+    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "codegen": "varlock codegen",
     "dev": "varlock run -- node --watch src/index.ts",

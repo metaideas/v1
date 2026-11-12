@@ -6,7 +6,7 @@
     "analyze": "adamantite analyze",
     "boundaries": "turbo boundaries",
     "build": "turbo build",
-    "bump:deps": "bun update --interactive --recursive",
+    "bump:deps": "pnpm update --interactive --recursive",
     "check": "adamantite check",
     "clean": "turbo clean && git clean -xdf .cache .turbo dist node_modules",
     "codegen": "turbo run codegen --continue --ui=stream --output-logs=errors-only",
