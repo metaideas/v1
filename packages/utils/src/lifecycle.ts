@@ -5,66 +5,60 @@ import { isUnhandledException } from "@sanely/try/errors"
 // Below the 30 seconds that Kubernetes and most platforms allow between SIGTERM and SIGKILL.
 const DEFAULT_TIMEOUT_MS = ms("25s")
 
+const SIGNALS = ["SIGINT", "SIGTERM"] as const
+
+const CRASHES = {
+  uncaughtException: "Uncaught exception",
+  unhandledRejection: "Unhandled promise rejection",
+} as const satisfies Record<NodeJS.UncaughtExceptionOrigin, string>
+
 // @sanely/try wraps an error that it does not map, which hides the original in the log.
 function unwrap(error: unknown) {
   return isUnhandledException(error) ? error.cause : error
 }
 
 /**
- * Starts a server process with `run`, and stops it on SIGINT, SIGTERM, an uncaught exception, or a
- * failed `run`, leaving the restart to the process supervisor. `close` gets `timeoutMs` to release
- * the process's services. The process exits with code 1 when an error occurs before it exits, or
- * when `close` fails or runs out of time. A second signal exits at once with code 1. An unhandled
- * rejection is logged, and the process keeps running.
+ * Starts a server process with `run`. The process keeps running after `run` returns. On the first
+ * SIGINT or SIGTERM, `close` gets `timeoutMs` to release the process's services, and the process
+ * exits with code 0, or with code 1 when `close` fails or runs out of time. A second signal ends
+ * the process at once.
  *
- * Resolves once `run` settles. A `run` that returns leaves the process running until it stops.
+ * A failed `run`, an uncaught exception, or an unhandled rejection goes to `onError`, and the
+ * process exits with code 1 without closing, because its state is unknown. The process supervisor
+ * starts a fresh one.
+ *
+ * Resolves once `run` settles.
  */
 export async function lifecycle(
   run: () => unknown,
   { close, onError, timeoutMs = DEFAULT_TIMEOUT_MS }: LifecycleOptions
 ) {
-  // Stays undefined until the process starts stopping. An error while it stops raises it to 1.
-  let exitCode: number | undefined
-  let signals = 0
-
-  async function stop(code: number) {
-    const isStopping = exitCode !== undefined
-    exitCode = Math.max(exitCode ?? 0, code)
-
-    if (isStopping) return
-
+  async function stop() {
     const closed = await try$.timeout(timeoutMs).run(() => close())
 
     if (closed instanceof Error) {
       onError(unwrap(closed), "Process did not stop cleanly")
-      exitCode = 1
     }
 
-    process.exit(exitCode)
+    process.exit(closed instanceof Error ? 1 : 0)
   }
 
-  function onSignal() {
-    signals += 1
-
-    if (signals > 1) {
-      process.exit(1)
+  function handleSignal() {
+    // Without these listeners, a second signal gets Node's default and ends the process at once.
+    for (const signal of SIGNALS) {
+      process.off(signal, handleSignal)
     }
 
-    void stop(0)
+    void stop()
   }
 
-  for (const signal of ["SIGINT", "SIGTERM"] as const) {
-    process.on(signal, onSignal)
+  for (const signal of SIGNALS) {
+    process.on(signal, handleSignal)
   }
 
-  process.on("unhandledRejection", (error) => {
-    onError(error, "Unhandled promise rejection")
-  })
-
-  // After an uncaught exception the process state is unknown, so a fresh process replaces it.
-  process.on("uncaughtException", (error) => {
-    onError(error, "Uncaught exception")
-    void stop(1)
+  // A monitor reports the crash and leaves Node's default in place, which exits with code 1.
+  process.on("uncaughtExceptionMonitor", (error, origin) => {
+    onError(error, CRASHES[origin])
   })
 
   const result = await try$.run(async () => {
@@ -73,7 +67,7 @@ export async function lifecycle(
 
   if (result instanceof Error) {
     onError(unwrap(result), "Process failed")
-    await stop(1)
+    process.exit(1)
   }
 }
 

@@ -33,6 +33,7 @@
         "@sanely/duration": "0.1.0",
         "@sanely/ratelimit": "0.1.0",
         "@sanely/request": "0.1.0",
+        "@sanely/try": "0.1.0",
         "@scalar/hono-api-reference": "0.12.10",
         "@trpc/server": "11.19.0",
         "@v1/auth": "workspace:*",

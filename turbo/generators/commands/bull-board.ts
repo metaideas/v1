@@ -112,8 +112,8 @@ const EDITS: readonly Edit[] = [
     path: "src/index.ts",
     replacements: [
       [
-        "    },\n    logger: log,\n",
-        "      await jobsDashboard?.close()\n    },\n    logger: log,\n",
+        "    database.$client.end(),\n  ])\n",
+        "    database.$client.end(),\n  ])\n  await jobsDashboard?.close()\n",
       ],
     ],
   },
