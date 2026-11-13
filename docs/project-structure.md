@@ -30,7 +30,7 @@ root
   ├── packages            # Shared internal packages for use across apps
   │   ├── auth                  # Authentication utilities using Better Auth
   │   ├── backend               # Convex backend, generated API types, and React client
-  │   ├── core                  # Shared business logic and errors, organized by domain
+  │   ├── core                  # Business rules, domain errors, and shared contracts, organized by domain
   │   ├── database              # Database client and ORM using Drizzle
   │   ├── email                 # Email templates and delivery through Resend or SMTP
   │   ├── jobs                  # Fire-and-forget background jobs on Redis using BullMQ

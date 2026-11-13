@@ -1,6 +1,6 @@
-import { DispatchJobError, JobPayloadError } from "@v1/core/errors"
 import { describe, expect, test } from "vitest"
 import { mockQueues } from "#__tests__/fakes.ts"
+import { DispatchJobError, JobPayloadError } from "#errors.ts"
 
 const { add, Queue, queue } = mockQueues()
 

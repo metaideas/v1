@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process"
-import { existsSync, globSync } from "node:fs"
+import { existsSync, globSync, readdirSync } from "node:fs"
 import { glob, readFile } from "node:fs/promises"
 import { dirname, join, relative, resolve } from "node:path"
 import { defineCommand } from "citty"
@@ -14,6 +14,7 @@ import {
 } from "./schemas.ts"
 import {
   checkIsRemovedByCleanup,
+  findPackageOwnedCoreServices,
   findTextReferences,
   findUnknownKnipWorkspaces,
   getProjectScope,
@@ -162,6 +163,27 @@ const checks: Check[] = [
         )
 
       return Promise.resolve(failures)
+    },
+  },
+  {
+    name: "Core services are contracts that several packages share",
+    run: ({ rootDir, workspaces }) => {
+      const packages = workspaces.filter((workspace) => workspace.kind === "package")
+      const core = packages.find((workspace) => workspace.name === "core")
+      const servicesDir = core ? join(core.directory, "src/services") : undefined
+      if (!servicesDir || !existsSync(servicesDir)) return []
+
+      const services = readdirSync(servicesDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+
+      return findPackageOwnedCoreServices(
+        services,
+        new Set(packages.map((workspace) => workspace.name))
+      ).map(
+        (name) =>
+          `${relative(rootDir, join(servicesDir, name))} belongs to packages/${name}. Move it into packages/${name}/src and export it from that package.`
+      )
     },
   },
   {

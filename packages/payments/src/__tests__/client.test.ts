@@ -1,7 +1,7 @@
-import { InvalidWebhookError } from "@v1/core/errors"
 import { createStorage } from "unstorage"
 import { describe, expect, test } from "vitest"
 import { createPayments } from "#client.ts"
+import { InvalidWebhookError } from "#errors.ts"
 
 const webhookSecret = "whsec_test_secret"
 

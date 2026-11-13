@@ -1,7 +1,7 @@
 import type { AnyFieldLikeMetaBase } from "@tanstack/react-form-start"
 import { createIsomorphicFn } from "@tanstack/react-start"
 import { getRequestHeaders } from "@tanstack/react-start/server"
-import { PasswordResetRequestError } from "@v1/core/errors"
+import { PasswordResetRequestError } from "@v1/core/domains/auth"
 import * as z from "@v1/utils/schema/mini"
 import { AUTHENTICATED_PATHNAME } from "#features/auth/constants.ts"
 import { EmailSchema, SignInWithPasswordFormSchema } from "#features/auth/schemas.ts"

@@ -8,6 +8,7 @@
   },
   "exports": {
     "./constants": "./src/constants.ts",
+    "./errors": "./src/errors.ts",
     "./react": "./src/react.ts",
     "./server": "./src/server.ts"
   },
@@ -22,6 +23,7 @@
     "@aws-sdk/s3-presigned-post": "3.1146.0",
     "@aws-sdk/s3-request-presigner": "3.1146.0",
     "@sanely/duration": "0.1.0",
+    "@sanely/errors": "0.1.0",
     "@sanely/try": "0.1.0",
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",

@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest"
 
-import { checkIsRemovedByCleanup, findUnknownKnipWorkspaces } from "../shared.ts"
+import {
+  checkIsRemovedByCleanup,
+  findPackageOwnedCoreServices,
+  findUnknownKnipWorkspaces,
+} from "../shared.ts"
 
 const ROOT_DIR = "/project"
 
@@ -51,5 +55,20 @@ describe("findUnknownKnipWorkspaces", () => {
         workspacePaths
       )
     ).toEqual([])
+  })
+})
+
+describe("findPackageOwnedCoreServices", () => {
+  const packageNames = new Set(["core", "email", "jobs"])
+
+  test("lists a core service named after a package workspace", () => {
+    expect(findPackageOwnedCoreServices(["email", "jobs", "logging"], packageNames)).toEqual([
+      "email",
+      "jobs",
+    ])
+  })
+
+  test("keeps a contract that no single package owns", () => {
+    expect(findPackageOwnedCoreServices(["logging"], packageNames)).toEqual([])
   })
 })
