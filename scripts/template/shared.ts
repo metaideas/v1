@@ -282,6 +282,18 @@ export function findUnknownKnipWorkspaces(config: KnipConfig, workspacePaths: Re
   )
 }
 
+/**
+ * Lists the folders under `packages/core/src/services/` that share a name with a package workspace.
+ * A contract that only one package uses belongs to that package, so removing the package removes
+ * it.
+ */
+export function findPackageOwnedCoreServices(
+  serviceNames: readonly string[],
+  packageNames: ReadonlySet<string>
+) {
+  return serviceNames.filter((name) => packageNames.has(name))
+}
+
 function joinAroundRemovedSection(before: string, after: string) {
   const trailingNewlines = /\n*$/.exec(before)?.[0] ?? ""
   const leadingNewlines = /^\n*/.exec(after)?.[0] ?? ""
