@@ -1,6 +1,6 @@
 import type { Logger } from "@v1/core/services/logging"
-import * as z from "@v1/utils/schema"
 import { Inngest, type LogArg, type Logger as InngestLogger } from "inngest"
+import { LogFieldsSchema, LogMessageSchema } from "#schemas.ts"
 
 type WorkflowsOptions = {
   /**
@@ -18,14 +18,9 @@ type WorkflowsOptions = {
   logger?: Logger
 }
 
-const LogMessage = z.string()
-
-// Inngest reports failures as `{ err }`, and other packages log them under `error`.
-const LogFields = z.looseObject({ err: z.unknown().optional() })
-
 // Inngest logs Pino-style: an optional object, then a message.
 function toEvent([first, ...rest]: LogArg[]) {
-  const text = LogMessage.safeParse(first)
+  const text = LogMessageSchema.safeParse(first)
 
   if (text.success) {
     return { message: text.data, scope: "workflows" }
@@ -33,14 +28,14 @@ function toEvent([first, ...rest]: LogArg[]) {
 
   const message = rest
     .values()
-    .map((value) => LogMessage.safeParse(value))
+    .map((value) => LogMessageSchema.safeParse(value))
     .find((parsed) => parsed.success)?.data
 
   if (first instanceof Error) {
     return { error: first, message, scope: "workflows" }
   }
 
-  const parsed = LogFields.safeParse(first)
+  const parsed = LogFieldsSchema.safeParse(first)
 
   if (!parsed.success) {
     return { details: first, message, scope: "workflows" }

@@ -4,7 +4,8 @@ import { createMiddleware } from "@tanstack/react-start"
 import { getRequest, getResponseStatus } from "@tanstack/react-start/server"
 import { createRequestLogger } from "evlog"
 import "#shared/logger.ts"
-import { ThrownStatus, resolveErrorStatus } from "#shared/server/error-status.ts"
+import { resolveErrorStatus } from "#shared/server/error-status.ts"
+import { ThrownStatusSchema } from "#shared/server/schemas.ts"
 import { auth, database } from "#shared/server/services.ts"
 
 /**
@@ -37,7 +38,9 @@ export const withLogger = createMiddleware({ type: "function" }).server(
         log.set({ status: 404 })
       } else {
         log.error(error instanceof Error ? error : String(error))
-        log.set({ status: resolveErrorStatus(ThrownStatus.parse(error), getResponseStatus()) })
+        log.set({
+          status: resolveErrorStatus(ThrownStatusSchema.parse(error), getResponseStatus()),
+        })
       }
 
       throw error
