@@ -28,7 +28,7 @@ Each app reaches the API in its own way, because each runs on an origin that can
 
 ## Steps
 
-1. Confirm the backend workspace exists: `apps/api` for hono and trpc, `packages/backend` for convex. Restore a missing one with `bun template add`.
+1. Confirm the backend workspace exists: `apps/api` for hono and trpc, `packages/backend` for convex. Restore a missing one with `pnpm template add`.
 2. Add workspace dependencies to the app's `package.json` as `workspace:*`: the api package and the utils package for hono and trpc; the backend package for convex, plus the auth package on mobile; the auth package for desktop, extension, and mobile with auth.
 3. Add environment keys to the app's `.env.schema` and a value to `.env.development`, creating that file when the app has none. `apps/app` already declares an optional `PUBLIC_API_URL`; set it in `.env.development` to select the remote API.
 
@@ -45,7 +45,7 @@ Each app reaches the API in its own way, because each runs on an origin that can
 
 4. Copy the client files for the connection into `src/`:
    - **hono**: `references/hono/api.ts.hbs` to `shared/api.ts`. Mobile with auth takes `references/hono/mobile/api.ts.hbs` instead, which sends the session headers. Desktop and extension take `references/hono/<app>/api.ts.hbs` instead. Desktop, extension, and mobile also take `references/hono/<app>/utils.ts.hbs` to `shared/utils.ts`.
-   - **trpc**: `references/trpc/<app>/trpc.tsx.hbs` to `shared/trpc.tsx`. Desktop and extension also take `references/hono/<app>/utils.ts.hbs` to `shared/utils.ts`. Install the client libraries inside the app: `bun add --exact @trpc/client @trpc/tanstack-react-query superjson`. An app without `@tanstack/react-query`, such as extension, also adds it at the version the other workspaces pin, so the workspace keeps one version: `bun add --exact @tanstack/react-query@<version>`. The desktop and extension clients batch calls into one response; a call streams each result as it resolves when it passes `trpc: { context: { stream: true } }`.
+   - **trpc**: `references/trpc/<app>/trpc.tsx.hbs` to `shared/trpc.tsx`. Desktop and extension also take `references/hono/<app>/utils.ts.hbs` to `shared/utils.ts`. Install the client libraries inside the app: `pnpm add @trpc/client @trpc/tanstack-react-query superjson`. An app without `@tanstack/react-query`, such as extension, also adds it at the version the other workspaces pin, so the workspace keeps one version: `pnpm add @tanstack/react-query@<version>`. The desktop and extension clients batch calls into one response; a call streams each result as it resolves when it passes `trpc: { context: { stream: true } }`.
    - **desktop API proxy** (hono or trpc): `references/shared/desktop/api-proxy.ts.hbs` to `shared/api-proxy.ts` and `shell-api-proxy.ts.hbs` to `shared/shell/api-proxy.ts`. Then edit the existing files:
      - `shared/bridge.ts`: export `const STREAM_CHANNEL_PREFIX = "stream:"` above the `Bridge` type, and add `listen: (channel: string, listener: (message: unknown) => void) => () => void` to the `Bridge` type.
      - `shell/preload.ts`: import `STREAM_CHANNEL_PREFIX` from `#shared/bridge.ts` and add `listen` to the bridge, before `send`:
@@ -112,7 +112,7 @@ Each app reaches the API in its own way, because each runs on an origin that can
    cd apps/desktop && CI=1 node --eval 'import { resolveConfig } from "vite"; await resolveConfig({ configFile: "vite.renderer.config.ts" }, "build")'
    ```
 
-7. Run `bun install`, `bun run codegen`, then `bun template doctor`. Fix what it reports. Finish when it passes.
+7. Run `pnpm install`, `pnpm run codegen`, then `pnpm template doctor`. Fix what it reports. Finish when it passes.
 
 Convex in `app` and `desktop` reaches public functions only. `apps/app` keeps its own Better Auth sessions; moving them to Convex means migrating the `/api/auth` handler, server-side token handoff, and the sign-up, reset, and social flows together, which is outside this skill.
 

@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 
 import {
   checkIsRemovedByCleanup,
+  checkIsTemplateReadme,
   findPackageOwnedCoreServices,
   findUnknownKnipWorkspaces,
 } from "../shared.ts"
@@ -70,5 +71,13 @@ describe("findPackageOwnedCoreServices", () => {
 
   test("keeps a contract that no single package owns", () => {
     expect(findPackageOwnedCoreServices(["logging"], packageNames)).toEqual([])
+  })
+})
+
+describe("checkIsTemplateReadme", () => {
+  test("accepts a README that setup wrote for the project", () => {
+    const readme = "# my-app\n\nTracks orders.\n\n## Workspaces\n\n- `apps/app`: web application\n"
+
+    expect(checkIsTemplateReadme(readme)).toBe(false)
   })
 })

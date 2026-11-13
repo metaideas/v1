@@ -14,6 +14,7 @@ import {
 } from "./schemas.ts"
 import {
   checkIsRemovedByCleanup,
+  checkIsTemplateReadme,
   findPackageOwnedCoreServices,
   findTextReferences,
   findUnknownKnipWorkspaces,
@@ -24,7 +25,6 @@ import {
   readPackageJson,
   readTemplateStamp,
   removeTemplateSections,
-  TEMPLATE_REPO,
   TEMPLATE_SCOPE,
   TEMPLATE_SECTION_START,
   TEMPLATE_STAMP_FILE,
@@ -302,7 +302,7 @@ const checks: Check[] = [
       const readmePath = join(rootDir, "README.md")
       if (!stamp || !existsSync(readmePath)) return []
       const contents = await readFile(readmePath, "utf8")
-      if (!contents.includes(`bun create ${TEMPLATE_REPO}`)) return []
+      if (!checkIsTemplateReadme(contents)) return []
 
       return [
         "README.md is still the template README. Rewrite it to describe the project and its workspaces",
