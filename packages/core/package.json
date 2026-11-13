@@ -8,7 +8,6 @@
     "#*": "./src/*"
   },
   "exports": {
-    "./errors": "./src/errors.ts",
     "./domains/*": "./src/domains/*/index.ts",
     "./services/*": "./src/services/*/index.ts"
   },
@@ -17,8 +16,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "dependencies": {
-    "@sanely/errors": "0.1.0",
-    "@v1/utils": "workspace:*"
+    "@sanely/errors": "0.1.0"
   },
   "devDependencies": {
     "@tooling/tsconfig": "workspace:*",
