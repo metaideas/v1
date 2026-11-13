@@ -1,5 +1,9 @@
-import { defineRule, type ESTree } from "adamantite/rules"
-import { findSourceRoot, findViolation, locate, resolveImport, selectBoundaries } from "#layers.ts"
+import { defineRule, type ESTree } from "adamantite/rules/plugin"
+import { findSourceRoot, findViolation, locate, resolveImport, isBoundaryMap } from "#layers.ts"
+
+function isStringLiteral(node: ESTree.Expression): node is ESTree.StringLiteral {
+  return node.type === "Literal" && typeof node.value === "string"
+}
 
 export default defineRule({
   create(context) {
@@ -9,7 +13,8 @@ export default defineRule({
       return {}
     }
 
-    const boundaries = selectBoundaries(context.options[0], root.app)
+    const [options] = context.options
+    const boundaries = isBoundaryMap(options) ? (options[root.app] ?? {}) : {}
     const from = locate(root, boundaries, context.filename)
 
     if (from === undefined) {
@@ -22,6 +27,7 @@ export default defineRule({
     function check(source: ESTree.StringLiteral) {
       const target = resolveImport(sourceRoot, context.filename, source.value)
       const to = target === undefined ? undefined : locate(sourceRoot, boundaries, target)
+
       const violation =
         target === undefined || to === undefined ? undefined : findViolation(importer, to, target)
 
@@ -41,7 +47,7 @@ export default defineRule({
         check(node.source)
       },
       ImportExpression(node) {
-        if (node.source.type === "Literal" && typeof node.source.value === "string") {
+        if (isStringLiteral(node.source)) {
           check(node.source)
         }
       },

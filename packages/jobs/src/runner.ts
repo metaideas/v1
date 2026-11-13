@@ -31,13 +31,11 @@ export function createJobsRunner<Subscribed extends QueueName>({
         throw new UnrecoverableError(`No handler for "${job.name}" on the "${queue}" queue`)
       }
 
-      return handle(queue, job.name, queueHandlers[job.name], job.data, {
-        attempt: job.attemptsMade + 1,
-        id: job.id ?? "",
-      })
+      return handle(queue, job.name, queueHandlers[job.name], job)
     }
 
     const { concurrency, limiter } = queues[queue]
+
     const worker = new Worker(queue, processJob, {
       autorun: false,
       concurrency,
@@ -101,10 +99,9 @@ async function handle<Queue extends QueueName, Name extends JobName<Queue>>(
   queue: Queue,
   name: Name,
   handler: QueueHandlers<Queue>[Name],
-  data: unknown,
-  context: JobContext
+  job: Job
 ) {
-  const parsed = getJob(queue, name).payload.safeParse(data)
+  const parsed = getJob(queue, name).payload.safeParse(job.data)
 
   if (!parsed.success) {
     throw new UnrecoverableError(
@@ -112,7 +109,7 @@ async function handle<Queue extends QueueName, Name extends JobName<Queue>>(
     )
   }
 
-  return handler(parsed.data, context)
+  return handler(parsed.data, { attempt: job.attemptsMade + 1, id: job.id ?? "" })
 }
 
 export type JobsRunner = ReturnType<typeof createJobsRunner>
@@ -124,10 +121,7 @@ export type { JobName, JobPayload, QueueName } from "#catalog.ts"
  * that consumes the queue until it handles the job.
  */
 type QueueHandlers<Queue extends QueueName> = {
-  [Name in JobName<Queue>]: (
-    payload: JobPayload<Queue, Name>,
-    context: JobContext
-  ) => Promise<unknown>
+  [Name in JobName<Queue>]: (payload: JobPayload<Queue, Name>, context: JobContext) => Promise<void>
 }
 
 type JobContext = {

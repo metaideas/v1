@@ -25,6 +25,7 @@ function checkIsValueImport(item: ProxifiedImportItem) {
 // when that declaration can hold it: a value import without a namespace or a second default.
 function checkCanMerge(mod: ProxifiedModule, item: ImportItemInput) {
   const target = mod.imports.$items.find((existing) => existing.from === item.from)
+
   if (!target || item.imported === "*" || target.$declaration.importKind === "type") return false
 
   return mod.imports.$items
@@ -41,6 +42,7 @@ function insertImport(mod: ProxifiedModule, item: ImportItemInput) {
   const scratch = parseModule("")
   scratch.imports.$append(item)
   const declaration = getProgram(scratch).body.at(0)
+
   if (!declaration) throw new Error(`Could not build an import from ${item.from}.`)
 
   const lastImport = program.body.findLastIndex((node) => node.type === "ImportDeclaration")
@@ -60,6 +62,7 @@ export function addImports(source: string, imports: readonly ImportItemInput[]) 
         binding.from === item.from
         && binding.imported === item.imported
         && checkIsValueImport(binding)
+
       if (!isSameBinding) return
 
       continue

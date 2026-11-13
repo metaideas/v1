@@ -63,6 +63,7 @@ async function applyEdit(path: string, edit: Edit) {
   }
 
   const sourceWithImports = addImports(source, edit.imports)
+
   if (sourceWithImports === undefined) {
     return `[MANUAL] ${path} already binds a name this edit imports. ${edit.manual}`
   }
@@ -70,6 +71,7 @@ async function applyEdit(path: string, edit: Edit) {
   source = sourceWithImports
 
   await writeFile(path, source)
+
   return `${path}: connected the update notice`
 }
 
@@ -88,6 +90,7 @@ export function registerSkewGenerator(plop: PlopTypes.NodePlopAPI) {
         }
 
         await runCommand(["pnpm", "add", "@sanely/skew"], APP_PATH)
+
         return `${APP_PATH}: installed @sanely/skew`
       },
       {
@@ -112,6 +115,7 @@ export function registerSkewGenerator(plop: PlopTypes.NodePlopAPI) {
       // TanStack Router adds the new route to the committed route tree when the app builds.
       async () => {
         await runCommand(["pnpm", "run", "build"], APP_PATH)
+
         return `${APP_PATH}: built the app, which adds /api/deployment to src/routeTree.gen.ts`
       },
       () =>

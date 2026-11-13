@@ -21,7 +21,7 @@ const languages = {
   yaml: () => import("shiki/langs/yaml.mjs"),
 }
 
-const aliases: Record<string, keyof typeof languages> = {
+const aliases = {
   js: "javascript",
   md: "markdown",
   py: "python",
@@ -31,7 +31,7 @@ const aliases: Record<string, keyof typeof languages> = {
   ts: "typescript",
   yml: "yaml",
   zsh: "bash",
-}
+} as const satisfies Record<string, keyof typeof languages>
 
 let highlighter: Promise<HighlighterCore> | undefined
 
@@ -49,6 +49,10 @@ function isListedLanguage(name: string): name is keyof typeof languages {
   return Object.hasOwn(languages, name)
 }
 
+function isAlias(name: string): name is keyof typeof aliases {
+  return Object.hasOwn(aliases, name)
+}
+
 function getLanguage(language: string) {
   const name = language.toLowerCase()
 
@@ -60,7 +64,7 @@ function getLanguage(language: string) {
     return name
   }
 
-  return aliases[name] ?? null
+  return isAlias(name) ? aliases[name] : null
 }
 
 // Loads a language and returns a highlighter for it, or null for a language

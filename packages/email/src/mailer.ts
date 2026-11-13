@@ -46,10 +46,12 @@ export function createMailer({
       options: SendOptions
     ): Promise<{ id: string } | SendEmailError> {
       const { element, subject } = templates[name](props)
+
       const [html, text] = await Promise.all([
         render(element),
         render(element, { plainText: true }),
       ])
+
       const message = { from: options.from ?? from, html, subject, text, to: options.to }
       const idempotencyKey = crypto.randomUUID()
 

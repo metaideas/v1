@@ -97,6 +97,7 @@ describe("workflowRunsTurbo", () => {
   test("ignores a workflow that only mentions the turbo directory", () => {
     const source =
       "jobs:\n  unit:\n    steps:\n      - run: pnpm vitest run apps packages tooling scripts turbo\n"
+
     expect(workflowRunsTurbo(source, scripts)).toBe(false)
   })
 
@@ -111,6 +112,7 @@ jobs:
     steps:
       - run: echo hello
 `
+
     expect(workflowRunsTurbo(source, scripts)).toBe(false)
   })
 })
@@ -204,6 +206,7 @@ describe("wireRemoteCacheEnv", () => {
   test("indents new env entries like the existing keys, not a comment", () => {
     const source =
       "env:\n    # note\n  CI: true\n\njobs:\n  unit:\n    steps:\n      - run: turbo build\n"
+
     const result = wireRemoteCacheEnv(source)
 
     expect(result.status).toBe("updated")

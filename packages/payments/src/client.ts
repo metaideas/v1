@@ -88,6 +88,7 @@ export function createPayments({ secretKey, storage, webhookSecret }: PaymentsOp
     }
 
     const paymentMethod = ExpandedPaymentMethodSchema.safeParse(subscription.default_payment_method)
+
     const cache: SubscriptionCache = {
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       currentPeriodEnd: item.current_period_end,
@@ -130,6 +131,7 @@ export function createPayments({ secretKey, storage, webhookSecret }: PaymentsOp
       }
 
       const body = await request.text()
+
       const event = await try$.run({
         catch: (error) =>
           PaymentsFault.wrap(error)

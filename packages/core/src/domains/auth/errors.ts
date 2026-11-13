@@ -7,6 +7,7 @@ export class UnauthorizedError extends Fault.Tagged("UnauthorizedError")<{
 }>() {}
 
 export class PasswordResetRequestError extends Fault.Tagged("PasswordResetRequestError")() {}
+
 export const AuthFault = Fault.registry({
   PasswordResetRequestError,
   UnauthenticatedError,

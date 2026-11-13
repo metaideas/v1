@@ -17,8 +17,7 @@
   "scripts": {
     "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "secret": "pnpm dlx auth@latest secret",
-    "test": "vitest run"
+    "secret": "pnpm dlx auth@latest secret"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.18",
@@ -31,10 +30,8 @@
     "drizzle-orm": "1.0.0-rc.5"
   },
   "devDependencies": {
-    "@tooling/testing": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
     "@types/node": "26.6.4",
-    "typescript": "7.0.2",
-    "vitest": "5.1.0"
+    "typescript": "7.0.2"
   }
 }

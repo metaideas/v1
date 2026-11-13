@@ -5,6 +5,7 @@ import { getRequest, getResponseStatus } from "@tanstack/react-start/server"
 import { createRequestLogger } from "evlog"
 import "#shared/logger.ts"
 import { resolveErrorStatus } from "#shared/server/error-status.ts"
+import { ThrownStatusSchema } from "#shared/server/schemas.ts"
 import { auth, database } from "#shared/server/services.ts"
 
 /**
@@ -14,6 +15,7 @@ import { auth, database } from "#shared/server/services.ts"
 export const withLogger = createMiddleware({ type: "function" }).server(
   async ({ next, method, serverFnMeta }) => {
     const request = getRequest()
+
     const log = createRequestLogger({
       method,
       path: new URL(request.url).pathname,
@@ -36,7 +38,9 @@ export const withLogger = createMiddleware({ type: "function" }).server(
         log.set({ status: 404 })
       } else {
         log.error(error instanceof Error ? error : String(error))
-        log.set({ status: resolveErrorStatus(error, getResponseStatus()) })
+        log.set({
+          status: resolveErrorStatus(ThrownStatusSchema.parse(error), getResponseStatus()),
+        })
       }
 
       throw error

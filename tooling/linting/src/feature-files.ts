@@ -9,6 +9,7 @@ function isRole(name: string) {
 
 function isRoleFile(file: string) {
   const [name] = file.split(".")
+
   return name !== undefined && isRole(name)
 }
 

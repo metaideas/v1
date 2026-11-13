@@ -115,6 +115,7 @@ async function applyEdit(path: string, edit: Edit) {
 
   if (edit.imports) {
     const sourceWithImports = addImports(source, edit.imports)
+
     if (sourceWithImports === undefined) {
       return `[MANUAL] ${path} already binds a name this edit imports. ${edit.manual}`
     }
@@ -123,16 +124,19 @@ async function applyEdit(path: string, edit: Edit) {
   }
 
   await writeFile(path, source)
+
   return `${path}: connected EmDash`
 }
 
 async function addEnvironment() {
   const schemaPath = `${WEB_PATH}/.env.schema`
   const schema = await readFile(schemaPath, "utf8")
+
   const missing = ENVIRONMENT.trim()
     .split("\n\n")
     .filter((declaration) => {
       const key = /^([A-Z0-9_]+)=/m.exec(declaration)?.[1]
+
       return key !== undefined && !new RegExp(`^${key}=`, "m").test(schema)
     })
 
@@ -141,6 +145,7 @@ async function addEnvironment() {
   }
 
   await writeFile(schemaPath, `${schema.trimEnd()}\n\n${missing.join("\n\n")}\n`)
+
   return `${schemaPath}: added the optional EmDash variables`
 }
 
@@ -156,6 +161,7 @@ async function ignoreContent() {
 
   const prefix = source.trim() === "" ? "" : `${source.trimEnd()}\n\n`
   await writeFile(path, `${prefix}# EmDash\n${missing.join("\n")}\n`)
+
   return `${path}: ignored the EmDash uploads`
 }
 
@@ -176,6 +182,7 @@ async function addLocalDatabaseUrl() {
   }
 
   await writeFile(path, `${source.trimEnd()}\n${line}\n`.trimStart())
+
   return `${path}: set DATABASE_URL to the local database`
 }
 
@@ -187,6 +194,7 @@ async function listMigrations() {
 // schema stays out of src/schema/, because drizzle-kit push would then drop EmDash's tables.
 async function addSchemaMigration() {
   const before = await listMigrations()
+
   const sources = await Promise.all(
     before.map((name) => readFile(`${MIGRATIONS_PATH}/${name}`, "utf8"))
   )
@@ -209,6 +217,7 @@ async function addSchemaMigration() {
   }
 
   await writeFile(`${MIGRATIONS_PATH}/${created}`, SCHEMA_SQL)
+
   return `${MIGRATIONS_PATH}/${created}: created the blog schema`
 }
 
@@ -233,6 +242,7 @@ export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
         }
 
         await runCommand(["pnpm", "add", "emdash", "@astrojs/node"], WEB_PATH)
+
         return `${WEB_PATH}: installed EmDash and the Astro Node adapter`
       },
       {

@@ -20,6 +20,7 @@ import type {
   NativeStackNavigationSearchBarOptions,
 } from "#shared/components/large-title-header/types.ts"
 import { useLargeTitleSearch } from "#shared/components/large-title-header/use-large-title-search.ts"
+import { isColor } from "#shared/theme/colors.ts"
 
 const SCREEN_OPTIONS = {
   headerShown: false,
@@ -60,6 +61,7 @@ function searchBarAutoCapitalizeToTextInput(
 
 function customEntering() {
   "worklet"
+
   return {
     animations: {
       transform: [{ scale: withTiming(3, { duration: 400 }) }],
@@ -72,6 +74,7 @@ function customEntering() {
 
 function customExiting() {
   "worklet"
+
   return {
     animations: {
       opacity: withTiming(0),
@@ -112,12 +115,14 @@ export default function LargeTitleHeader(props: LargeTitleHeaderProps) {
   const navigation = useNavigation()
   const route = useRoute()
   const id = React.useId()
+
   const [foreground, mutedForeground] = useCSSVariable([
     "--color-foreground",
     "--color-muted-foreground",
   ])
-  const foregroundColor = typeof foreground === "string" ? foreground : undefined
-  const mutedForegroundColor = typeof mutedForeground === "string" ? mutedForeground : undefined
+
+  const foregroundColor = isColor(foreground) ? foreground : undefined
+  const mutedForegroundColor = isColor(mutedForeground) ? mutedForeground : undefined
 
   const search = useLargeTitleSearch(props.searchBar)
 

@@ -2,16 +2,16 @@ import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-reac
 import { useEffect, useState } from "react"
 
 type CarouselApi = UseEmblaCarouselType[1]
+
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
 
 type CarouselStateOptions = {
   opts?: UseCarouselParameters[0]
   plugins?: UseCarouselParameters[1]
   orientation: "horizontal" | "vertical"
-  setApi?: (api: CarouselApi) => void
 }
 
-export function useCarouselState({ opts, plugins, orientation, setApi }: CarouselStateOptions) {
+export function useCarouselState({ opts, plugins, orientation }: CarouselStateOptions) {
   const [carouselRef, api] = useEmblaCarousel(
     {
       ...opts,
@@ -19,13 +19,9 @@ export function useCarouselState({ opts, plugins, orientation, setApi }: Carouse
     },
     plugins
   )
+
   const [canScrollPrev, setCanScrollPrev] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
-
-  useEffect(() => {
-    if (!api || !setApi) return
-    setApi(api)
-  }, [api, setApi])
 
   useEffect(() => {
     if (!api) return

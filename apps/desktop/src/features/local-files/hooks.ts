@@ -6,6 +6,7 @@ export function useTextFileEditor() {
   const [contents, setContents] = useState("")
   const [path, setPath] = useState<string>()
   const saveFile = useMutation(saveTextFileOptions)
+
   const openFile = useMutation({
     ...openTextFileOptions,
     onSuccess: (file) => {
@@ -15,6 +16,7 @@ export function useTextFileEditor() {
       setPath(file.path)
     },
   })
+
   const isSaved =
     saveFile.isSuccess
     && saveFile.variables.contents === contents

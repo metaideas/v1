@@ -7,6 +7,7 @@ import { authClient } from "#shared/auth.ts"
 
 export default function ResetPasswordForm({ token }: { token: string }) {
   const navigate = useNavigate()
+
   const form = useForm({
     defaultValues: { confirmPassword: "", password: "" },
     onSubmit: async ({ value }) => {

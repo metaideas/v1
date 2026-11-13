@@ -10,6 +10,7 @@ const themeScript = (() => {
       root.classList.add(isDark ? "dark" : "light", "system")
     }
   }
+
   return `(${themeFn.toString()})();`
 })()
 

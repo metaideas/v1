@@ -25,6 +25,7 @@ export function toRedisKey(key: string) {
 export function parsePublished(message: string): StreamEntry | undefined {
   const cursorEnd = message.indexOf("\n")
   const eventEnd = message.indexOf("\n", cursorEnd + 1)
+
   if (cursorEnd === -1 || eventEnd === -1) return undefined
 
   return {
@@ -49,6 +50,7 @@ export function parseStored({
  */
 export async function readTime(connection: RedisClientType) {
   const [seconds, microseconds] = await connection.time()
+
   return Number(seconds) * 1000 + Math.floor(Number(microseconds) / 1000)
 }
 
@@ -61,5 +63,6 @@ export async function readTail(connection: RedisClientType, redisKey: string) {
   // empty, so an event emitted between the two commands never expires before the checkpoint does.
   const time = await readTime(connection)
   const [last] = await connection.xRevRange(redisKey, "+", "-", { COUNT: 1 })
+
   return last?.id ?? `0-${time}`
 }

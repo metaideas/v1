@@ -1,9 +1,9 @@
 import core from "adamantite/lint"
-import custom from "adamantite/lint/custom"
 import node from "adamantite/lint/node"
 import react from "adamantite/lint/react"
 import reactStrict from "adamantite/lint/react-strict"
 import strict from "adamantite/lint/strict"
+import custom from "adamantite/rules"
 import { defineConfig } from "oxlint"
 
 const APP_BOUNDARIES = {

@@ -46,6 +46,7 @@ export async function readPackageJson(path: string) {
 
 export async function readPackageName(path: string) {
   const { name } = await readPackageJson(path)
+
   if (!name) throw new Error(`Expected ${path} to declare a package name.`)
 
   return name

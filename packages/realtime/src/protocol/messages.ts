@@ -55,3 +55,10 @@ export const ServerMessageSchemas = {
 }
 
 export type ServerMessageType = keyof typeof ServerMessageSchemas
+
+/**
+ * The data of one SSE event type, as the server writes it.
+ */
+export type ServerMessage<Type extends ServerMessageType> = z.input<
+  (typeof ServerMessageSchemas)[Type]
+>

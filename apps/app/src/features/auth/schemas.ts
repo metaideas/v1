@@ -27,6 +27,7 @@ export const SignInWithPasswordFormSchema = z.object({
   email: EmailSchema,
   password: PasswordSchema,
 })
+
 export const ForgotPasswordFormSchema = z.object({
   email: EmailSchema,
 })

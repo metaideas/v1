@@ -113,6 +113,10 @@
       }
     },
     "oxlint": {
+      "binary": {
+        "arguments": ["node_modules/adamantite/dist/oxlint.js", "--lsp"],
+        "path": "node"
+      },
       "initialization_options": {
         "settings": {
           "configPath": null,

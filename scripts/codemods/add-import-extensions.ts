@@ -15,6 +15,7 @@ import { dirname, join } from "node:path"
 
 const RELATIVE_SPECIFIER =
   /(?<prefix>\bfrom\s+|\bimport\s*\(\s*|\bimport\s+)"(?<path>\.{1,2}\/[^"]+)"/g
+
 const CANDIDATES = [".ts", ".tsx", "/index.ts", "/index.tsx"] as const
 
 function resolveSpecifier(importer: string, specifier: string) {

@@ -6,6 +6,6 @@
     "allowImportingTsExtensions": true,
     "jsx": "preserve"
   },
-  "include": ["${configDir}/src", "${configDir}/reset.d.ts"],
+  "include": ["${configDir}/src"],
   "display": "Internal package"
 }

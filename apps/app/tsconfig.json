@@ -1,4 +1,4 @@
 {
   "extends": "@tooling/tsconfig/app.json",
-  "include": ["src", "reset.d.ts", "vite.config.ts"]
+  "include": ["src", "vite.config.ts"]
 }

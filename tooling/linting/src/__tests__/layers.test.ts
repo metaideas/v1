@@ -9,6 +9,7 @@ import {
 } from "#layers.ts"
 
 const app: Boundaries = { routes: "routes" }
+
 const desktop: Boundaries = {
   featureTiers: {
     components: "renderer",

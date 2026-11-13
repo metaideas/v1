@@ -21,6 +21,7 @@ export function useThemeState({ theme, setTheme, defaultTheme, storageKey }: The
 
     if (storageKey && typeof localStorage !== "undefined") {
       const stored = localStorage.getItem(storageKey)
+
       if (stored && isTheme(stored)) {
         return stored
       }
@@ -58,6 +59,7 @@ export function useThemeState({ theme, setTheme, defaultTheme, storageKey }: The
 
       if (setTheme) {
         setTheme(newTheme)
+
         return
       }
 

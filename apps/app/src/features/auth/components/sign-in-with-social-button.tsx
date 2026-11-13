@@ -16,6 +16,7 @@ export default function SignInWithSocialButton({
   provider: keyof typeof PROVIDERS
 }) {
   const { icon: ProviderIcon, label } = PROVIDERS[provider]
+
   const { isSigningIn, signInWithProvider } = useSocialSignIn(
     provider,
     `Failed to sign in with ${label}`

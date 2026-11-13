@@ -12,7 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "adamantite": "0.43.0"
+    "adamantite": "0.47.0"
   },
   "devDependencies": {
     "@tooling/testing": "workspace:*",

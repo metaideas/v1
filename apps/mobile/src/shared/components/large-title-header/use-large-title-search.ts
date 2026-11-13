@@ -15,6 +15,7 @@ export function useLargeTitleSearch(searchBar: LargeTitleHeaderProps["searchBar"
       setIsSearchBarShown(false)
       setSearchValue("")
       onChangeText?.("")
+
       return true
     })
 
@@ -40,6 +41,7 @@ export function useLargeTitleSearch(searchBar: LargeTitleHeaderProps["searchBar"
     },
     handleBlur: () => {
       setIsFocused(false)
+
       if (searchValue.length === 0) setIsSearchBarShown(false)
       searchBar?.onBlur?.()
     },

@@ -1,4 +1,4 @@
-import { defineRule } from "adamantite/rules"
+import { defineRule } from "adamantite/rules/plugin"
 import { FEATURE_ROLE_FILES, isAllowedFeatureFile } from "#feature-files.ts"
 
 export default defineRule({

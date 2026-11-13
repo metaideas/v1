@@ -104,6 +104,7 @@ function Calendar({
     locale,
     ...dayPickerProps
   } = props
+
   const defaultClassNames = getDefaultClassNames()
 
   return (

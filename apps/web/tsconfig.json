@@ -8,5 +8,5 @@
       }
     ]
   },
-  "include": [".astro/types.d.ts", "src", "reset.d.ts", "astro.config.ts"]
+  "include": [".astro/types.d.ts", "src", "astro.config.ts"]
 }

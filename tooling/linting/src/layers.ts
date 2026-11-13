@@ -37,6 +37,7 @@ export type Violation =
 const LAYER_FOLDERS = ["shared", "features"] as const
 const TEST_FOLDER = "__tests__"
 const SOURCE_ROOT = /^(?<root>.*\/apps\/(?<app>[^/]+)\/src)\//u
+
 const MODULE_EXTENSIONS = new Set([
   "",
   ".astro",
@@ -49,7 +50,7 @@ const MODULE_EXTENSIONS = new Set([
   ".tsx",
 ])
 
-function isBoundaryMap(value: unknown): value is Readonly<Record<string, Boundaries>> {
+export function isBoundaryMap(value: unknown): value is Readonly<Record<string, Boundaries>> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
@@ -61,10 +62,6 @@ export function findSourceRoot(filename: string) {
   }
 
   return { app: groups.app, path: groups.root }
-}
-
-export function selectBoundaries(options: unknown, app: string): Boundaries {
-  return isBoundaryMap(options) ? (options[app] ?? {}) : {}
 }
 
 export function resolveImport(root: SourceRoot, importer: string, specifier: string) {
@@ -170,9 +167,11 @@ export function findViolation(from: Location, to: Location, target: string): Vio
       return to.layer.kind === "shared" ? undefined : "sharedImportsUp"
     case "feature":
       if (to.layer.kind === "shared") return undefined
+
       if (to.layer.kind === "feature") {
         return to.layer.name === from.layer.name ? undefined : "featureImportsFeature"
       }
+
       return "featureImportsComposition"
     case "route":
       return to.layer.kind === "route" && isModule(target) ? "routeImportsRoute" : undefined

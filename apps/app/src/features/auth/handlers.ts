@@ -39,12 +39,14 @@ function pickHeaders(headers: Headers, names: readonly string[]) {
 export const validateSession = createIsomorphicFn()
   .client(async () => {
     const { data: session } = await authClient.getSession()
+
     return session
   })
   .server(async () => {
     const { data: session } = await authClient.getSession({
       fetchOptions: { headers: getRequestHeaders() },
     })
+
     return session
   })
 
@@ -72,6 +74,7 @@ export const forgotPassword = publicFunction
         error.message ?? "Unable to request a password reset"
       )
     }
+
     return { success: true }
   })
 
@@ -83,12 +86,13 @@ export async function signInWithPasswordForm(
   request: Request
 ): Promise<{ response: Response } | { formState: SignInFormState }> {
   const formData = await request.formData()
-  const email = formData.get("email")
-  const values = { email: typeof email === "string" ? email : "", password: "" }
+  const email = z.string().safeParse(formData.get("email"))
+  const values = { email: email.success ? email.data : "", password: "" }
   const result = SignInWithPasswordFormSchema.safeParse(Object.fromEntries(formData))
 
   if (!result.success) {
     const { fieldErrors } = z.flattenError(result.error)
+
     // Rejected fields are marked touched so the form renders them as invalid.
     const fieldMetaBase = Object.fromEntries(
       Object.entries(fieldErrors).map(([field, messages]) => [
@@ -110,6 +114,7 @@ export async function signInWithPasswordForm(
   }
 
   let setCookies: string[] = []
+
   // Goes through the auth client, like `validateSession`, so the session belongs to whichever auth
   // server `PUBLIC_API_URL` selects. On a separate hostname, that server must scope its cookies to a
   // parent domain shared with this app (`AUTH_COOKIE_DOMAIN` in `apps/api`).

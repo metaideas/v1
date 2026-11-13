@@ -25,12 +25,14 @@ export function createWorkflowsRunner({
 
     if (opened instanceof Error) {
       logger?.error({ error: opened, message: "Workflows could not connect", scope: "workflows" })
+
       return
     }
 
     // `connect` resolves only once Inngest is reachable, which can be after `close`.
     if (isClosed) {
       await opened.close()
+
       return
     }
 

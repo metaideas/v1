@@ -25,7 +25,7 @@ export function useHideSplashScreen() {
   }, [])
 }
 
-export function useLogRenderError(error: unknown) {
+export function useLogRenderError(error: Error) {
   useEffect(() => {
     log.error({ error, message: "Route rendering failed" })
   }, [error])
@@ -37,6 +37,7 @@ export function usePersistedLocale() {
   useEffect(() => {
     async function hydrateLocale() {
       const storedLocale = await AsyncStorage.getItem(LOCALE_STORAGE_KEY)
+
       if (!isLocale(storedLocale)) return
 
       void setParaglideLocale(storedLocale, { reload: false })

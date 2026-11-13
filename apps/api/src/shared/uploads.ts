@@ -8,6 +8,7 @@ import { context } from "#shared/utils.ts"
 export async function upsertUpload(file: UploadRecord) {
   const ctx = context<AccessTokenAppContext>()
   const userId = UserIdSchema.parse(ctx.var.userId)
+
   const record = {
     etag: file.etag,
     lastModified: file.lastModified,

@@ -24,23 +24,22 @@ export function useSidebarState({
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
   const open = openProp ?? uncontrolledOpen
 
-  function setOpen(value: boolean | ((value: boolean) => boolean)) {
-    const openState = typeof value === "function" ? value(open) : value
+  function setOpen(value: boolean) {
     if (setOpenProp) {
-      setOpenProp(openState)
+      setOpenProp(value)
     } else {
-      setUncontrolledOpen(openState)
+      setUncontrolledOpen(value)
     }
 
     // oxlint-disable-next-line unicorn/no-document-cookie -- The Cookie Store API is asynchronous and not available in every supported browser.
-    document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+    document.cookie = `${SIDEBAR_COOKIE_NAME}=${value}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
   }
 
   function toggleSidebar() {
     if (isMobile) {
       setOpenMobile((open) => !open)
     } else {
-      setOpen((open) => !open)
+      setOpen(!open)
     }
   }
 
@@ -55,6 +54,7 @@ export function useSidebarState({
     }
 
     globalThis.addEventListener("keydown", handleKeyDown)
+
     return () => {
       globalThis.removeEventListener("keydown", handleKeyDown)
     }

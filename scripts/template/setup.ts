@@ -33,6 +33,7 @@ async function promptForWorkspaceNames(kind: WorkspaceKind, names: string[]) {
     options: names,
     type: "multiselect",
   })
+
   if (!Array.isArray(selected) || !selected.every((value) => value.constructor === String))
     throw new Error(`Expected the ${kind} selection to contain workspace names.`)
 
@@ -49,6 +50,7 @@ async function promptForConfirmation(message: string) {
 
 async function getTemplateCommit() {
   const response = await fetch(`https://api.github.com/repos/${TEMPLATE_REPO}/commits/main`)
+
   if (!response.ok) throw new Error(`GitHub returned ${response.status}.`)
 
   return GitHubCommitSchema.parse(await response.json()).sha
@@ -68,6 +70,7 @@ async function stampProject(rootDir: string) {
 
 function getSelectionError(kind: WorkspaceKind, selected: string[], available: string[]) {
   const unknown = selected.filter((name) => !available.includes(name))
+
   if (unknown.length > 0) {
     return `Unknown ${kind} workspace(s): ${unknown.join(", ")}. Available: ${available.join(", ") || "none"}.`
   }
@@ -85,16 +88,19 @@ function expandWorkspaceSelection(
   selectedPackages: string[]
 ) {
   const byPackageName = new Map(workspaces.map((workspace) => [workspace.packageName, workspace]))
+
   const selectedKeys = new Set([
     ...selectedApps.map((name) => `app/${name}`),
     ...selectedPackages.map((name) => `package/${name}`),
   ])
+
   const queue = workspaces.filter((workspace) => selectedKeys.has(getWorkspaceKey(workspace)))
   const autoKept: WorkspaceNode[] = []
 
   for (const workspace of queue) {
     for (const dependencyName of workspace.dependencies) {
       const dependency = byPackageName.get(dependencyName)
+
       if (!dependency || selectedKeys.has(getWorkspaceKey(dependency))) continue
 
       selectedKeys.add(getWorkspaceKey(dependency))
@@ -107,14 +113,23 @@ function expandWorkspaceSelection(
 
   return {
     autoKept,
-    keepApps: kept.filter((workspace) => workspace.kind === "app").map(({ name }) => name),
-    keepPackages: kept.filter((workspace) => workspace.kind === "package").map(({ name }) => name),
+    keepApps: kept
+      .values()
+      .filter((workspace) => workspace.kind === "app")
+      .map(({ name }) => name)
+      .toArray(),
+    keepPackages: kept
+      .values()
+      .filter((workspace) => workspace.kind === "package")
+      .map(({ name }) => name)
+      .toArray(),
   }
 }
 
 async function pruneWorkspaces(rootDir: string, workspaces: Workspace[], selectedNames: string[]) {
   await Promise.all(
     workspaces
+      .values()
       .filter((workspace) => !selectedNames.includes(workspace.name))
       .map((workspace) => removePath(rootDir, relative(rootDir, workspace.directory)))
   )
@@ -156,9 +171,11 @@ async function getWorkspaceLines(rootDir: string) {
 
 async function getDocumentationLines(rootDir: string) {
   const paths = await Array.fromAsync(glob("docs/*.md", { cwd: rootDir }))
+
   const documents = await Promise.all(
     paths.map(async (path) => {
       const title = /^title:\s*(.+)$/m.exec(await readFile(join(rootDir, path), "utf8"))?.[1]
+
       return { path, title: title ?? basename(path, ".md") }
     })
   )
@@ -176,6 +193,7 @@ async function getDocumentationLines(rootDir: string) {
 async function writeReadme(rootDir: string, projectName: string, description: string) {
   const workspaceLines = await getWorkspaceLines(rootDir)
   const documentationLines = await getDocumentationLines(rootDir)
+
   const sections = [
     `# ${projectName}`,
     description,
@@ -228,11 +246,13 @@ export default defineCommand({
   run: async ({ args, rawArgs }) => {
     const rootDir = process.cwd()
     const shouldAcceptDefaults = args.yes ?? false
+
     const hasEmptyKeepAppsOption = rawArgs.some(
       (argument, index) =>
         (argument === "--keep-apps" || argument === "--keepApps")
         && rawArgs[index + 1]?.startsWith("-") !== false
     )
+
     const hasEmptyKeepPackagesOption = rawArgs.some(
       (argument, index) =>
         (argument === "--keep-packages" || argument === "--keepPackages")
@@ -242,11 +262,14 @@ export default defineCommand({
     if (hasEmptyKeepAppsOption) {
       consola.error("Provide at least one workspace name with --keep-apps.")
       process.exitCode = 1
+
       return
     }
+
     if (hasEmptyKeepPackagesOption) {
       consola.error("Provide at least one workspace name with --keep-packages.")
       process.exitCode = 1
+
       return
     }
 
@@ -254,16 +277,20 @@ export default defineCommand({
     const packages = await getWorkspaces(rootDir, "package")
     const rootPackage = await readPackageJson(join(rootDir, "package.json"))
     const defaultName = rootPackage.name ?? "project"
+
     const cleanup = TemplateCleanupSchema.safeParse(
       rootPackage.v1 ?? { cleanupPaths: [], cleanupSections: [] }
     )
+
     if (!cleanup.success) {
       consola.error(
         "The v1 field in package.json needs cleanupPaths and cleanupSections arrays. Fix it before setup changes the project."
       )
       process.exitCode = 1
+
       return
     }
+
     const sourceScope = await getProjectScope(rootDir).catch(() => TEMPLATE_SCOPE)
     const selectedApps = args["keep-apps"]?.split(",").filter(Boolean)
     const selectedPackages = args["keep-packages"]?.split(",").filter(Boolean)
@@ -271,11 +298,14 @@ export default defineCommand({
     if (args["keep-apps"] !== undefined && selectedApps?.length === 0) {
       consola.error("Provide at least one workspace name with --keep-apps.")
       process.exitCode = 1
+
       return
     }
+
     if (args["keep-packages"] !== undefined && selectedPackages?.length === 0) {
       consola.error("Provide at least one workspace name with --keep-packages.")
       process.exitCode = 1
+
       return
     }
 
@@ -287,6 +317,7 @@ export default defineCommand({
             "app",
             apps.map((workspace) => workspace.name)
           ))
+
     const keepPackages =
       selectedPackages
       ?? (shouldAcceptDefaults
@@ -295,17 +326,21 @@ export default defineCommand({
             "package",
             packages.map((workspace) => workspace.name)
           ))
+
     const projectName =
       args.name
       ?? (shouldAcceptDefaults ? defaultName : await promptForText("Project name", defaultName))
+
     const description =
       args.description
       ?? (shouldAcceptDefaults
         ? ""
         : await promptForText("Describe the project in one sentence", ""))
+
     const shouldInitializeGit =
       args.git
       ?? (shouldAcceptDefaults ? true : await promptForConfirmation("Initialize a git repository?"))
+
     const shouldInstall =
       args.install
       ?? (shouldAcceptDefaults ? true : await promptForConfirmation("Run pnpm install?"))
@@ -321,16 +356,20 @@ export default defineCommand({
         keepPackages,
         packages.map((workspace) => workspace.name)
       )
+
     if (selectionError) {
       consola.error(selectionError)
       process.exitCode = 1
+
       return
     }
+
     try {
       normalizeScope(projectName)
     } catch (error) {
       consola.error(error instanceof Error ? error.message : error)
       process.exitCode = 1
+
       return
     }
 
@@ -339,6 +378,7 @@ export default defineCommand({
       keepApps,
       keepPackages
     )
+
     if (selection.autoKept.length > 0) {
       consola.info(
         `Keeping workspace dependencies: ${selection.autoKept.map(getWorkspacePath).join(", ")}.`
@@ -354,10 +394,12 @@ export default defineCommand({
 
     if (shouldInitializeGit && !existsSync(join(rootDir, ".git")))
       await runCommand(["git", "init"], rootDir)
+
     if (shouldInstall) {
       await runCommand(["pnpm", "install"], rootDir)
       await runCommand(["pnpm", "run", "codegen"], rootDir)
     }
+
     // Prebuild regenerates the committed native projects from app.config.js, but it can only
     // install CocoaPods on macOS.
     if (selection.keepApps.includes("mobile")) {

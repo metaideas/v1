@@ -8,15 +8,17 @@ import { Icon } from "#components/icon.tsx"
 import { useCarouselState } from "#hooks/use-carousel-state.ts"
 
 type CarouselApi = UseEmblaCarouselType[1]
+
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
+
 type CarouselOptions = UseCarouselParameters[0]
+
 type CarouselPlugin = UseCarouselParameters[1]
 
 type CarouselProps = {
   opts?: CarouselOptions
   plugins?: CarouselPlugin
   orientation?: "horizontal" | "vertical"
-  setApi?: (api: CarouselApi) => void
 }
 
 type CarouselContextProps = {
@@ -43,16 +45,15 @@ function useCarousel() {
 function Carousel({
   orientation = "horizontal",
   opts,
-  setApi,
   plugins,
   ...props
 }: React.ComponentProps<"div"> & CarouselProps) {
   const { className, children, ...divProps } = props
+
   const contextValue = useCarouselState({
     opts,
     orientation,
     plugins,
-    setApi,
   })
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {

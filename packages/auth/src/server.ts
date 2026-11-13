@@ -12,11 +12,14 @@ import {
 } from "#constants.ts"
 
 export { APIError as AuthError } from "better-auth/api"
+
 export {
   type BetterAuthOptions as AuthOptions,
   betterAuth as createAuth,
 } from "better-auth/minimal"
+
 export { electron } from "@better-auth/electron"
+
 export { expo } from "@better-auth/expo"
 
 type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = {
@@ -47,7 +50,7 @@ type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = {
   /**
    * Delivers a password reset link. Without it, password reset is unavailable.
    */
-  sendPasswordReset?: (input: { email: string; url: string }) => Promise<unknown>
+  sendPasswordReset?: (input: { email: string; url: string }) => Promise<void>
   socialProviders?: SocialProviders
   trustedOrigins: string[]
 }
@@ -100,7 +103,8 @@ export function createServerAuth<const Plugins extends BetterAuthPlugin[] = []>(
       disabled: logger === undefined,
       level: "warn",
       log: (level, message, ...details) => {
-        logger?.[level]({ message, scope: "auth", ...(details.length > 0 ? { details } : {}) })
+        const event = { message, scope: "auth" }
+        logger?.[level](details.length > 0 ? { ...event, details } : event)
       },
     },
     plugins: options.plugins,

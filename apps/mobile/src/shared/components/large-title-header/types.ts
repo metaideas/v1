@@ -5,8 +5,7 @@ import type { SearchBarCommands } from "react-native-screens"
 
 type NativeStackNavigationOptions = Exclude<
   NonNullable<React.ComponentPropsWithoutRef<typeof Stack.Screen>["options"]>,
-  // oxlint-disable-next-line no-explicit-any
-  (props: any) => any
+  (props: never) => object
 >
 
 type ScreenOptions = Pick<

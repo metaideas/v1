@@ -1,6 +1,7 @@
 import { seconds } from "@sanely/duration"
 
 export const AUTH_COOKIE_PREFIX = "v1"
+
 // The API's auth instance namespaces its cookies so the two localhost jars
 // stay separate during development.
 export const AUTH_API_COOKIE_PREFIX = `${AUTH_COOKIE_PREFIX}-api`

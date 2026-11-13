@@ -15,6 +15,7 @@ import {
 const CONNECT_DEBOUNCE_MS = 25
 const RETRY_BASE_MS = ms("500ms")
 const RETRY_MAX_MS = ms("30s")
+
 // Missing three heartbeats in a row means the stream died without closing, such as when a laptop
 // sleeps or a phone changes networks.
 const STALE_AFTER_MS = HEARTBEAT_INTERVAL_MS * 3
@@ -74,7 +75,7 @@ type Subscription = {
 }
 
 function onBrowserResume(resume: () => void) {
-  if (typeof document === "undefined" || typeof globalThis.addEventListener !== "function") return
+  if (typeof document === "undefined" || !("addEventListener" in globalThis)) return
 
   function handleVisibilityChange() {
     if (document.visibilityState === "visible") resume()
@@ -155,7 +156,9 @@ export function createConnection({
 
   function deliver({ cursor, data, event, key }: z.infer<typeof ServerMessageSchemas.message>) {
     const subscription = subscriptions.get(key)
+
     if (!subscription) return
+
     if (subscription.cursor && compareCursors(cursor, subscription.cursor) <= 0) return
 
     subscription.cursor = cursor
@@ -171,27 +174,33 @@ export function createConnection({
 
     if (event === "message") {
       const message = z.safeParse(ServerMessageSchemas.message, JSON.parse(data))
+
       if (message.success) deliver(message.data)
+
       return
     }
 
     if (event === "ready" || event === "reset") {
       const message = z.safeParse(ServerMessageSchemas[event], JSON.parse(data))
       const subscription = message.success ? subscriptions.get(message.data.key) : undefined
+
       if (!message.success || !subscription) return
 
       subscription.cursor = message.data.cursor
+
       if (event === "reset") {
         notifyListeners(subscription, (listener) => {
           listener.onReset?.()
         })
       }
+
       return
     }
 
     if (event === "denied") {
       const message = z.safeParse(ServerMessageSchemas.denied, JSON.parse(data))
       const subscription = message.success ? subscriptions.get(message.data.key) : undefined
+
       if (!subscription) return
 
       subscription.isDenied = true
@@ -207,11 +216,14 @@ export function createConnection({
         params,
       })),
     }
+
     const token = await getToken()
+
     // A connection that ended while it waited for the token must not open a stream, because no
     // transport is required to reject a signal that aborted before the request. React Native's
     // `AbortSignal` has no `throwIfAborted`.
     if (controller.signal.aborted) return
+
     const response = await fetch(endpoint, {
       body: JSON.stringify(body),
       headers: {
@@ -237,6 +249,7 @@ export function createConnection({
     for (;;) {
       // oxlint-disable-next-line no-await-in-loop -- A stream yields its chunks in order, one read at a time.
       const { done, value } = await reader.read()
+
       if (done) return
 
       watchForStaleStream(controller)
@@ -254,12 +267,14 @@ export function createConnection({
       stopResume?.()
       stopResume = undefined
       setStatus("disconnected")
+
       return
     }
 
     const controller = new AbortController()
     current = controller
     stopResume ??= onResume(resume)
+
     for (const subscription of subscriptions.values()) subscription.isDenied = false
     setStatus("connecting")
 
@@ -294,6 +309,7 @@ export function createConnection({
     { onMessage, onReset }: Subscriber<Channel>
   ) {
     const address = addressChannel(channel, params)
+
     if ("error" in address) {
       throw new Error(`The params do not match the "${channel}" channel`, { cause: address.error })
     }
@@ -302,10 +318,12 @@ export function createConnection({
       deliver: ({ cursor, data, event }) => {
         if (!isEventName(channel, event)) {
           logger?.warn({ channel, event, message: "Unknown realtime event", scope: "realtime" })
+
           return
         }
 
         const decoded = getEvent(channel, event).safeParse(data)
+
         if (!decoded.success) {
           logger?.warn({
             channel,
@@ -314,6 +332,7 @@ export function createConnection({
             message: "Realtime event does not match its schema",
             scope: "realtime",
           })
+
           return
         }
 
@@ -323,6 +342,7 @@ export function createConnection({
     }
 
     const existing = subscriptions.get(address.key)
+
     if (existing) {
       existing.listeners.add(listener)
     } else {
@@ -333,6 +353,7 @@ export function createConnection({
     return () => {
       const subscription = subscriptions.get(address.key)
       subscription?.listeners.delete(listener)
+
       if (!subscription || subscription.listeners.size > 0) return
 
       subscriptions.delete(address.key)

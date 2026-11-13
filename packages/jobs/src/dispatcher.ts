@@ -31,6 +31,7 @@ export function createDispatcher({ logger, url }: DispatcherOptions) {
 
   function queueFor(name: QueueName) {
     const existing = opened.get(name)
+
     if (existing) return existing
 
     const queue = new Queue(name, {
@@ -38,6 +39,7 @@ export function createDispatcher({ logger, url }: DispatcherOptions) {
       defaultJobOptions: DEFAULT_JOB_OPTIONS,
       skipWaitingForReady: true,
     })
+
     // The queue re-emits its connection's errors, which the connection already logs. Without a
     // listener, BullMQ prints each one to the console.
     queue.on("error", (error) => {

@@ -24,6 +24,7 @@ function rewriteImport(source: string) {
       .split(",")
       .map((name) => name.trim())
       .filter((name) => name !== "")
+
     const kept = names.filter((name) => !REPLACED_IMPORTS.has(name))
     const usesVi = kept.length !== names.length
 

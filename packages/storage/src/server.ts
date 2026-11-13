@@ -49,11 +49,11 @@ type SyncCallbacks = {
    * Records a file after an upload or `head` succeeds. The operation waits for it, and a failure is
    * logged without failing the operation.
    */
-  onUploadStored?: (file: UploadRecord) => Promise<unknown>
+  onUploadStored?: (file: UploadRecord) => Promise<void>
   /**
    * Removes the record of a deleted key. A bulk delete calls it once for each key.
    */
-  onUploadDeleted?: (key: string) => Promise<unknown>
+  onUploadDeleted?: (key: string) => Promise<void>
 }
 
 type UploadStorageOptions = SyncCallbacks & {
@@ -112,6 +112,7 @@ function getStoredUploadRecord(key: string, file: StoredFile): UploadRecord {
 
 function checkIsAllowedType(type: string) {
   const essence = (type.split(";")[0] ?? "").trim().toLowerCase()
+
   return STORAGE_ALLOWED_TYPES.some((allowed) =>
     allowed.endsWith("/*") ? essence.startsWith(allowed.slice(0, -1)) : essence === allowed
   )
@@ -135,28 +136,35 @@ function createTypePolicyPlugin(): FilesPlugin {
   return {
     extend: (files) => {
       storage = files
+
       return {}
     },
     name: "type-policy",
     wrap: handlers({
       head: async (operation, next) => {
         const file = await next(operation)
+
         if (!checkIsAllowedType(file.type)) await rejectStoredFile(operation.key, file.type)
+
         return file
       },
       // A direct upload never passes through storage, so the signed policy pins an allowed type.
       signedUploadUrl: (operation, next) => {
         assertAllowedType(operation.options?.contentType)
+
         return next(operation)
       },
       upload: async (operation, next) => {
         const declaredType = operation.options?.contentType
+
         if (declaredType !== undefined) assertAllowedType(declaredType)
 
         const result = await next(operation)
+
         if (!checkIsAllowedType(result.contentType)) {
           await rejectStoredFile(operation.key, result.contentType)
         }
+
         return result
       },
     }),
@@ -171,7 +179,7 @@ function createSyncPlugin({
   async function sync(
     operation: StorageSyncError["fields"]["operation"],
     key: string,
-    write: () => Promise<unknown>
+    write: () => Promise<void>
   ) {
     const result = await try$.run({
       catch: (error) => StorageFault.wrap(error).as("StorageSyncError", { key, operation }),
@@ -193,26 +201,31 @@ function createSyncPlugin({
     wrap: handlers({
       delete: async (operation, next) => {
         await next(operation)
+
         if (onUploadDeleted) {
           await sync("delete", operation.key, () => onUploadDeleted(operation.key))
         }
       },
       head: async (operation, next) => {
         const file = await next(operation)
+
         if (onUploadStored) {
           await sync("store", operation.key, () =>
             onUploadStored(getStoredUploadRecord(operation.key, file))
           )
         }
+
         return file
       },
       upload: async (operation, next) => {
         const result = await next(operation)
+
         if (onUploadStored) {
           await sync("store", operation.key, () =>
             onUploadStored(getUploadResultRecord(operation.key, result))
           )
         }
+
         return result
       },
     }),

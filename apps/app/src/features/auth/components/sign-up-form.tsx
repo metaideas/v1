@@ -14,6 +14,7 @@ import { signUp } from "#shared/auth.ts"
 
 export default function SignUpForm() {
   const navigate = useNavigate()
+
   const form = useForm({
     defaultValues: { confirmPassword: "", email: "", name: "", password: "" },
     onSubmit: async ({ value }) => {

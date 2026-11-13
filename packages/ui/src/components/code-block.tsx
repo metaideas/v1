@@ -147,6 +147,7 @@ function CodeBlockContent({
         data-slot="code-block-code"
         className="grid min-h-lh min-w-max content-start in-data-numbered:grid-cols-[auto_1fr] in-data-wrap:min-w-0"
       >
+        {/* oxlint-disable-next-line anti-slop/no-runtime-typeof -- Narrows a declared union, not unparsed input. Remove after adelrodriguez/adamantite#740 is fixed. */}
         {lineNumbers && typeof children === "string"
           ? children
               .replace(/\n$/, "")

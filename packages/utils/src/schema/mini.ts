@@ -29,5 +29,5 @@ export function ip() {
   return z.union([z.ipv4(), z.ipv6()])
 }
 
-// oxlint-disable-next-line no-barrel-file
+// oxlint-disable-next-line no-barrel-file -- this module extends Zod, so callers import one schema module
 export * from "zod/mini"

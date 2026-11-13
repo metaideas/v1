@@ -74,6 +74,7 @@ const TOOL_COMMANDS = [
 
 async function collectEnvFiles(rootDir: string) {
   const patterns = ["{apps,packages}/*/.env.schema", "packages/*/env/.env.*"]
+
   const files = await Promise.all(
     patterns.map((pattern) => Array.fromAsync(glob(pattern, { cwd: rootDir })))
   )
@@ -82,17 +83,18 @@ async function collectEnvFiles(rootDir: string) {
 }
 
 function matchDirectives(contents: string, directive: string) {
-  return [
-    ...contents.matchAll(new RegExp(`@${directive}\\(path=([^,)]+)|@${directive}\\(([^,)]+)`, "g")),
-  ]
+  return contents
+    .matchAll(new RegExp(`@${directive}\\(path=([^,)]+)|@${directive}\\(([^,)]+)`, "g"))
     .map((match) => match[1] ?? match[2])
     .filter((path): path is string => path !== undefined)
+    .toArray()
 }
 
 async function checkEnvPaths(context: Context, directive: string, label: string) {
   const failures = await Promise.all(
     context.envFiles.map(async (file) => {
       const contents = await readFile(file, "utf8")
+
       return matchDirectives(contents, directive)
         .filter((path) => !existsSync(resolve(dirname(file), path)))
         .map((path) => `${relative(context.rootDir, file)} ${label} ${path}, which does not exist`)
@@ -109,6 +111,7 @@ const checks: Check[] = [
       if (scope === TEMPLATE_SCOPE) return []
 
       const files = await findTextReferences(rootDir, getScopePrefix(TEMPLATE_SCOPE))
+
       return files
         .map((path) => relative(rootDir, path))
         .filter((path) => path !== TEMPLATE_STAMP_FILE)
@@ -124,14 +127,17 @@ const checks: Check[] = [
       const failures = workspaces.flatMap((workspace) =>
         workspace.dependencies.flatMap((dependency) => {
           const target = byPackageName.get(dependency)
+
           if (!target && dependency.startsWith(prefix))
             return [
               `${getWorkspacePath(workspace)} depends on ${dependency}, which is not a workspace`,
             ]
+
           if (target?.kind === "app" && workspace.kind === "package")
             return [
               `${getWorkspacePath(workspace)} depends on the ${getWorkspacePath(target)} application`,
             ]
+
           return []
         })
       )
@@ -171,6 +177,7 @@ const checks: Check[] = [
       const packages = workspaces.filter((workspace) => workspace.kind === "package")
       const core = packages.find((workspace) => workspace.name === "core")
       const servicesDir = core ? join(core.directory, "src/services") : undefined
+
       if (!servicesDir || !existsSync(servicesDir)) return []
 
       const services = readdirSync(servicesDir, { withFileTypes: true })
@@ -196,9 +203,11 @@ const checks: Check[] = [
           const files = globSync("src/**/*.{ts,tsx}", { cwd: workspace.directory }).filter(
             (file) => !file.endsWith("env.generated.ts")
           )
+
           const readers = await Promise.all(
             files.map(async (file) => {
               const contents = await readFile(join(workspace.directory, file), "utf8")
+
               return ENV_VALUE_IMPORT.test(contents) ? [file] : []
             })
           )
@@ -231,8 +240,10 @@ const checks: Check[] = [
           allowTrailingComma: true,
         })
       )
+
       const patterns = turbo.tasks.build?.env ?? []
       const contents = await Promise.all(envFiles.map((file) => readFile(file, "utf8")))
+
       const keys = contents.flatMap((text) =>
         [...text.matchAll(/^([A-Z][A-Z0-9_]*)=/gm)].map((match) => match[1])
       )
@@ -240,6 +251,7 @@ const checks: Check[] = [
       return patterns
         .filter((pattern) => {
           const matcher = new RegExp(`^${pattern.replaceAll("*", ".*")}$`)
+
           return !keys.some((key) => key !== undefined && matcher.test(key))
         })
         .map(
@@ -254,6 +266,7 @@ const checks: Check[] = [
       const { default: config } = KnipConfigModuleSchema.parse(
         await import(join(rootDir, "knip.config.ts"))
       )
+
       const paths = new Set(workspaces.map((workspace) => getWorkspacePath(workspace)))
 
       return findUnknownKnipWorkspaces(config, paths).map(
@@ -267,6 +280,7 @@ const checks: Check[] = [
       const packageJson = await readPackageJson(join(rootDir, "package.json"))
       const cleanup = TemplateCleanupSchema.safeParse(packageJson.v1)
       const allMarkedFiles = await findTextReferences(rootDir, TEMPLATE_SECTION_START)
+
       const markedFiles = allMarkedFiles.filter(
         (path) => !relative(rootDir, path).startsWith("scripts/")
       )
@@ -279,6 +293,7 @@ const checks: Check[] = [
         }
 
         const { cleanupPaths, cleanupSections } = cleanup.data
+
         return [
           ...cleanupPaths
             .filter((path) => !existsSync(join(rootDir, path)))
@@ -300,8 +315,10 @@ const checks: Check[] = [
     name: "README.md describes the project",
     run: async ({ rootDir, stamp }) => {
       const readmePath = join(rootDir, "README.md")
+
       if (!stamp || !existsSync(readmePath)) return []
       const contents = await readFile(readmePath, "utf8")
+
       if (!contents.includes(`bun create ${TEMPLATE_REPO}`)) return []
 
       return [
@@ -313,19 +330,24 @@ const checks: Check[] = [
     name: "AGENTS.md references docs that setup keeps",
     run: async ({ rootDir }) => {
       const agentsPath = join(rootDir, "AGENTS.md")
+
       if (!existsSync(agentsPath)) return []
 
       const packageJson = await readPackageJson(join(rootDir, "package.json"))
       const cleanup = TemplateCleanupSchema.safeParse(packageJson.v1)
       const cleanupPaths = cleanup.success ? cleanup.data.cleanupPaths : []
+
       const references = new Set(
         removeTemplateSections(await readFile(agentsPath, "utf8")).match(/docs\/[\w-]+\.md/g)
       )
+
       return [...references].flatMap((path) => {
         if (!existsSync(join(rootDir, path)))
           return [`AGENTS.md references ${path}, which does not exist`]
+
         if (checkIsRemovedByCleanup(rootDir, path, cleanupPaths))
           return [`AGENTS.md references ${path}, which v1.cleanupPaths removes during setup`]
+
         return []
       })
     },
@@ -334,6 +356,7 @@ const checks: Check[] = [
     name: "Backend connections have their backend workspace",
     run: ({ workspaces }) => {
       const apps = workspaces.filter((workspace) => workspace.kind === "app")
+
       return apps.flatMap((app) =>
         BACKEND_MARKERS.flatMap(({ backend, file }) => {
           if (!existsSync(join(app.directory, file))) return []
@@ -341,11 +364,15 @@ const checks: Check[] = [
           const target = workspaces.find(
             (workspace) => workspace.kind === backend.kind && workspace.name === backend.name
           )
+
           const appPath = getWorkspacePath(app)
           const backendPath = getWorkspacePath(backend)
+
           if (!target) return [`${appPath}/${file} needs ${backendPath}, which does not exist`]
+
           if (!app.dependencies.includes(target.packageName))
             return [`${appPath}/${file} needs ${appPath} to depend on ${target.packageName}`]
+
           return []
         })
       )
@@ -360,6 +387,7 @@ function runTool(rootDir: string, command: readonly string[]) {
     env: { ...process.env, VARLOCK_ENV: process.env.VARLOCK_ENV ?? "development" },
     maxBuffer: Number.POSITIVE_INFINITY,
   })
+
   if (result.status === 0) return []
 
   return [`pnpm run ${command.join(" ")} failed:\n${result.stdout}${result.stderr}`]
@@ -368,11 +396,14 @@ function runTool(rootDir: string, command: readonly string[]) {
 function report(name: string, failures: string[]) {
   if (failures.length === 0) {
     consola.success(name)
+
     return false
   }
 
   consola.fail(name)
+
   for (const failure of failures) consola.log(`  - ${failure}`)
+
   return true
 }
 
@@ -390,6 +421,7 @@ export default defineCommand({
   },
   run: async ({ args }) => {
     const rootDir = process.cwd()
+
     const context = {
       envFiles: await collectEnvFiles(rootDir),
       rootDir,
@@ -397,20 +429,25 @@ export default defineCommand({
       stamp: await readTemplateStamp(rootDir),
       workspaces: await getWorkspaceGraph(rootDir),
     }
+
     const tools = TOOL_COMMANDS.filter((command) => !(args.fast && command[0] === "build"))
+
     const steps = [
       ...checks.map((check) => async () => report(check.name, await check.run(context))),
       ...tools.map((command) => () => report(`pnpm run ${command[0]}`, runTool(rootDir, command))),
     ]
+
     const failed = await steps.reduce(async (previous, step) => {
       const previousFailed = await previous
       const stepFailed = await step()
+
       return previousFailed || stepFailed
     }, Promise.resolve(false))
 
     if (failed) {
       consola.error("The doctor found problems. Fix them and run pnpm template doctor again.")
       process.exitCode = 1
+
       return
     }
 

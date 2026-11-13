@@ -1,5 +1,6 @@
-import type { LogEvent, Logger } from "@v1/core/services/logging"
-import { Inngest, type Logger as InngestLogger } from "inngest"
+import type { Logger } from "@v1/core/services/logging"
+import { Inngest, type LogArg, type Logger as InngestLogger } from "inngest"
+import { LogFieldsSchema, LogMessageSchema } from "#schemas.ts"
 
 type WorkflowsOptions = {
   /**
@@ -18,27 +19,33 @@ type WorkflowsOptions = {
 }
 
 // Inngest logs Pino-style: an optional object, then a message.
-function toEvent(args: unknown[]): LogEvent {
-  const [first, ...rest] = args
+function toEvent([first, ...rest]: LogArg[]) {
+  const text = LogMessageSchema.safeParse(first)
 
-  if (typeof first === "string") {
-    return { message: first, scope: "workflows" }
+  if (text.success) {
+    return { message: text.data, scope: "workflows" }
   }
 
-  const message = rest.find((value) => typeof value === "string")
+  const message = rest
+    .values()
+    .map((value) => LogMessageSchema.safeParse(value))
+    .find((parsed) => parsed.success)?.data
 
   if (first instanceof Error) {
     return { error: first, message, scope: "workflows" }
   }
 
-  if (typeof first !== "object" || first === null) {
+  const parsed = LogFieldsSchema.safeParse(first)
+
+  if (!parsed.success) {
     return { details: first, message, scope: "workflows" }
   }
 
-  // Inngest reports failures as `{ err }`, and other packages log them under `error`.
-  const { err, ...fields }: LogEvent = { ...first }
+  const { err, ...fields } = parsed.data
 
-  return { ...fields, ...(err === undefined ? {} : { error: err }), message, scope: "workflows" }
+  return err === undefined
+    ? { ...fields, message, scope: "workflows" }
+    : { ...fields, error: err, message, scope: "workflows" }
 }
 
 function toInngestLogger(log: Logger): InngestLogger {
@@ -74,9 +81,8 @@ function toInternalLogger(log: Logger): InngestLogger {
 export function createWorkflows({ logger, ...options }: WorkflowsOptions) {
   return new Inngest({
     ...options,
-    ...(logger
-      ? { internalLogger: toInternalLogger(logger), logger: toInngestLogger(logger) }
-      : {}),
+    internalLogger: logger && toInternalLogger(logger),
+    logger: logger && toInngestLogger(logger),
   })
 }
 

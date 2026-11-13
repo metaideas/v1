@@ -1,5 +1,5 @@
-import { defineRule } from "adamantite/rules"
-import { findSourceRoot, findStrayFolder, listLayerFolders, selectBoundaries } from "#layers.ts"
+import { defineRule } from "adamantite/rules/plugin"
+import { findSourceRoot, findStrayFolder, listLayerFolders, isBoundaryMap } from "#layers.ts"
 
 export default defineRule({
   create(context) {
@@ -9,7 +9,8 @@ export default defineRule({
       return {}
     }
 
-    const boundaries = selectBoundaries(context.options[0], root.app)
+    const [options] = context.options
+    const boundaries = isBoundaryMap(options) ? (options[root.app] ?? {}) : {}
     const folder = findStrayFolder(root, boundaries, context.filename)
 
     if (folder === undefined) {

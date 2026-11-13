@@ -27,4 +27,5 @@ export function createRealtimeClient(options: RealtimeClientOptions) {
 }
 
 export type { ChannelName, EventName, RealtimeMessage } from "#channels/catalog.ts"
+
 export type { ConnectionStatus } from "#client/connection.ts"

@@ -37,6 +37,7 @@ export function useRealtime<Channel extends ChannelName, Event extends EventName
 ) {
   const address =
     options.enabled === false ? undefined : addressChannel(options.channel, options.params)
+
   const key = address && "key" in address ? address.key : undefined
 
   function isListed(message: RealtimeMessage<Channel>): message is RealtimeMessage<Channel, Event> {
@@ -46,9 +47,11 @@ export function useRealtime<Channel extends ChannelName, Event extends EventName
   const handleMessage = useEffectEvent((message: RealtimeMessage<Channel>) => {
     if (isListed(message)) options.onData(message)
   })
+
   const handleReset = useEffectEvent(() => {
     options.onReset?.()
   })
+
   const subscribe = useEffectEvent(() =>
     connection.subscribe(options.channel, options.params, {
       onMessage: handleMessage,

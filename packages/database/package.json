@@ -23,8 +23,7 @@
     "migrate": "varlock run -- drizzle-kit migrate",
     "push": "varlock run -- drizzle-kit push",
     "reset": "varlock run -- node ./scripts/reset.ts",
-    "seed": "varlock run -- node ./scripts/seed.ts",
-    "test": "vitest run"
+    "seed": "varlock run -- node ./scripts/seed.ts"
   },
   "dependencies": {
     "@v1/core": "workspace:*",
@@ -34,12 +33,10 @@
     "varlock": "1.21.1"
   },
   "devDependencies": {
-    "@tooling/testing": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
     "@types/node": "26.6.4",
     "drizzle-kit": "1.0.0-rc.5",
     "drizzle-seed": "1.0.0-rc.5",
-    "typescript": "7.0.2",
-    "vitest": "5.1.0"
+    "typescript": "7.0.2"
   }
 }

@@ -1,4 +1,4 @@
-// oxlint-disable no-console - We use console.log for logging in scripts
+// oxlint-disable no-console -- this script reports its progress to the terminal
 
 import { checkIsLocalDatabase, createDatabase } from "@v1/database/client"
 import * as schema from "@v1/database/schema"
@@ -50,7 +50,7 @@ async function main() {
 
 void main()
   .then(() => process.exit(0))
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error(`\n✖  ${error instanceof Error ? error.message : String(error)}\n`)
     process.exit(1)
   })

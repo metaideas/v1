@@ -6,6 +6,7 @@ import { spawn } from "node:child_process"
  */
 export async function runCommand([command, ...args]: readonly [string, ...string[]], cwd?: string) {
   const child = spawn(command, args, { cwd, stdio: "inherit" })
+
   const exitCode = await new Promise<number | null>((resolve, reject) => {
     child.once("error", reject).once("close", resolve)
   })
