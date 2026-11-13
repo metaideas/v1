@@ -60,7 +60,8 @@
       "apps/web/vercel.json"
     ],
     "cleanupSections": [
-      "AGENTS.md"
+      "AGENTS.md",
+      "CODING_STANDARDS.md"
     ]
   }
 }

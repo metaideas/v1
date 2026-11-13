@@ -56,6 +56,13 @@ Follow the TypeScript, service, import, UI, component, test, comment, and commit
 
 ## Tests
 
+<!-- TEMPLATE:START -->
+
+- The template tests only its template commands in `scripts/`, its template recipes in `turbo/generators/`, the `tooling/` workspaces, and `@v1/utils`. Scaffolded projects change the other workspaces, so tests there slow every template change and protect code that may not survive. Spot it: a new `__tests__` folder or `test` script in any other workspace.
+- Leave out a template test that replaces a module, a global, or a process method, such as `vi.doMock("bullmq")`, `vi.spyOn(globalThis, "fetch")`, or `vi.spyOn(process, "exit")`. Such a test checks the replacement more than the template's code.
+
+<!-- TEMPLATE:END -->
+
 - Write a test only when it can fail on a real bug: code with a defined spec (parsers, serialization and protocol code, math, date and money logic, permission rules, state machines), a regression test that fails without the fix for a bug you just fixed, or behavior that running the app cannot easily reach, such as edge cases, concurrency, error paths, and retries.
 - Verify everything else for real. Run `bun run check`, then use the feature: run the CLI, open the page, or hit the endpoint. Say in the PR how you verified the change.
 - Leave out tests that cannot catch a bug:
