@@ -3,7 +3,6 @@ import type { Adapter, Files, FilesPlugin, StoredFile, UploadResult } from "file
 import type { AllowedOrigins } from "files-sdk/api"
 import type { MemoryAdapterOptions } from "files-sdk/memory"
 import * as try$ from "@sanely/try"
-import { StorageFault, StorageSyncError } from "@v1/core/errors"
 import { createFiles, handlers } from "files-sdk"
 import { createFilesRouter } from "files-sdk/api"
 import { memory } from "files-sdk/memory"
@@ -16,6 +15,7 @@ import {
   STORAGE_MAX_UPLOAD_SIZE,
   STORAGE_MAX_URL_AGE,
 } from "#constants.ts"
+import { StorageFault, StorageSyncError } from "#errors.ts"
 import { FileKeySchema } from "#schemas.ts"
 
 type S3AdapterOptions = {

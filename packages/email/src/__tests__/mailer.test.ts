@@ -1,7 +1,7 @@
 import { isTimeoutError } from "@sanely/try/errors"
-import { EmailDeliveryError, SendEmailError } from "@v1/core/errors"
 import { describe, expect, test, vi } from "vitest"
 import type { EmailMessage, SendContext } from "#transports.ts"
+import { EmailDeliveryError, SendEmailError } from "#errors.ts"
 import { createMailer } from "#mailer.ts"
 
 const props = { appName: "v1", resetUrl: "https://example.com/reset?token=abc" }

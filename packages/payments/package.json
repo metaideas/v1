@@ -8,7 +8,8 @@
     "#*": "./src/*"
   },
   "exports": {
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./errors": "./src/errors.ts"
   },
   "scripts": {
     "bump:deps": "pnpm update --interactive",
@@ -16,8 +17,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@sanely/errors": "0.1.0",
     "@sanely/try": "0.1.0",
-    "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
     "stripe": "23.0.0",
     "unstorage": "1.17.5"

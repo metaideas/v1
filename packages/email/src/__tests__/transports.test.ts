@@ -1,5 +1,5 @@
-import { EmailDeliveryError } from "@v1/core/errors"
 import { afterEach, describe, expect, test, vi } from "vitest"
+import { EmailDeliveryError } from "#errors.ts"
 import { resendTransport, smtpTransport } from "#transports.ts"
 
 const message = {

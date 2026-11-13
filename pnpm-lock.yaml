@@ -1064,6 +1064,9 @@ importers:
       '@sanely/duration':
         specifier: 0.1.0
         version: 0.1.0
+      '@sanely/errors':
+        specifier: 0.1.0
+        version: 0.1.0
       '@sanely/try':
         specifier: 0.1.0
         version: 0.1.0
@@ -1113,6 +1116,9 @@ importers:
       '@sanely/duration':
         specifier: 0.1.0
         version: 0.1.0
+      '@sanely/errors':
+        specifier: 0.1.0
+        version: 0.1.0
       '@sanely/try':
         specifier: 0.1.0
         version: 0.1.0
@@ -1147,12 +1153,12 @@ importers:
 
   packages/payments:
     dependencies:
+      '@sanely/errors':
+        specifier: 0.1.0
+        version: 0.1.0
       '@sanely/try':
         specifier: 0.1.0
         version: 0.1.0
-      '@v1/core':
-        specifier: workspace:*
-        version: link:../core
       '@v1/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1182,6 +1188,9 @@ importers:
   packages/realtime:
     dependencies:
       '@sanely/duration':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@sanely/errors':
         specifier: 0.1.0
         version: 0.1.0
       '@sanely/try':
@@ -1240,6 +1249,9 @@ importers:
         specifier: 3.1146.0
         version: 3.1146.0
       '@sanely/duration':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@sanely/errors':
         specifier: 0.1.0
         version: 0.1.0
       '@sanely/try':

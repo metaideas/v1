@@ -3,9 +3,9 @@ import { createServer } from "node:http"
 import { setTimeout as sleep } from "node:timers/promises"
 import { getRequestListener } from "@hono/node-server"
 import { ms } from "@sanely/duration"
-import { PublishEventError, RealtimePayloadError } from "@v1/core/errors"
 import * as z from "@v1/utils/schema/mini"
 import { beforeEach, describe, expect, test } from "vitest"
+import { PublishEventError, RealtimePayloadError } from "#errors.ts"
 import { mockRedis, readEvents } from "#server/__tests__/fakes.ts"
 
 const redis = mockRedis()

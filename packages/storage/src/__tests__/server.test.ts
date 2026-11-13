@@ -1,8 +1,8 @@
 import { setTimeout as sleep } from "node:timers/promises"
-import { StorageSyncError } from "@v1/core/errors"
 import { ValidationError } from "files-sdk/validation"
 import { describe, expect, test, vi } from "vitest"
 import type { UploadRecord } from "#server.ts"
+import { StorageSyncError } from "#errors.ts"
 import {
   createUploadStorage,
   createUploadStorageRouter,

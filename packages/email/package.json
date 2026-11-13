@@ -7,6 +7,7 @@
     "#*": "./src/*"
   },
   "exports": {
+    "./errors": "./src/errors.ts",
     "./mailer": "./src/mailer.ts",
     "./transports": "./src/transports.ts"
   },
@@ -22,6 +23,7 @@
     "@react-email/components": "1.0.12",
     "@react-email/render": "2.1.0",
     "@sanely/duration": "0.1.0",
+    "@sanely/errors": "0.1.0",
     "@sanely/try": "0.1.0",
     "@v1/core": "workspace:*",
     "nodemailer": "10.0.15",

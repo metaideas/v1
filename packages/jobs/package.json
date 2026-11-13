@@ -9,6 +9,7 @@
   },
   "exports": {
     "./dispatcher": "./src/dispatcher.ts",
+    "./errors": "./src/errors.ts",
     "./queue-names": "./src/queue-names.ts",
     "./runner": "./src/runner.ts"
   },
@@ -19,6 +20,7 @@
   },
   "dependencies": {
     "@sanely/duration": "0.1.0",
+    "@sanely/errors": "0.1.0",
     "@sanely/try": "0.1.0",
     "@v1/core": "workspace:*",
     "@v1/utils": "workspace:*",
