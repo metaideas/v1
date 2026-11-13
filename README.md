@@ -1,3 +1,5 @@
+<!-- TEMPLATE:README -->
+
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./.github/assets/v1-logo-dark.svg">
