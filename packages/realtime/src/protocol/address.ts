@@ -9,9 +9,11 @@ export function compareCursors(left: string, right: string) {
   return leftTime - rightTime || leftSequence - rightSequence
 }
 
+// oxlint-disable-next-line anti-slop/no-unknown-parameters, anti-slop/no-unknown-returns -- Walks params that addressChannel already parsed. Remove after adelrodriguez/adamantite#742 is fixed.
 function sortKeys(value: unknown): unknown {
   if (Array.isArray(value)) return value.map((item) => sortKeys(item))
 
+  // oxlint-disable-next-line anti-slop/no-runtime-typeof -- Walks params that addressChannel already parsed. Remove after adelrodriguez/adamantite#742 is fixed.
   if (typeof value !== "object" || value === null) return value
 
   return Object.fromEntries(
@@ -25,6 +27,7 @@ function sortKeys(value: unknown): unknown {
  * Parses a channel's params and names the instance they address. The same params give the same key
  * on the server and every client, whatever the order of their keys.
  */
+// oxlint-disable-next-line anti-slop/no-unknown-parameters -- Parses params with the channel's schema. Remove after adelrodriguez/adamantite#742 is fixed.
 export function addressChannel<Channel extends ChannelName>(channel: Channel, params: unknown) {
   const parsed = z.safeParse(getChannel(channel).params, params)
 
