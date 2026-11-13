@@ -48,7 +48,7 @@ function unavailable() {
  * Streams events to clients over server-sent events. A request lists the channels it subscribes to
  * and the cursor each one reached. The handler replays the events after each cursor that Redis
  * still holds, then streams new events as they arrive. It uses only web standards, so it runs on
- * any server that takes a `Request` and returns a `Response`, on Bun or Node.
+ * any server that takes a `Request` and returns a `Response`.
  */
 export function createRealtimeHandler({ authorize, realtime }: RealtimeHandlerOptions) {
   const { connection, hub, logger } = getInternals(realtime)

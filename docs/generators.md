@@ -93,7 +93,7 @@ if (error) {
 <ul>{posts.map((post) => <li>{post.data.title}</li>)}</ul>
 ```
 
-EmDash needs `EMDASH_ENCRYPTION_KEY` only when a plugin stores a secret setting. Generate a key with `bunx emdash secrets generate` and back it up, because EmDash cannot read those settings without it. Uploaded media stay in `apps/web/uploads`, so the server needs a persistent disk. Deploy with `pnpm --filter web run build` and `pnpm --filter web run start`, and remove `apps/web/vercel.json` if you no longer deploy to Vercel. To keep media in S3 instead, change the storage adapter in `astro.config.ts` following the EmDash [configuration reference](https://docs.emdashcms.com/reference/configuration/).
+EmDash needs `EMDASH_ENCRYPTION_KEY` only when a plugin stores a secret setting. Generate a key with `pnpm --filter web exec emdash secrets generate` and back it up, because EmDash cannot read those settings without it. Uploaded media stay in `apps/web/uploads`, so the server needs a persistent disk. Deploy with `pnpm --filter web run build` and `pnpm --filter web run start`, and remove `apps/web/vercel.json` if you no longer deploy to Vercel. To keep media in S3 instead, change the storage adapter in `astro.config.ts` following the EmDash [configuration reference](https://docs.emdashcms.com/reference/configuration/).
 
 Where an edit does not apply, the template command prints the step to finish by hand. A repeat run reports skips without replacing generated application code.
 

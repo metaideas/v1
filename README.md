@@ -11,7 +11,7 @@
   </p>
 
   <p align="center">
-    <code>bun create metaideas/v1 my-app</code>
+    <code>gh repo create my-app --template metaideas/v1 --private --clone</code>
   </p>
 </div>
 

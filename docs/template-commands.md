@@ -3,7 +3,7 @@ title: Template Commands
 description: Configure, verify, extend, and update scaffolded projects from v1 with local template commands.
 ---
 
-Use these template commands to configure and extend projects created with `bun create metaideas/v1 <name>`. Each command does one mechanical job. The skills in `.agents/skills/` drive them and finish with `pnpm template doctor`.
+Use these template commands to configure and extend projects created from the `metaideas/v1` template. Each command does one mechanical job. The skills in `.agents/skills/` drive them and finish with `pnpm template doctor`.
 
 ## Commands
 

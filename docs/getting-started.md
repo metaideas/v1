@@ -7,25 +7,26 @@ sidebar:
 
 ## Prerequisites
 
-- Use [bun](https://bun.sh/) as the package manager.
+- Install [pnpm](https://pnpm.io/installation), the package manager.
+- Install the [GitHub CLI](https://cli.github.com/) to create the project.
 - Install Node.js. See the tooling requirements below.
 - Install Docker to run the local services: Postgres, Redis, SeaweedFS, Mailpit, and the Inngest Dev Server. Use [OrbStack](https://orbstack.dev/) to manage containers.
 
 ## Tooling Expectations
 
-- Bun: the version in the root `package.json` `packageManager` field.
+- pnpm: the version in the root `package.json` `packageManager` field.
 - Node.js: the range in the root `package.json` `engines` field.
 
 ## Create a Project
 
 ```bash
-bun create metaideas/v1 my-app
+gh repo create my-app --template metaideas/v1 --private --clone
 cd my-app
 ```
 
 ## Setup
 
-1. Install the dependencies with `bun`:
+1. Install the dependencies with `pnpm`:
 
 ```bash
 pnpm install
@@ -97,7 +98,7 @@ Docker Compose services use fixed host ports in the `8000` block, declared in `i
 
 ### Troubleshooting
 
-- For a Bun version mismatch, compare `bun --version` with the `packageManager` field in the root `package.json`.
+- For a pnpm version mismatch, compare `pnpm --version` with the `packageManager` field in the root `package.json`.
 - For a Node.js version mismatch, install a version in the `engines` range with your version manager.
 - When Docker services do not run, examine `docker ps`. Then run `pnpm run docker:up`.
 - When Postgres exits with "in 18+, these Docker images are configured to store database data in a format which is compatible with pg_ctlcluster", the local data comes from an older major version. See [Upgrading local Postgres](#upgrading-local-postgres).
