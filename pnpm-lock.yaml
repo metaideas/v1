@@ -415,9 +415,6 @@ importers:
       '@tooling/internationalization':
         specifier: workspace:*
         version: link:../../tooling/internationalization
-      '@tooling/testing':
-        specifier: workspace:*
-        version: link:../../tooling/testing
       '@tooling/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/tsconfig
@@ -451,9 +448,6 @@ importers:
       vite:
         specifier: 8.3.2
         version: 8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.1)
-      vitest:
-        specifier: 5.1.0
-        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.1))
 
   apps/desktop:
     dependencies:
@@ -950,9 +944,6 @@ importers:
         specifier: 1.0.0-rc.5
         version: 1.0.0-rc.5(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(effect@4.1.2)(postgres@4.1.0)(valibot@1.5.0(typescript@7.0.2))(zod@4.6.5)
     devDependencies:
-      '@tooling/testing':
-        specifier: workspace:*
-        version: link:../../tooling/testing
       '@tooling/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/tsconfig
@@ -962,9 +953,6 @@ importers:
       typescript:
         specifier: 7.0.2
         version: 7.0.2
-      vitest:
-        specifier: 5.1.0
-        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.1))
 
   packages/backend:
     dependencies:
@@ -1034,9 +1022,6 @@ importers:
         specifier: 1.21.1
         version: 1.21.1
     devDependencies:
-      '@tooling/testing':
-        specifier: workspace:*
-        version: link:../../tooling/testing
       '@tooling/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/tsconfig
@@ -1052,9 +1037,6 @@ importers:
       typescript:
         specifier: 7.0.2
         version: 7.0.2
-      vitest:
-        specifier: 5.1.0
-        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.1))
 
   packages/email:
     dependencies:
@@ -1092,9 +1074,6 @@ importers:
       '@react-email/ui':
         specifier: 6.11.0
         version: 6.11.0(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@tooling/testing':
-        specifier: workspace:*
-        version: link:../../tooling/testing
       '@tooling/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/tsconfig
@@ -1110,9 +1089,6 @@ importers:
       typescript:
         specifier: 7.0.2
         version: 7.0.2
-      vitest:
-        specifier: 5.1.0
-        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.1))
 
   packages/jobs:
     dependencies:
@@ -1166,9 +1142,6 @@ importers:
         specifier: 1.17.5
         version: 1.17.5(aws4fetch@1.0.20)(db0@0.4.1)(ioredis@6.0.0(supports-color@8.1.1))
     devDependencies:
-      '@tooling/testing':
-        specifier: workspace:*
-        version: link:../../tooling/testing
       '@tooling/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/tsconfig
@@ -1178,9 +1151,6 @@ importers:
       typescript:
         specifier: 7.0.2
         version: 7.0.2
-      vitest:
-        specifier: 5.1.0
-        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.1))
 
   packages/realtime:
     dependencies:
@@ -1212,9 +1182,6 @@ importers:
       '@hono/node-server':
         specifier: 2.1.6
         version: 2.1.6(hono@4.13.13)
-      '@tooling/testing':
-        specifier: workspace:*
-        version: link:../../tooling/testing
       '@tooling/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/tsconfig
@@ -1227,9 +1194,6 @@ importers:
       typescript:
         specifier: 7.0.2
         version: 7.0.2
-      vitest:
-        specifier: 5.1.0
-        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.1))
 
   packages/storage:
     dependencies:
@@ -1267,9 +1231,6 @@ importers:
         specifier: 19.2.3
         version: 19.2.3
     devDependencies:
-      '@tooling/testing':
-        specifier: workspace:*
-        version: link:../../tooling/testing
       '@tooling/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/tsconfig
@@ -1279,9 +1240,6 @@ importers:
       typescript:
         specifier: 7.0.2
         version: 7.0.2
-      vitest:
-        specifier: 5.1.0
-        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.1))
 
   packages/ui:
     dependencies:
@@ -1340,9 +1298,6 @@ importers:
         specifier: 4.5.0
         version: 4.5.0
     devDependencies:
-      '@tooling/testing':
-        specifier: workspace:*
-        version: link:../../tooling/testing
       '@tooling/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/tsconfig
@@ -1367,9 +1322,6 @@ importers:
       typescript:
         specifier: 7.0.2
         version: 7.0.2
-      vitest:
-        specifier: 5.1.0
-        version: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.1))
 
   packages/utils:
     dependencies:

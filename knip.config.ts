@@ -40,7 +40,6 @@ export default {
     "apps/app": {
       entry: ["src/routeTree.gen.{ts,js}", "vite.config.ts"],
       vite: false,
-      vitest,
     },
     "apps/desktop": {
       entry: [
@@ -81,11 +80,9 @@ export default {
         entry: ["drizzle.config.ts", "src/relations.ts", "src/schema/index.ts"],
       },
       entry: ["scripts/*.ts"],
-      vitest,
     },
     "packages/ui": {
       project: "src/**/*.{css,js,jsx,ts,tsx}",
-      vitest,
     },
     "tooling/linting": {
       entry: "src/rules/*.ts",

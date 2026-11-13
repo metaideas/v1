@@ -16,8 +16,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "email dev --dir src/templates --port ${PORT:-4001}",
     "export": "email export --dir src/templates",
-    "preview:build": "email build --dir src/templates",
-    "test": "vitest run"
+    "preview:build": "email build --dir src/templates"
   },
   "dependencies": {
     "@react-email/components": "1.0.12",
@@ -33,12 +32,10 @@
   },
   "devDependencies": {
     "@react-email/ui": "6.11.0",
-    "@tooling/testing": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
     "@types/node": "26.6.4",
     "@types/react": "19.2.4",
     "react-email": "6.11.0",
-    "typescript": "7.0.2",
-    "vitest": "5.1.0"
+    "typescript": "7.0.2"
   }
 }
