@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs"
-
 import { describe, expect, test } from "vitest"
 
 import {
@@ -77,12 +75,6 @@ describe("findPackageOwnedCoreServices", () => {
 })
 
 describe("checkIsTemplateReadme", () => {
-  test("recognizes the template's own README", () => {
-    const readme = readFileSync(new URL("../../../README.md", import.meta.url), "utf8")
-
-    expect(checkIsTemplateReadme(readme)).toBe(true)
-  })
-
   test("accepts a README that setup wrote for the project", () => {
     const readme = "# my-app\n\nTracks orders.\n\n## Workspaces\n\n- `apps/app`: web application\n"
 

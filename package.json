@@ -55,6 +55,7 @@
     "cleanupPaths": [
       ".github/workflows/pullfrog.yml",
       "scripts/codemods",
+      "scripts/template/__tests__/template-readme.test.ts",
       "apps/docs/vercel.json",
       "apps/web/vercel.json"
     ],
