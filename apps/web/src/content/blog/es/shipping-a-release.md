@@ -15,5 +15,5 @@ Esta es una nota de lanzamiento de ejemplo. Reemplázala con tu propio anuncio.
 Lee más en la [guía de colecciones de contenido de Astro](https://docs.astro.build/es/guides/content-collections/).
 
 ```sh
-bun run build --filter=web
+pnpm run build --filter=web
 ```

@@ -29,7 +29,7 @@ Follow the TypeScript, service, import, UI, component, test, comment, and commit
 - A factory takes configuration and other services as options. A package workspace exports Varlock fragments under `env/` (`.env.server`, `.env.client`, `.env.build`, `.env.shared`). Application workspaces own the `.env.schema` that composes those fragments with their own keys, read `ENV`, and pass the values to factories.
 - A package workspace does not import another capability package. It declares the smallest interface it needs, such as a callback, and the application passes an implementation. A contract that several packages share lives in `@v1/core/services/<service>/`.
 - A package accepts an optional `logger` that satisfies `@v1/core/services/logging`. The application decides where logs go.
-- A package defines the faults it throws in `src/errors.ts`, groups them in a registry named after the package, such as `JobsFault`, and exports them at `./errors`. Faults for business rules that several workspaces share live in `@v1/core/domains/<domain>/errors.ts`. An application merges the registries whose faults cross one of its boundaries, such as the faults its server functions throw to the client, where it serializes them. `bun template doctor` reports a `@v1/core/services/` folder named after a package workspace.
+- A package defines the faults it throws in `src/errors.ts`, groups them in a registry named after the package, such as `JobsFault`, and exports them at `./errors`. Faults for business rules that several workspaces share live in `@v1/core/domains/<domain>/errors.ts`. An application merges the registries whose faults cross one of its boundaries, such as the faults its server functions throw to the client, where it serializes them. `pnpm template doctor` reports a `@v1/core/services/` folder named after a package workspace.
 - Each application builds its services once in its composition root: `#shared/services.ts`, or `#shared/server/services.ts` for server-only services in a full-stack application. Code deeper in the application receives those instances and never calls a factory itself.
 - Pass services through the framework context: `c.var` in Hono, request middleware context in TanStack Start, and `ctx` in Convex. Import the composition root directly only where no framework context exists, such as a workflow definition or a script.
 - A service that holds connections exposes a way to close them, and the application closes it on shutdown. A long-running server process, such as `apps/api` or `apps/worker`, starts with `lifecycle` from `@v1/utils/lifecycle`. It runs the startup function, and on `SIGINT` or `SIGTERM` it closes the process's services in `close` within a deadline. After a failed startup, an uncaught exception, or an unhandled rejection, the process exits with code 1 without closing, because its state is unknown. `lifecycle` reports the errors it catches to `onError`, where the application logs them.
@@ -57,7 +57,7 @@ Follow the TypeScript, service, import, UI, component, test, comment, and commit
 ## Tests
 
 - Write a test only when it can fail on a real bug: code with a defined spec (parsers, serialization and protocol code, math, date and money logic, permission rules, state machines), a regression test that fails without the fix for a bug you just fixed, or behavior that running the app cannot easily reach, such as edge cases, concurrency, error paths, and retries.
-- Verify everything else for real. Run `bun run check`, then use the feature: run the CLI, open the page, or hit the endpoint. Say in the PR how you verified the change.
+- Verify everything else for real. Run `pnpm run check`, then use the feature: run the CLI, open the page, or hit the endpoint. Say in the PR how you verified the change.
 - Leave out tests that cannot catch a bug:
   - Tests of what the language or a library already guarantees, such as `Array.map` mapping or a spread copying.
   - Tests that a component renders its own markup, such as a "Save" button showing "Save".
@@ -69,10 +69,10 @@ Follow the TypeScript, service, import, UI, component, test, comment, and commit
 - When a test covers important behavior but breaks on implementation details, such as internals, timing, or heavy mocking, rewrite it to test the behavior.
 - Keep test code in proportion to the change. A PR with 20 lines of change and 500 lines of tests has a test problem.
 - Use Bun to manage packages and execute scripts.
-- Use Vitest. Import `describe`, `expect`, `test`, and `vi` from `vitest`. A workspace with tests re-exports `@tooling/testing` from its `vitest.config.ts` and runs `vitest run` in its `test` script. `bun run test` runs every workspace through Turborepo.
+- Use Vitest. Import `describe`, `expect`, `test`, and `vi` from `vitest`. A workspace with tests re-exports `@tooling/testing` from its `vitest.config.ts` and runs `vitest run` in its `test` script. `pnpm run test` runs every workspace through Turborepo.
 - Add tests to a `__tests__` folder beside the file they test.
 - Name each `describe` block after its function. Name each test case after its behavior.
-- Use `bun run build --filter=<workspace>` for builds of a target workspace.
+- Use `pnpm run build --filter=<workspace>` for builds of a target workspace.
 
 ## Comments
 
@@ -97,4 +97,4 @@ Follow the TypeScript, service, import, UI, component, test, comment, and commit
 - `packages/core`: put business rules in `src/domains/<domain>/` and contracts that several package workspaces share, such as the logger, in `src/services/<service>/`. Code that both use goes in `src/shared/`. Do not organize it by product feature.
 - `packages/database`: use Drizzle, the shared prefixed-ID helper, and timestamps where appropriate.
 - `packages/backend`: keep Convex functions in `public/`, `system/`, and `shared/`. Do not edit `_generated/`.
-- `packages/ui`: components are copy-owned source from the shadcn registry, and oxlint checks them like any other code. After `components:add`, run `bun run fix` and resolve what `bun run check` still reports.
+- `packages/ui`: components are copy-owned source from the shadcn registry, and oxlint checks them like any other code. After `components:add`, run `pnpm run fix` and resolve what `pnpm run check` still reports.

@@ -15,5 +15,5 @@ This is a sample release note. Replace it with your own announcement.
 Read more in the [Astro content collections guide](https://docs.astro.build/en/guides/content-collections/).
 
 ```sh
-bun run build --filter=web
+pnpm run build --filter=web
 ```

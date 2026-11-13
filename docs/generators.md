@@ -3,7 +3,7 @@ title: Project Generators
 description: Use local template recipes to add features, package workspaces, and optional integrations.
 ---
 
-Run `bun run generate` to open the Turbo generator menu. Template commands use local template recipes from the exact template snapshot in the project. They do not download a catalog. They do not update previously generated files. They do not track template drift.
+Run `pnpm run generate` to open the Turbo generator menu. Template commands use local template recipes from the exact template snapshot in the project. They do not download a catalog. They do not update previously generated files. They do not track template drift.
 
 `turbo/generators/config.ts` registers each implementation in `turbo/generators/commands`. Put generated source in Handlebars files under `templates/`. Keep each template command direct and self-contained. Do not add shared recipe, adapter, or utility layers.
 
@@ -12,30 +12,30 @@ Run `bun run generate` to open the Turbo generator menu. Template commands use l
 `new-feature` creates a feature folder under `src/features` with the roles you select. It offers only the roles the application workspace supports. See [Features](./project-structure.md#features).
 
 ```bash
-bun run generate new-feature
+pnpm run generate new-feature
 ```
 
 `new-package` creates a workspace under `packages/`. It uses the current npm scope, shared TypeScript configuration, and TypeScript version of the project:
 
 ```bash
-bun run generate new-package
+pnpm run generate new-package
 ```
 
 Both scaffold template commands preserve existing files on a repeat run.
 
 ## Connect a backend
 
-Backend connections are not a generator. The `connect-backend` skill in `.agents/skills/connect-backend/` carries the supported connections, their environment keys, and reference sources. A coding agent applies it and verifies the result with `bun template doctor`.
+Backend connections are not a generator. The `connect-backend` skill in `.agents/skills/connect-backend/` carries the supported connections, their environment keys, and reference sources. A coding agent applies it and verifies the result with `pnpm template doctor`.
 
 ## Add Sentry
 
 Application workspaces log with evlog and need no external account. Error monitoring is opt-in. `sentry` adds the Sentry SDK to `apps/api`, `apps/app`, or `apps/mobile`:
 
 ```bash
-bun run generate sentry
+pnpm run generate sentry
 ```
 
-The template command installs the SDK for the runtime of the workspace, adds a module that initializes it, and declares the Sentry variables in the workspace's `.env.schema` as optional. Without a DSN, Sentry stays off. In `apps/api` it also ships evlog events to Sentry through a drain, flushes the drain on shutdown, and reports unhandled errors from `app.onError`. In `apps/mobile` it adds the Expo config plugin and the Metro configuration. Run `bun run --filter mobile prebuild` afterward to update the native projects.
+The template command installs the SDK for the runtime of the workspace, adds a module that initializes it, and declares the Sentry variables in the workspace's `.env.schema` as optional. Without a DSN, Sentry stays off. In `apps/api` it also ships evlog events to Sentry through a drain, flushes the drain on shutdown, and reports unhandled errors from `app.onError`. In `apps/mobile` it adds the Expo config plugin and the Metro configuration. Run `pnpm --filter mobile run prebuild` afterward to update the native projects.
 
 The template command connects the module where the generated application still matches the template. Where an edit does not apply, it prints the step to finish by hand. A repeat run reports skips without replacing generated application code.
 
@@ -44,10 +44,10 @@ The template command connects the module where the generated application still m
 Product analytics is opt-in. `posthog` adds PostHog to `apps/api`, `apps/app`, or `apps/mobile`:
 
 ```bash
-bun run generate posthog
+pnpm run generate posthog
 ```
 
-The template command installs the SDK for the runtime of the workspace and declares the PostHog variables in the workspace's `.env.schema`. The project key is optional, and PostHog stays off without it. In `apps/api` it adds a server client and shuts it down with the process. In `apps/app` and `apps/mobile` it adds an analytics provider and wraps the existing providers with it. The mobile provider captures screens from the Expo Router pathname. In `apps/mobile`, the template command also installs the Expo modules PostHog reads device details from, so run `bun run --filter mobile prebuild` afterward to update the native projects. Identify users with `usePostHog().identify()` once a session loads. On mobile, the hook returns `undefined` when no project key is set, so call `usePostHog()?.identify()`.
+The template command installs the SDK for the runtime of the workspace and declares the PostHog variables in the workspace's `.env.schema`. The project key is optional, and PostHog stays off without it. In `apps/api` it adds a server client and shuts it down with the process. In `apps/app` and `apps/mobile` it adds an analytics provider and wraps the existing providers with it. The mobile provider captures screens from the Expo Router pathname. In `apps/mobile`, the template command also installs the Expo modules PostHog reads device details from, so run `pnpm --filter mobile run prebuild` afterward to update the native projects. Identify users with `usePostHog().identify()` once a session loads. On mobile, the hook returns `undefined` when no project key is set, so call `usePostHog()?.identify()`.
 
 Where an edit does not apply, the template command prints the step to finish by hand. A repeat run reports skips without replacing generated application code.
 
@@ -56,7 +56,7 @@ Where an edit does not apply, the template command prints the step to finish by 
 `bull-board` adds a [bull-board](https://github.com/felixmosh/bull-board) dashboard for the `@v1/jobs` queues to `apps/api`:
 
 ```bash
-bun run generate bull-board
+pnpm run generate bull-board
 ```
 
 The template command installs bull-board and the BullMQ and node-redis versions that `packages/jobs` uses, adds `src/shared/jobs-dashboard.ts`, and mounts the dashboard at `/jobs` outside the typed router, so it does not change the API client or the OpenAPI document. The dashboard opens one queue for each name in `@v1/jobs/queue-names` on a shared Redis connection and closes them with the process. It rejects cross-site form posts, and it is protected by basic auth: set `JOBS_DASHBOARD_USERNAME` and a `JOBS_DASHBOARD_PASSWORD` of at least 16 characters in `apps/api`. Without them, `/jobs` is not mounted. From the dashboard you can retry, promote, and remove jobs, so share the credentials only with people who operate the queues.
@@ -68,15 +68,15 @@ The dashboard copies the shadcn theme from `packages/ui/src/styles/globals.css` 
 `emdash` adds the [EmDash](https://docs.emdashcms.com/) CMS to `apps/web`, so editors can write and publish content from an admin panel. EmDash stores its content in the project's Postgres database, in a `blog` schema of its own:
 
 ```bash
-bun run generate emdash
-bun run --filter @v1/database migrate
+pnpm run generate emdash
+pnpm --filter @v1/database run migrate
 ```
 
 The template command follows the EmDash guide for [existing projects](https://docs.emdashcms.com/existing-project/). It needs `packages/database`. It installs EmDash and the Astro Node adapter, adds the `emdash()` integration to `astro.config.ts`, and creates `src/live.config.ts`, which loads EmDash content as an Astro live collection. It also adds a `start` script that runs the built server and declares `EMDASH_ENCRYPTION_KEY` in `.env.schema` as optional.
 
 `apps/web` imports the database environment fragment and reads `DATABASE_URL`, like `apps/api`. EmDash copies its database config into the server bundle, so the config names `src/shared/emdash-database.ts` instead of holding the URL. That module reads `DATABASE_URL` when the server starts and sets the connection's `search_path` to `blog`, so every EmDash table lands in that schema. The template command adds a custom migration to `packages/database/migrations` that creates the schema, so the deploy that migrates the app's tables creates it too. The schema stays out of `src/schema/`, so `drizzle-kit push` and `reset` leave EmDash's tables alone. EmDash creates and migrates its own tables when the server starts.
 
-EmDash ignores Astro's `site`, and production setup fails without a public origin, so the template command passes EmDash the same value: `PUBLIC_SITE_URL`, or the `SITE_URL` constant in `src/shared/constants.ts`. Set it to the deployed origin before you build for production. The site keeps `output: "static"`, so the existing pages stay prerendered. The Node adapter serves the admin at `/_emdash/admin/` and the EmDash API on demand. Run `bun run --filter web dev`, open the admin, and finish the setup wizard. The dev server writes `emdash-env.d.ts` from the content model. Commit it, because `bun run codegen` cannot regenerate it without the database. Query content from a page that renders on demand:
+EmDash ignores Astro's `site`, and production setup fails without a public origin, so the template command passes EmDash the same value: `PUBLIC_SITE_URL`, or the `SITE_URL` constant in `src/shared/constants.ts`. Set it to the deployed origin before you build for production. The site keeps `output: "static"`, so the existing pages stay prerendered. The Node adapter serves the admin at `/_emdash/admin/` and the EmDash API on demand. Run `pnpm --filter web run dev`, open the admin, and finish the setup wizard. The dev server writes `emdash-env.d.ts` from the content model. Commit it, because `pnpm run codegen` cannot regenerate it without the database. Query content from a page that renders on demand:
 
 ```astro
 ---
@@ -93,16 +93,16 @@ if (error) {
 <ul>{posts.map((post) => <li>{post.data.title}</li>)}</ul>
 ```
 
-EmDash needs `EMDASH_ENCRYPTION_KEY` only when a plugin stores a secret setting. Generate a key with `bunx emdash secrets generate` and back it up, because EmDash cannot read those settings without it. Uploaded media stay in `apps/web/uploads`, so the server needs a persistent disk. Deploy with `bun run --filter web build` and `bun run --filter web start`, and remove `apps/web/vercel.json` if you no longer deploy to Vercel. To keep media in S3 instead, change the storage adapter in `astro.config.ts` following the EmDash [configuration reference](https://docs.emdashcms.com/reference/configuration/).
+EmDash needs `EMDASH_ENCRYPTION_KEY` only when a plugin stores a secret setting. Generate a key with `bunx emdash secrets generate` and back it up, because EmDash cannot read those settings without it. Uploaded media stay in `apps/web/uploads`, so the server needs a persistent disk. Deploy with `pnpm --filter web run build` and `pnpm --filter web run start`, and remove `apps/web/vercel.json` if you no longer deploy to Vercel. To keep media in S3 instead, change the storage adapter in `astro.config.ts` following the EmDash [configuration reference](https://docs.emdashcms.com/reference/configuration/).
 
 Where an edit does not apply, the template command prints the step to finish by hand. A repeat run reports skips without replacing generated application code.
 
 ## Add the Turbo remote cache
 
-Remote cache is opt-in. `remote-cache` wires [Vercel Remote Cache](https://turborepo.com/docs/core-concepts/remote-caching) into every GitHub Actions workflow that runs Turbo, including a workflow that only reaches Turbo through a root script such as `bun run codegen` or `bun run boundaries`:
+Remote cache is opt-in. `remote-cache` wires [Vercel Remote Cache](https://turborepo.com/docs/core-concepts/remote-caching) into every GitHub Actions workflow that runs Turbo, including a workflow that only reaches Turbo through a root script such as `pnpm run codegen` or `pnpm run boundaries`:
 
 ```bash
-bun run generate remote-cache
+pnpm run generate remote-cache
 ```
 
 The template command sets a workflow `env` block. `TURBO_TOKEN` reads the `TURBO_TOKEN` Actions secret. `TURBO_TEAM` reads the `TURBO_TEAM` Actions variable, which is the Vercel team slug. The command writes those references only. It never writes a token or a team slug into the repository. Create the secret and the variable in the GitHub repository before the workflows run. A repeat run leaves a workflow alone when both entries already point at that secret and that variable. When a workflow sets either name to something else, the command prints the edit to finish by hand and does not replace it.
@@ -112,7 +112,7 @@ The template command sets a workflow `env` block. `TURBO_TOKEN` reads the `TURBO
 `realtime` adds the `@v1/realtime` client to `apps/app`, `apps/desktop`, `apps/extension`, or `apps/mobile`, so the app can subscribe to realtime channels. See [Realtime](./packages.md#realtime) for the channels and the server.
 
 ```bash
-bun run generate realtime
+pnpm run generate realtime
 ```
 
 The client streams from the realtime route of `apps/api` and authenticates with an access token from the session, so connect the app to `apps/api` first with the `connect-backend` skill: `apps/app` with `PUBLIC_API_URL` set, and `apps/desktop`, `apps/extension`, and `apps/mobile` with auth. The template command stops with that step when the app is not connected. It adds the package as a workspace dependency and creates `src/shared/realtime.ts`, which exports `useRealtime`. In `apps/desktop`, the client streams through the main process's API proxy and gets its token over the bridge, so the renderer never holds the session. In `apps/mobile`, the client streams with `fetch` from `expo/fetch` and reconnects when the app returns to the foreground.
@@ -139,7 +139,7 @@ A repeat run reports skips without replacing `src/shared/realtime.ts`.
 A browser tab can stay open across many deployments and keep running old code. `skew` adds [`@sanely/skew`](https://github.com/adelrodriguez/sanely/tree/main/packages/skew) to `apps/app`, so an open tab asks the user to reload when a newer deployment is live:
 
 ```bash
-bun run generate skew
+pnpm run generate skew
 ```
 
 The template command installs the package and gives each build an ID in `vite.config.ts`, which the client and server bundles of that build share. It adds `src/shared/deployment.ts`, which exports the ID, and the `/api/deployment` route, which answers with the ID of the deployment that serves the app now, with `Cache-Control: no-store`. It adds `src/shared/components/update-notice.tsx` and renders it in `src/shared/components/providers.tsx`. The notice checks `/api/deployment` when the tab becomes visible, when the network comes back, and every 5 minutes, and shows a **Reload** button when the IDs differ. Then it builds the app once, so TanStack Router adds the route to `src/routeTree.gen.ts`.

@@ -41,7 +41,7 @@ root
   │   ├── utils                 # Shared helpers and constants for packages and apps
   │   └── workflows             # Durable background workflows and their events using Inngest
   │
-  ├── scripts             # Template commands (bun template setup, doctor, add, remove, diff)
+  ├── scripts             # Template commands (pnpm template setup, doctor, add, remove, diff)
   │
   ├── tooling             # Shared development and build tools
   │   ├── internationalization  # Inlang project configuration and translations
@@ -49,7 +49,7 @@ root
   │   └── tsconfig              # TypeScript configuration
   │
   └── turbo               # Turborepo configuration for monorepo management
-      └── generators        # Template recipes that bun run generate applies
+      └── generators        # Template recipes that pnpm run generate applies
 ```
 
 ## App structure
@@ -105,7 +105,7 @@ features/<feature>/
 - A helper lives in the file that uses it until another feature needs it. Then it moves to `shared/`.
 - A desktop feature's `handlers.ts` runs in the main process. Its `data.ts`, `hooks.ts`, and components run in the renderer, and both sides share its `schemas.ts`, `errors.ts`, and `constants.ts`.
 
-The `v1/feature-files` lint rule in `tooling/linting/src/rules` enforces these names. Run `bun run generate new-feature` to scaffold a feature with the roles its application workspace supports.
+The `v1/feature-files` lint rule in `tooling/linting/src/rules` enforces these names. Run `pnpm run generate new-feature` to scaffold a feature with the roles its application workspace supports.
 
 Each application workspace below follows the layout above. The trees show the folders that differ between frameworks; look inside a workspace for its current files.
 
@@ -176,7 +176,7 @@ features/<feature>/schemas.ts, errors.ts  # Contract named after the feature, an
   → features/<feature>/data.ts            # Client over #shared/bridge.ts → hooks.ts → components/ → renderer/routes/
 ```
 
-A feature's `handlers.ts` builds its router with `createShellRouter` from `#shared/bridge.ts`. `shell/bridge.ts` merges every feature's router with @sanely/rpc's `mergeRouters` and serves the result over IPC, and `bun run generate new-feature` adds a new desktop feature's router to that merge. The router parses every payload before a resolver runs, because renderer input is untrusted. Faults that features define reach the renderer with their message, and every other failure crosses as `internal`. The preload exposes only the transport, so it never changes. Name the contract's root key after the feature, such as `localFiles`, so channel names can't collide; `mergeRouters` throws at startup if two features declare the same channel.
+A feature's `handlers.ts` builds its router with `createShellRouter` from `#shared/bridge.ts`. `shell/bridge.ts` merges every feature's router with @sanely/rpc's `mergeRouters` and serves the result over IPC, and `pnpm run generate new-feature` adds a new desktop feature's router to that merge. The router parses every payload before a resolver runs, because renderer input is untrusted. Faults that features define reach the renderer with their message, and every other failure crosses as `internal`. The preload exposes only the transport, so it never changes. Name the contract's root key after the feature, such as `localFiles`, so channel names can't collide; `mergeRouters` throws at startup if two features declare the same channel.
 
 ### Extension
 
@@ -225,7 +225,7 @@ packages/package-name
 Run the following command to create a new package workspace:
 
 ```sh
-bun run generate new-package
+pnpm run generate new-package
 ```
 
 Apply the `connect-backend` skill to connect an application workspace to an existing backend
