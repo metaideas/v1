@@ -1,4 +1,4 @@
-import type { LogEvent, Logger } from "@v1/core/services/logging"
+import type { Logger } from "@v1/core/services/logging"
 import * as z from "@v1/utils/schema"
 import { Inngest, type LogArg, type Logger as InngestLogger } from "inngest"
 
@@ -24,7 +24,7 @@ const LogMessage = z.string()
 const LogFields = z.looseObject({ err: z.unknown().optional() })
 
 // Inngest logs Pino-style: an optional object, then a message.
-function toEvent([first, ...rest]: LogArg[]): LogEvent {
+function toEvent([first, ...rest]: LogArg[]) {
   const text = LogMessage.safeParse(first)
 
   if (text.success) {
