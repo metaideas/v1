@@ -97,9 +97,7 @@
     "test": {
       // `codegen` depends on `^codegen`, which Turborepo hashes in every dependency, even one without
       // a codegen script. A change in a workspace this one depends on therefore reruns its tests.
-      "dependsOn": ["codegen"],
-      // The database tests run only when DATABASE_URL points at a Postgres server.
-      "env": ["DATABASE_URL"]
+      "dependsOn": ["codegen"]
     },
     // Tests for the template commands in scripts/ and the template recipes in turbo/generators/.
     "//#test:template": {}

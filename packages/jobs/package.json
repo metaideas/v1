@@ -15,8 +15,7 @@
   },
   "scripts": {
     "bump:deps": "pnpm update --interactive",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "test": "vitest run"
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "dependencies": {
     "@sanely/duration": "0.1.0",
@@ -28,10 +27,8 @@
     "redis": "6.2.1"
   },
   "devDependencies": {
-    "@tooling/testing": "workspace:*",
     "@tooling/tsconfig": "workspace:*",
     "@types/node": "26.6.4",
-    "typescript": "7.0.2",
-    "vitest": "5.1.0"
+    "typescript": "7.0.2"
   }
 }
