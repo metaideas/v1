@@ -1,3 +1,4 @@
+import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query"
 import type { TRPCRouter } from "{{apiPackage}}/client"
 import { createIsomorphicFn } from "@tanstack/react-start"
 import { getRequestHeaders } from "@tanstack/react-start/server"
@@ -5,6 +6,8 @@ import { createTRPCClient, httpBatchStreamLink, loggerLink } from "@trpc/client"
 import { createTRPCContext } from "@trpc/tanstack-react-query"
 import superjson from "superjson"
 import { buildApiUrl } from "#shared/utils.ts"
+
+export type TRPC = TRPCOptionsProxy<TRPCRouter>
 
 export const { useTRPC, useTRPCClient, TRPCProvider } = createTRPCContext<TRPCRouter>()
 

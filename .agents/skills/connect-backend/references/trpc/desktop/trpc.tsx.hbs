@@ -1,5 +1,6 @@
-import type { TRPCRouter } from "{{apiPackage}}/client"
+import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query"
 import type { PropsWithChildren } from "react"
+import type { TRPCRouter } from "{{apiPackage}}/client"
 import { useQueryClient } from "@tanstack/react-query"
 import {
   createTRPCClient,
@@ -12,6 +13,8 @@ import { createTRPCContext } from "@trpc/tanstack-react-query"
 import superjson from "superjson"
 import { shellFetch } from "#shared/api-proxy.ts"
 import { buildApiUrl } from "#shared/utils.ts"
+
+export type TRPC = TRPCOptionsProxy<TRPCRouter>
 
 export const {
   useTRPC,

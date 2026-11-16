@@ -23,7 +23,7 @@
   "dependencies": {
     "@sanely/errors": "0.1.0",
     "@tanstack/react-form-start": "1.33.5",
-    "@tanstack/react-query": "5.104.1",
+    "@tanstack/react-query": "5.107.1",
     "@tanstack/react-router": "1.170.44",
     "@tanstack/react-router-ssr-query": "1.167.3",
     "@tanstack/react-start": "1.169.1",
@@ -48,7 +48,7 @@
     "@tanstack/devtools-vite": "0.8.5",
     "@tanstack/react-devtools": "0.10.13",
     "@tanstack/react-form-devtools": "0.2.34",
-    "@tanstack/react-query-devtools": "5.104.1",
+    "@tanstack/react-query-devtools": "5.107.1",
     "@tanstack/react-router-devtools": "1.167.2",
     "@tooling/internationalization": "workspace:*",
     "@tooling/testing": "workspace:*",
