@@ -33,8 +33,8 @@ web_home_title
 
 1. Add the same key to `tooling/internationalization/messages/en.json` and every translated catalog.
 2. Preserve the same variables, markup, and variants in every locale.
-3. Run `bun run fix` to format the catalogs consistently.
-4. Run `bun run codegen` to regenerate the Paraglide output for each workspace.
-5. Before you commit, run `bun run check`.
+3. Run `pnpm run fix` to format the catalogs consistently.
+4. Run `pnpm run codegen` to regenerate the Paraglide output for each workspace.
+5. Before you commit, run `pnpm run check`.
 
 The message-format plugin sorts keys in ascending order when it writes the catalogs. This keeps related prefixes together and reduces noise in diffs.

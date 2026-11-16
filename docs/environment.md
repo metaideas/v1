@@ -43,9 +43,9 @@ FEATURE_ENABLED=false
 After you add, rename, deprecate, or remove a key, update safe development values. Regenerate types. Then validate:
 
 ```sh
-bun run codegen
-bun run env:check
-bun run check
+pnpm run codegen
+pnpm run env:check
+pnpm run check
 ```
 
 Varlock writes `env.generated.ts`. Import the generated binding directly. Keep the literal uppercase `ENV.<KEY>` identifier. The Varlock integrations for Vite and Expo require this identifier for static replacement in client bundles:
@@ -54,13 +54,13 @@ Varlock writes `env.generated.ts`. Import the generated binding directly. Keep t
 import { ENV } from "#shared/env.generated.ts"
 ```
 
-Do not read project configuration from `process.env` or `import.meta.env` in application code. Do not alias the generated binding to lowercase `env`. Do not edit the generated file by hand. The file is not in version control: `bun run codegen` regenerates it.
+Do not read project configuration from `process.env` or `import.meta.env` in application code. Do not alias the generated binding to lowercase `env`. Do not edit the generated file by hand. The file is not in version control: `pnpm run codegen` regenerates it.
 
 ## Environment selection
 
 `VARLOCK_ENV` selects development, test, preview, or production. Local commands use safe `.env.development` values and `.env.local` overrides. CI and deployment commands must set their target explicitly. Before a remote build or mutation, run `varlock load` or the workspace's wrapped command. Node does not load dotenv files automatically. This prevents precedence-rule conflicts.
 
-Required production credentials are absent from committed development files when no safe substitute exists. Every Varlock workspace owns an `env:check` script that runs `varlock load`. The root `bun run env:check` runs these scripts in parallel through Turbo. Turbo passes deployment variables without a cached validation result.
+Required production credentials are absent from committed development files when no safe substitute exists. Every Varlock workspace owns an `env:check` script that runs `varlock load`. The root `pnpm run env:check` runs these scripts in parallel through Turbo. Turbo passes deployment variables without a cached validation result.
 
 ## Framework boundaries
 
@@ -69,7 +69,7 @@ Required production credentials are absent from committed development files when
 - A framework configuration file that runs before the Varlock plugin can read only launcher-supplied values such as `PORT`.
 - When a framework evaluates a configuration file before bundling and offers no plugin seam, that file is the one place that can read `process.env`. Run its commands through Varlock.
 
-Run `bun run env:scan` to build each client artifact and scan it for sensitive values in the committed development contract. Scans use explicit paths for schemas and development fixtures. Ignored local overrides cannot change CI results. Each workspace verifies its expected artifact directory before a scan. A missing build fails instead of passing without a result.
+Run `pnpm run env:scan` to build each client artifact and scan it for sensitive values in the committed development contract. Scans use explicit paths for schemas and development fixtures. Ignored local overrides cannot change CI results. Each workspace verifies its expected artifact directory before a scan. A missing build fails instead of passing without a result.
 
 ## Deployment secrets
 
@@ -94,4 +94,4 @@ Do not synchronize Varlock-resolved values into Convex. Expo and other clients o
 
 ## Template commands
 
-The `connect-backend` skill adds only schema keys and development values for the selected connection. Removing a backend-specific key does not remove a similarly named application key. After you change workspace selection, run `bun template doctor`. It reports environment imports that point at deleted packages.
+The `connect-backend` skill adds only schema keys and development values for the selected connection. Removing a backend-specific key does not remove a similarly named application key. After you change workspace selection, run `pnpm template doctor`. It reports environment imports that point at deleted packages.

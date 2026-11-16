@@ -1,3 +1,5 @@
+<!-- TEMPLATE:README -->
+
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./.github/assets/v1-logo-dark.svg">
@@ -9,7 +11,7 @@
   </p>
 
   <p align="center">
-    <code>bun create metaideas/v1 my-app</code>
+    <code>gh repo create my-app --template metaideas/v1 --private --clone</code>
   </p>
 </div>
 

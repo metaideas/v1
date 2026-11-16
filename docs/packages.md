@@ -5,7 +5,7 @@ description: Understand the shared package workspaces, hosted backend package, k
 
 Shared libraries and hosted backends are in `packages/`. Application workspaces consume them through workspace dependencies. Package names use the configured scope of the project.
 
-Use `bun template add package <name>` to restore an available package workspace that setup removed. See [Project structure](./project-structure.md) for the full package catalog.
+Use `pnpm template add package <name>` to restore an available package workspace that setup removed. See [Project structure](./project-structure.md) for the full package catalog.
 
 ## Services
 
@@ -22,7 +22,7 @@ export const auth = createServerAuth({
 })
 ```
 
-Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/ui`. `@v1/utils` imports no other workspace, which `bun run boundaries` checks. When a package needs another capability, it declares the smallest interface it needs, such as `sendPasswordReset` above, and the application connects the two. `bun template doctor` reports a package that depends on another capability package or reads `ENV` in its source.
+Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/ui`. `@v1/utils` imports no other workspace, which `pnpm run boundaries` checks. When a package needs another capability, it declares the smallest interface it needs, such as `sendPasswordReset` above, and the application connects the two. `pnpm template doctor` reports a package that depends on another capability package or reads `ENV` in its source.
 
 ## Convex Backend
 
@@ -32,7 +32,7 @@ Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/
 
 Use the `connect-backend` skill in `.agents/skills/` to add the client, environment, provider, and optional example connections to `apps/app`, `apps/desktop`, or `apps/mobile`. It does not deploy Convex or create credentials.
 
-Run `bun run --filter @v1/backend dev` to connect the package to a Convex deployment.
+Run `pnpm --filter @v1/backend run dev` to connect the package to a Convex deployment.
 
 ### Structure
 
@@ -257,7 +257,7 @@ export default factory
   .post("/", requireAccessToken, (c) => realtimeHandler.handle(c.req.raw))
 ```
 
-The handler takes a web `Request` and returns a `Response`, so it runs on Bun and Node. An open stream never finishes on its own, so on shutdown `apps/api` calls `realtimeHandler.close()` after the server stops taking requests, and the server can finish the rest. A denied subscription gets a `denied` message, and the rest of the stream continues. Each API process shares one Redis subscriber across its open streams, and Redis delivers each event to every API process, so the API scales out without sticky sessions.
+The handler takes a web `Request` and returns a `Response`, so it runs on any server built on web standards, such as `@hono/node-server`. An open stream never finishes on its own, so on shutdown `apps/api` calls `realtimeHandler.close()` after the server stops taking requests, and the server can finish the rest. A denied subscription gets a `denied` message, and the rest of the stream continues. Each API process shares one Redis subscriber across its open streams, and Redis delivers each event to every API process, so the API scales out without sticky sessions.
 
 Clients subscribe with `useRealtime`. Add the client to `apps/app`, `apps/desktop`, `apps/extension`, or `apps/mobile` with the `realtime` template recipe, which creates `src/shared/realtime.ts`. See [Project generators](./generators.md#add-a-realtime-client). Every hook in the app shares one stream:
 

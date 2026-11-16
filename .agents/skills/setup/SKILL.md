@@ -3,7 +3,7 @@ name: setup
 description: Configure a project freshly created from the v1 template. Use when the repository still has the template name, a v1 field in package.json, or the user asks to set up, configure, or trim the template.
 ---
 
-Turn the template into the user's project. `bun template setup` does the mechanical part; you choose what it keeps.
+Turn the template into the user's project. `pnpm template setup` does the mechanical part; you choose what it keeps.
 
 1. Ask what the product is and which surfaces it needs. Map the answer to workspaces:
    - `apps/app` for a full-stack web application, `apps/web` for a marketing site, `apps/docs` for documentation, `apps/mobile` for Expo, `apps/desktop` for Electron, `apps/extension` for a browser extension.
@@ -15,11 +15,11 @@ Turn the template into the user's project. `bun template setup` does the mechani
 4. Run setup non-interactively with the choices:
 
    ```bash
-   bun template setup --yes --name <name> --description "<sentence>" --keep-apps <a,b> --keep-packages <c,d>
+   pnpm template setup --yes --name <name> --description "<sentence>" --keep-apps <a,b> --keep-packages <c,d>
    ```
 
    Add `--no-git` when the repository already has history and `--no-install` when the user will install later.
 
-5. If `apps/mobile` is kept and setup did not run prebuild, run `bun run --filter mobile prebuild` on macOS so the native projects use the new app identifier. On other systems, tell the user to run it on macOS.
-6. Run `bun template doctor` and fix everything it reports. Removing workspaces often leaves an env key in the `build` task of `turbo.json` or a doc page for a deleted surface.
+5. If `apps/mobile` is kept and setup did not run prebuild, run `pnpm --filter mobile run prebuild` on macOS so the native projects use the new app identifier. On other systems, tell the user to run it on macOS.
+6. Run `pnpm template doctor` and fix everything it reports. Removing workspaces often leaves an env key in the `build` task of `turbo.json` or a doc page for a deleted surface.
 7. Report the kept workspaces, the scope, and the doctor result.

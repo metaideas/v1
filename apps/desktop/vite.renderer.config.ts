@@ -36,7 +36,7 @@ export default defineConfig(() => ({
   ],
   resolve: {
     // The Forge Vite plugin turns `preserveSymlinks` on, which breaks package
-    // resolution inside Bun's symlinked workspace `node_modules`.
+    // resolution inside pnpm's symlinked workspace `node_modules`.
     preserveSymlinks: false,
   },
   server: {

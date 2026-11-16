@@ -33,6 +33,14 @@ const TEMPLATE_REMOTE = "template"
 export const TEMPLATE_SECTION_START = "<!-- TEMPLATE:START -->"
 const TEMPLATE_SECTION_END = "<!-- TEMPLATE:END -->"
 
+// Setup replaces the template README, which carries this marker, with one that describes the
+// project. A README that still has the marker was never rewritten.
+const TEMPLATE_README_MARKER = "<!-- TEMPLATE:README -->"
+
+export function checkIsTemplateReadme(contents: string) {
+  return contents.includes(TEMPLATE_README_MARKER)
+}
+
 export const execFileAsync = promisify(execFile)
 
 const ignoredDirectories = new Set([".cache", ".git", ".turbo", "build", "dist", "node_modules"])

@@ -7,34 +7,35 @@ sidebar:
 
 ## Prerequisites
 
-- Use [bun](https://bun.sh/) as the package manager.
+- Install [pnpm](https://pnpm.io/installation), the package manager.
+- Install the [GitHub CLI](https://cli.github.com/) to create the project.
 - Install Node.js. See the tooling requirements below.
 - Install Docker to run the local services: Postgres, Redis, SeaweedFS, Mailpit, and the Inngest Dev Server. Use [OrbStack](https://orbstack.dev/) to manage containers.
 
 ## Tooling Expectations
 
-- Bun: the version in the root `package.json` `packageManager` field.
+- pnpm: the version in the root `package.json` `packageManager` field.
 - Node.js: the range in the root `package.json` `engines` field.
 
 ## Create a Project
 
 ```bash
-bun create metaideas/v1 my-app
+gh repo create my-app --template metaideas/v1 --private --clone
 cd my-app
 ```
 
 ## Setup
 
-1. Install the dependencies with `bun`:
+1. Install the dependencies with `pnpm`:
 
 ```bash
-bun install
+pnpm install
 ```
 
 2. Configure the template:
 
 ```bash
-bun template setup
+pnpm template setup
 ```
 
 The command does the following:
@@ -48,7 +49,7 @@ The command does the following:
 
 ### Choosing Workspaces
 
-`template setup` prompts first for application workspaces and then for package workspaces. Add workspaces later with `bun template add app <name>` or `bun template add package <name>`.
+`template setup` prompts first for application workspaces and then for package workspaces. Add workspaces later with `pnpm template add app <name>` or `pnpm template add package <name>`.
 
 ### Choosing a Backend
 
@@ -63,33 +64,33 @@ After you select a backend alternative, connect an application workspace with th
 3. Generate source files and types. Run the command again after you change an environment contract or a message catalog:
 
 ```bash
-bun run codegen
+pnpm run codegen
 ```
 
-Application contracts are in `.env.schema`. Safe local values are committed in `.env.development`. Put personal overrides in `.env.local`. Then run `bun run env:check`. See [Environment configuration](./environment.md) for package contracts, production values, and secret stores.
+Application contracts are in `.env.schema`. Safe local values are committed in `.env.development`. Put personal overrides in `.env.local`. Then run `pnpm run env:check`. See [Environment configuration](./environment.md) for package contracts, production values, and secret stores.
 
 4. Start the local services with `docker`:
 
 ```bash
-bun run docker:up
+pnpm run docker:up
 ```
 
 5. Start the development servers:
 
 ```bash
-bun run dev
+pnpm run dev
 ```
 
 Each workspace serves on a fixed local port. See [Development servers](./development.md#development-servers) for the port convention and where each workspace declares its port.
 
-At the repository root, `bun run dev` runs all workspaces through Turbo. Inside a workspace, the same command starts that workspace alone.
+At the repository root, `pnpm run dev` runs all workspaces through Turbo. Inside a workspace, the same command starts that workspace alone.
 
 ### First Run Checklist
 
-- Run `bun template setup`.
-- Generate source files and types with `bun run codegen`.
-- Start services with `bun run docker:up`.
-- Start the development servers with `bun run dev`.
+- Run `pnpm template setup`.
+- Generate source files and types with `pnpm run codegen`.
+- Start services with `pnpm run docker:up`.
+- Start the development servers with `pnpm run dev`.
 
 #### Infrastructure Ports
 
@@ -97,17 +98,17 @@ Docker Compose services use fixed host ports in the `8000` block, declared in `i
 
 ### Troubleshooting
 
-- For a Bun version mismatch, compare `bun --version` with the `packageManager` field in the root `package.json`.
+- For a pnpm version mismatch, compare `pnpm --version` with the `packageManager` field in the root `package.json`.
 - For a Node.js version mismatch, install a version in the `engines` range with your version manager.
-- When Docker services do not run, examine `docker ps`. Then run `bun run docker:up`.
+- When Docker services do not run, examine `docker ps`. Then run `pnpm run docker:up`.
 - When Postgres exits with "in 18+, these Docker images are configured to store database data in a format which is compatible with pg_ctlcluster", the local data comes from an older major version. See [Upgrading local Postgres](#upgrading-local-postgres).
-- For missing environment variables, run `bun run env:check`. Then examine the owning `.env.schema` and the ignored `.env.local` overrides.
+- For missing environment variables, run `pnpm run env:check`. Then examine the owning `.env.schema` and the ignored `.env.local` overrides.
 - For a port conflict, find the process with `lsof -i :<port>`. See [Development servers](./development.md#development-servers) for where each port is declared.
 - Expo on a physical device requires the development machine's LAN IP instead of `localhost`.
 
 #### Upgrading Local Postgres
 
-Postgres cannot read data from an older major version. To start over, run `bun run docker:down`, move the old data aside, then run `bun run docker:up` and `bun run db:migrate`:
+Postgres cannot read data from an older major version. To start over, run `pnpm run docker:down`, move the old data aside, then run `pnpm run docker:up` and `pnpm run db:migrate`:
 
 ```bash
 docker run --rm -v "$PWD/infra/local/.data:/data" alpine mv /data/postgres /data/postgres-17
@@ -116,13 +117,13 @@ docker run --rm -v "$PWD/infra/local/.data:/data" alpine mv /data/postgres /data
 To keep the data, dump it with the old version before you move it, then restore it into the new one:
 
 ```bash
-bun run docker:down
+pnpm run docker:down
 docker run -d --name postgres-17 -e POSTGRES_PASSWORD=postgres -v "$PWD/infra/local/.data/postgres:/var/lib/postgresql/data" postgres:17
 until docker exec postgres-17 pg_isready -U postgres; do sleep 1; done
 docker exec postgres-17 pg_dumpall -U postgres > postgres-17.sql
 docker rm -f postgres-17
 docker run --rm -v "$PWD/infra/local/.data:/data" alpine mv /data/postgres /data/postgres-17
-bun run docker:up
+pnpm run docker:up
 docker compose -f infra/local/docker-compose.yml exec -T postgres psql -U postgres -d postgres < postgres-17.sql
 ```
 
