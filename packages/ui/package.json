@@ -52,5 +52,10 @@
   },
   "peerDependencies": {
     "react": "*"
+  },
+  "workspace": {
+    "knip": {
+      "project": "src/**/*.{css,js,jsx,ts,tsx}"
+    }
   }
 }

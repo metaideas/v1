@@ -41,7 +41,7 @@ root
   │   ├── utils                 # Shared helpers and constants for packages and apps
   │   └── workflows             # Durable background workflows and their events using Inngest
   │
-  ├── scripts             # Template commands (pnpm template setup, doctor, add, remove, diff)
+  ├── scripts             # Template commands (pnpm template setup, add, remove, diff)
   │
   ├── tooling             # Shared development and build tools
   │   ├── internationalization  # Inlang project configuration and translations
@@ -64,7 +64,7 @@ Application workspaces usually use three folders:
 
 These folders have a one-way import flow. The `features` folder can import from the `shared` folder. The `shared` folder cannot import from the `features` folder. The router folder can import from the `features` or `shared` folder. Neither folder can import from the router folder. This flow organizes the code and makes it easier to understand.
 
-The `v1/layers` lint rule in `tooling/linting/src/rules` enforces these flows for both `#` and relative imports, and covers a new feature folder without a configuration change. A route can import style and image assets, but not another route. The `v1/layer-folders` rule keeps every source folder in a layer: a file at the root of `src` is an entrypoint, and every other file lives in `shared/`, `features/`, or a folder that the rules' options declare. The options in `oxlint.config.ts` name each application workspace's route folder, entrypoint tiers, and other composition folders, such as the API's `routes/`, whose routes compose each other. An application workspace can also assign feature roles to tiers, such as the desktop's `handlers.ts` to the main process. A `shared/` folder named after a tier, such as the desktop's `shared/shell/`, belongs to that tier, so it can hold code that only that tier runs, such as main-process helpers that two features' handlers share. Tiered code follows the tier rule below, and untiered code, such as `schemas.ts` or the rest of `shared/`, can't import it, because both tiers load untiered code.
+The `v1/layers` lint rule in `tooling/linting/src/rules` enforces these flows for both `#` and relative imports, and covers a new feature folder without a configuration change. A route can import style and image assets, but not another route. The `v1/layer-folders` rule keeps every source folder in a layer: a file at the root of `src` is an entrypoint, and every other file lives in `shared/`, `features/`, or a folder that the application workspace declares. Each application workspace declares its route folder, entrypoint tiers, and other composition folders, such as the API's `routes/`, whose routes compose each other, in `workspace.layers` in its `package.json`. An application workspace can also assign feature roles to tiers, such as the desktop's `handlers.ts` to the main process. A `shared/` folder named after a tier, such as the desktop's `shared/shell/`, belongs to that tier, so it can hold code that only that tier runs, such as main-process helpers that two features' handlers share. Tiered code follows the tier rule below, and untiered code, such as `schemas.ts` or the rest of `shared/`, can't import it, because both tiers load untiered code.
 
 When an application workspace has more than one entrypoint tier, such as a desktop main process and a renderer, the tiers never import each other. They communicate through a typed contract in `shared`.
 
@@ -81,7 +81,7 @@ features/<feature>/
   ├── assets/         # Static files the feature's components import
   ├── components/     # UI components, one file per exported component
   ├── constants.ts    # Static values and content, such as paths and lists
-  ├── data.ts         # Client data layer: query and mutation options, Convex hooks
+  ├── data.ts         # Data layer: query and mutation options, Convex hooks, content queries
   ├── errors.ts       # Errors that stay inside the app
   ├── handlers.ts     # Server entry points: tRPC procedures, server functions, form actions, durable workflows, job handlers
   ├── hooks.ts        # React hooks for local and derived state
@@ -93,7 +93,8 @@ features/<feature>/
 | ----------------------------------------- | --- | --- | ------- | --------- | ------ | --- | ------ |
 | `assets/`, `components/`                  |     | ✓   | ✓       | ✓         | ✓      | ✓   |        |
 | `constants.ts`, `errors.ts`, `schemas.ts` | ✓   | ✓   | ✓       | ✓         | ✓      | ✓   | ✓      |
-| `data.ts`, `hooks.ts`                     |     | ✓   | ✓       | ✓         | ✓      |     |        |
+| `data.ts`                                 |     | ✓   | ✓       | ✓         | ✓      | ✓   |        |
+| `hooks.ts`                                |     | ✓   | ✓       | ✓         | ✓      |     |        |
 | `handlers.ts`                             | ✓   | ✓   | ✓       |           |        |     | ✓      |
 | `middleware.ts`                           | ✓   |     |         |           |        |     |        |
 
@@ -105,7 +106,7 @@ features/<feature>/
 - A helper lives in the file that uses it until another feature needs it. Then it moves to `shared/`.
 - A desktop feature's `handlers.ts` runs in the main process. Its `data.ts`, `hooks.ts`, and components run in the renderer, and both sides share its `schemas.ts`, `errors.ts`, and `constants.ts`.
 
-The `v1/feature-files` lint rule in `tooling/linting/src/rules` enforces these names. Run `pnpm run generate new-feature` to scaffold a feature with the roles its application workspace supports.
+Each application workspace lists the roles it allows in `workspace.features.roles` in its `package.json`. The `v1/feature-files` lint rule in `tooling/linting/src/rules` rejects any other file in a feature, and `pnpm run generate new-feature` offers only those roles.
 
 Each application workspace below follows the layout above. The trees show the folders that differ between frameworks; look inside a workspace for its current files.
 

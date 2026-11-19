@@ -13,30 +13,30 @@ Node runs the application workspaces, scripts, and tests. pnpm installs packages
 
 These commands match the scripts in the root `package.json`.
 
-| Command                 | Description                                                          |
-| ----------------------- | -------------------------------------------------------------------- |
-| `pnpm run dev`          | Start all workspaces on their fixed local ports.                     |
-| `pnpm run dev:apps`     | Start application workspaces.                                        |
-| `pnpm run dev:packages` | Start package workspaces.                                            |
-| `pnpm run build`        | Build all workspaces.                                                |
-| `pnpm run start`        | Run the `start` task of each workspace.                              |
-| `pnpm run clean`        | Remove build artifacts.                                              |
-| `pnpm run check`        | Run Adamantite lint, format, and type checks.                        |
-| `pnpm run fix`          | Apply safe lint fixes and format code.                               |
-| `pnpm run analyze`      | Detect unused dependencies, files, and exports.                      |
-| `pnpm run codegen`      | Generate workspace source and environment types.                     |
-| `pnpm run env:check`    | Validate Varlock workspaces in parallel.                             |
-| `pnpm run env:scan`     | Build client artifacts and scan for sensitive values.                |
-| `pnpm run test`         | Run the test suite.                                                  |
-| `pnpm run test:watch`   | Run the test suite in watch mode.                                    |
-| `pnpm run db:push`      | Push the Drizzle schema to the database.                             |
-| `pnpm run db:migrate`   | Run the Drizzle migrations.                                          |
-| `pnpm run docker:up`    | Start the local services.                                            |
-| `pnpm run docker:down`  | Stop the local services.                                             |
-| `pnpm run boundaries`   | Check Turborepo workspace boundaries and tags.                       |
-| `pnpm run generate`     | Run a template recipe with Turbo generators.                         |
-| `pnpm template`         | Run a template command (`setup`, `doctor`, `add`, `remove`, `diff`). |
-| `pnpm run scripts`      | Run the project script entry point.                                  |
+| Command                 | Description                                                |
+| ----------------------- | ---------------------------------------------------------- |
+| `pnpm run dev`          | Start all workspaces on their fixed local ports.           |
+| `pnpm run dev:apps`     | Start application workspaces.                              |
+| `pnpm run dev:packages` | Start package workspaces.                                  |
+| `pnpm run build`        | Build all workspaces.                                      |
+| `pnpm run start`        | Run the `start` task of each workspace.                    |
+| `pnpm run clean`        | Remove build artifacts.                                    |
+| `pnpm run check`        | Run Adamantite lint, format, and type checks.              |
+| `pnpm run fix`          | Apply safe lint fixes and format code.                     |
+| `pnpm run analyze`      | Detect unused dependencies, files, and exports.            |
+| `pnpm run codegen`      | Generate workspace source and environment types.           |
+| `pnpm run env:check`    | Validate Varlock workspaces in parallel.                   |
+| `pnpm run env:scan`     | Build client artifacts and scan for sensitive values.      |
+| `pnpm run test`         | Run the test suite.                                        |
+| `pnpm run test:watch`   | Run the test suite in watch mode.                          |
+| `pnpm run db:push`      | Push the Drizzle schema to the database.                   |
+| `pnpm run db:migrate`   | Run the Drizzle migrations.                                |
+| `pnpm run docker:up`    | Start the local services.                                  |
+| `pnpm run docker:down`  | Stop the local services.                                   |
+| `pnpm run boundaries`   | Check Turborepo workspace boundaries and tags.             |
+| `pnpm run generate`     | Run a template recipe with Turbo generators.               |
+| `pnpm template`         | Run a template command (`setup`, `add`, `remove`, `diff`). |
+| `pnpm run scripts`      | Run the project script entry point.                        |
 
 To run a command for one workspace, use this syntax:
 
@@ -69,7 +69,6 @@ The update prompt can offer versions beyond the declared ranges, including major
 ## Template Management
 
 - `pnpm template setup` - Configure the project and record its template version.
-- `pnpm template doctor` - Verify workspace selection, environment contracts, and tooling.
 - `pnpm template add <kind> <name>` - Add a workspace from the template at the recorded commit.
 - `pnpm template remove <kind> <name>` - Delete a workspace and list what still references it.
 - `pnpm template diff` - Show upstream template changes since the recorded commit.

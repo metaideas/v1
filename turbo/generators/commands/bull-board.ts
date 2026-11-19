@@ -261,7 +261,8 @@ export function registerBullBoardGenerator(plop: PlopTypes.NodePlopAPI) {
         ...EDITS.map((edit) => () => applyEdit(`${API_PATH}/${edit.path}`, edit)),
         () =>
           "Set JOBS_DASHBOARD_USERNAME and JOBS_DASHBOARD_PASSWORD in apps/api, then open /jobs on the API.",
-        () => "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm template doctor`.",
+        () =>
+          "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm run check` and `pnpm run analyze`.",
       ]
     },
     description: "Add a bull-board dashboard for the job queues to apps/api",

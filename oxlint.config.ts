@@ -6,27 +6,6 @@ import reactStrict from "adamantite/lint/react-strict"
 import strict from "adamantite/lint/strict"
 import { defineConfig } from "oxlint"
 
-const APP_BOUNDARIES = {
-  api: { folders: ["routes"] },
-  app: { routes: "routes" },
-  desktop: {
-    // A feature's handlers run in the main process; its UI and data layer run in the renderer.
-    featureTiers: {
-      components: "renderer",
-      data: "renderer",
-      handlers: "shell",
-      hooks: "renderer",
-    },
-    routes: "renderer/routes",
-    tiers: ["renderer", "shell"],
-  },
-  docs: { routes: "pages" },
-  extension: { folders: ["entrypoints"] },
-  mobile: { routes: "app" },
-  web: { routes: "pages" },
-  worker: {},
-}
-
 export default defineConfig({
   extends: [
     core,
@@ -34,14 +13,9 @@ export default defineConfig({
     react,
     reactStrict,
     node,
-    custom({
-      dir: "./tooling/linting/src/rules",
-      name: "v1",
-      rules: {
-        "layer-folders": ["error", APP_BOUNDARIES],
-        layers: ["error", APP_BOUNDARIES],
-      },
-    }),
+    // The v1 rules read each application workspace's layers and feature roles from the `workspace`
+    // field of its package.json.
+    custom({ dir: "./tooling/linting/src/rules", name: "v1" }),
   ],
   ignorePatterns: [
     "**/*.hbs",

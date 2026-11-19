@@ -277,7 +277,8 @@ export function registerPostHogGenerator(plop: PlopTypes.NodePlopAPI) {
         },
         ...setup.edits.map((edit) => () => applyEdit(`${appPath}/${edit.path}`, edit)),
         ...setup.nextSteps.map((step) => () => step),
-        () => "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm template doctor`.",
+        () =>
+          "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm run check` and `pnpm run analyze`.",
       ]
     },
     description: "Add optional PostHog product analytics to an application workspace",

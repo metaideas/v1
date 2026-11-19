@@ -10,7 +10,7 @@ When working with `v1`, you should always keep the following in mind:
 
 1. This is a template, not a finished product. There will be gaps in the implementation that scaffolded projects will need to fill in. This is fine, as long as we don't ship anything in a broken state.
 2. Consistency is paramount. We reduce cognitive overhead by making sure that all application workspaces are structured similarly, and all package workspaces are structured similarly.
-3. Every workspace is selectable. After you remove one, the rest must still build, with no leftover imports or required environment variables. Dependencies point one way. Application workspaces depend on package workspaces. Package workspaces depend only on `@v1/core`, `@v1/utils`, and `@v1/ui`, so removing a package workspace means deleting its lines from each composition root. `@v1/core` can depend on `@v1/utils`, and `@v1/utils` and `@v1/ui` depend on no other workspace. Any workspace can depend on a tooling workspace. `pnpm template doctor` checks these rules.
+3. Every workspace is selectable. After you remove one, the rest must still build, with no leftover imports or required environment variables. Dependencies point one way. Application workspaces depend on package workspaces. Package workspaces depend only on `@v1/core`, `@v1/utils`, and `@v1/ui`, so removing a package workspace means deleting its lines from each composition root. `@v1/core` can depend on `@v1/utils`, and `@v1/utils` and `@v1/ui` depend on no other workspace. `packages/backend` is the one exception: it deploys on its own and composes packages the way an application does. Any workspace can depend on a tooling workspace. The tags in each workspace's `turbo.json` encode these rules, and `pnpm run boundaries` checks them.
 4. Package workspaces own their domain. Constants, types, and environment fragments live in the package workspace that uses them.
 5. `@v1/utils` is not a junk drawer. Add a helper there only when several workspaces use it and no single package workspace owns it.
 6. Prefer a small, focused dependency over custom code. Delete code that nothing uses.
@@ -31,17 +31,17 @@ Use these terms in issues, plans, code, and documentation. Do not use the altern
 - **Application workspace**: a product surface that users see or that runs independently. Not "app package".
 - **Package workspace**: runtime code that application workspaces or other package workspaces share. Not "application package".
 - **Template recipe**: copy-once code in `turbo/generators/` that a scaffolded project owns after generation. Not "plugin" or "recipe package".
-- **Template command**: a local command that configures a scaffolded project or manages its workspaces, such as `pnpm template setup` or `pnpm template doctor`. Use "Turbo generator" only for the mechanism that runs a template recipe.
+- **Template command**: a local command that configures a scaffolded project or manages its workspaces, such as `pnpm template setup` or `pnpm template add`. Use "Turbo generator" only for the mechanism that runs a template recipe.
 - **Internal cleanup path**: content that only maintainers use. Setup removes it from a scaffolded project.
 - **Backend alternative**: an optional backend shape that a scaffolded project selects. Not "required backend" or "backend layer".
 - **Preset**: a reusable configuration for an environment or tooling that a template command selects.
-- **Skill**: an agent workflow in `.agents/skills/` that drives template commands and generators toward a passing `pnpm template doctor`.
+- **Skill**: an agent workflow in `.agents/skills/` that drives template commands and generators and names the checks that prove the result.
 
 <!-- TEMPLATE:END -->
 
 ## Skills
 
-Template work runs through the skills in `.agents/skills/`. Each skill states which template command or Turbo generator does the mechanical part and ends with `pnpm template doctor`; a passing doctor is the definition of done for setup, workspace changes, backend connections, and template updates. Reach for `setup`, `add-workspace`, `remove-workspace`, `connect-backend`, `new-package`, `new-feature`, `update-from-template`, or `doctor` before editing those areas by hand.
+Template work runs through the skills in `.agents/skills/`. Each skill states which template command or Turbo generator does the mechanical part and which checks prove the result. Lint, `pnpm run boundaries`, typecheck, and tests enforce the template's structure, and CI runs them on every pull request. Reach for `setup`, `add-workspace`, `remove-workspace`, `connect-backend`, `new-package`, `new-feature`, or `update-from-template` before editing those areas by hand.
 
 ## Architecture
 

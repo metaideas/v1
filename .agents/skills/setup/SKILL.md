@@ -21,5 +21,5 @@ Turn the template into the user's project. `pnpm template setup` does the mechan
    Add `--no-git` when the repository already has history and `--no-install` when the user will install later.
 
 5. If `apps/mobile` is kept and setup did not run prebuild, run `pnpm --filter mobile run prebuild` on macOS so the native projects use the new app identifier. On other systems, tell the user to run it on macOS.
-6. Run `pnpm template doctor` and fix everything it reports. Removing workspaces often leaves an env key in the `build` task of `turbo.json` or a doc page for a deleted surface.
-7. Report the kept workspaces, the scope, and the doctor result.
+6. Setup fails if it leaves template content behind. Run `pnpm run check`, `pnpm run analyze`, `pnpm run boundaries`, and `VARLOCK_ENV=development pnpm run build`, and fix what they report. Removing workspaces can leave a doc page for a deleted surface.
+7. Report the kept workspaces, the scope, and the check results.

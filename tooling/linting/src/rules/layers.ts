@@ -1,5 +1,5 @@
 import { defineRule, type ESTree } from "adamantite/rules"
-import { findSourceRoot, findViolation, locate, resolveImport, selectBoundaries } from "#layers.ts"
+import { findSourceRoot, findViolation, locate, resolveImport, readBoundaries } from "#layers.ts"
 
 export default defineRule({
   create(context) {
@@ -9,7 +9,7 @@ export default defineRule({
       return {}
     }
 
-    const boundaries = selectBoundaries(context.options[0], root.app)
+    const boundaries = readBoundaries(root)
     const from = locate(root, boundaries, context.filename)
 
     if (from === undefined) {

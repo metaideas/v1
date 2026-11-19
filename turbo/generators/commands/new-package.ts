@@ -66,6 +66,12 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
           type: "add",
         },
         {
+          path: "packages/{{kebabCase name}}/turbo.json",
+          skipIfExists: true,
+          templateFile: "templates/scaffolds/new-package/package.turbo.json.hbs",
+          type: "add",
+        },
+        {
           path: "packages/{{kebabCase name}}/src/index.ts",
           skipIfExists: true,
           templateFile: "templates/scaffolds/new-package/index.ts.hbs",

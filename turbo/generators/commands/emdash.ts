@@ -212,6 +212,41 @@ async function addSchemaMigration() {
   return `${MIGRATIONS_PATH}/${created}: created the blog schema`
 }
 
+// Knip's Astro plugin lists src/content.config.ts but not the live collection config, so the recipe
+// adds it to the web app's Knip entries. Drop this step once the plugin lists src/live.config.ts.
+async function addKnipEntry() {
+  const path = `${WEB_PATH}/package.json`
+  const contents = await readFile(path, "utf8")
+  const packageJson: unknown = JSON.parse(contents)
+  const entry = "src/live.config.ts"
+
+  if (contents.includes(`"${entry}"`)) {
+    return `[SKIPPED] ${path} already lists ${entry} for Knip`
+  }
+
+  if (typeof packageJson !== "object" || packageJson === null || !("workspace" in packageJson)) {
+    return `[MANUAL] Add "${entry}" to workspace.knip.entry in ${path}.`
+  }
+
+  const { workspace } = packageJson
+  if (typeof workspace !== "object" || workspace === null) {
+    return `[MANUAL] Add "${entry}" to workspace.knip.entry in ${path}.`
+  }
+
+  const knip =
+    "knip" in workspace && typeof workspace.knip === "object" && workspace.knip !== null
+      ? workspace.knip
+      : {}
+  const current = "entry" in knip ? knip.entry : []
+  const entries = [...(Array.isArray(current) ? current : [current]), entry]
+
+  await writeFile(
+    path,
+    `${JSON.stringify({ ...packageJson, workspace: { ...workspace, knip: { ...knip, entry: entries } } }, null, 2)}\n`
+  )
+  return `${path}: added ${entry} to the Knip entries`
+}
+
 export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
   plop.setGenerator("emdash", {
     actions: () => [
@@ -247,6 +282,7 @@ export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
         templateFile: "templates/emdash/web-emdash-database.ts.hbs",
         type: "add",
       },
+      addKnipEntry,
       addEnvironment,
       addLocalDatabaseUrl,
       ignoreContent,
@@ -260,7 +296,8 @@ export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
         'Query content with `getEmDashCollection()` from "emdash" in a page that sets `export const prerender = false`.',
       () =>
         `Uploaded media live in ${WEB_PATH}/uploads, so the server needs a persistent disk. Run \`pnpm run --filter web build\`, then \`pnpm run --filter web start\`, and remove ${WEB_PATH}/vercel.json if you no longer deploy to Vercel.`,
-      () => "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm template doctor`.",
+      () =>
+        "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm run check` and `pnpm run analyze`.",
     ],
     description: "Add the EmDash CMS to apps/web",
     prompts: [],

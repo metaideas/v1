@@ -41,7 +41,7 @@ Each app reaches the API in its own way, because each runs on an origin that can
    | `mobile`               | `EXPO_PUBLIC_CONVEX_SITE_URL` | `# @public @static @type=url`                                   | `https://example.convex.site`  |
    | `app`, `desktop`       | `PUBLIC_CONVEX_URL`           | `# @public @required @type=url`                                 | `https://example.convex.cloud` |
 
-   Put a one-line description above each key, as the file's other keys have. The API URL keys belong to hono and trpc, and the Convex keys belong to convex. `EXTENSION_KEY` changes the built manifest, so also add it to the `build` task's `env` in the root `turbo.json`, which keeps Turbo from reusing a build with another key.
+   Put a one-line description above each key, as the file's other keys have. The API URL keys belong to hono and trpc, and the Convex keys belong to convex. `EXTENSION_KEY` changes the built manifest, so also add it to the `build` task's `env` in `apps/extension/turbo.json`, which keeps Turbo from reusing a build with another key.
 
 4. Copy the client files for the connection into `src/`:
    - **hono**: `references/hono/api.ts.hbs` to `shared/api.ts`. Mobile with auth takes `references/hono/mobile/api.ts.hbs` instead, which sends the session headers. Desktop and extension take `references/hono/<app>/api.ts.hbs` instead. Desktop, extension, and mobile also take `references/hono/<app>/utils.ts.hbs` to `shared/utils.ts`.
@@ -114,7 +114,7 @@ Each app reaches the API in its own way, because each runs on an origin that can
 
    For tRPC queries in `app` and `desktop`, start the page's queries together in its route loader with `loadHandles` from `@trpc/tanstack-react-query/unstable-handles`. Use `ensureEntry` for data the page needs before rendering, and `prefetchEntry` for data that can load after rendering. Take inputs from route params and validated search params, and return the handles. Pass each handle to its reader, type the prop with `inferQueryHandle<TRPC[...]>`, and read it with `useSuspenseQuery(fromHandle(useTRPC(), handle))`. Give each reader a `Suspense` fallback, because its cache entry can be removed after loading. Let loader failures reach the route's error component. Mutations keep using `mutationOptions`; invalidate `{ queryKey: handle.queryKey, exact: true }` to refetch one handle. The extension has no route loaders, so its components keep using `queryOptions`. See [Prefetching with handles](https://trpc.io/docs/client/tanstack-react-query/handles) for dependent and infinite queries.
 
-7. Run `pnpm install`, `pnpm run codegen`, then `pnpm template doctor`. Fix what it reports. Finish when it passes.
+7. Run `pnpm install` and `pnpm run codegen`, then `pnpm run check`, `pnpm run analyze`, and `VARLOCK_ENV=development pnpm run env:check`. Fix what they report. Finish when they pass.
 
 Convex in `app` and `desktop` reaches public functions only. `apps/app` keeps its own Better Auth sessions; moving them to Convex means migrating the `/api/auth` handler, server-side token handoff, and the sign-up, reset, and social flows together, which is outside this skill.
 

@@ -29,6 +29,7 @@
     "test:watch": "turbo watch test test:template"
   },
   "devDependencies": {
+    "@tooling/linting": "workspace:*",
     "@turbo/gen": "2.11.11",
     "@types/node": "26.6.4",
     "adamantite": "0.43.0",
@@ -57,7 +58,9 @@
       ".github/assets/v1-nebula.png",
       ".github/workflows/pullfrog.yml",
       ".github/workflows/release.yml",
+      ".github/workflows/scaffold.yml",
       "scripts/create",
+      "scripts/template/__tests__/template-cleanup.test.ts",
       "scripts/template/__tests__/template-readme.test.ts",
       "apps/docs/vercel.json",
       "apps/web/vercel.json"

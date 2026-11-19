@@ -1,9 +1,9 @@
 ---
 title: Template Commands
-description: Configure, verify, extend, and update scaffolded projects from v1 with local template commands.
+description: Configure, extend, and update scaffolded projects from v1 with local template commands.
 ---
 
-Use these template commands to configure and extend projects created from the `metaideas/v1` template. Each command does one mechanical job. The skills in `.agents/skills/` drive them and finish with `pnpm template doctor`.
+Use these template commands to configure and extend projects created from the `metaideas/v1` template. Each command does one mechanical job. The skills in `.agents/skills/` drive them. The template ships no verification command: lint, `pnpm run boundaries`, typecheck, tests, and CI enforce its structure, and a scaffolded project can add its own verification skill.
 
 ## Commands
 
@@ -21,24 +21,6 @@ Configure a newly created project. This command does the following:
 ```bash
 pnpm template setup
 pnpm template setup --yes --name <name> --description "<sentence>" --keep-apps app,api --keep-packages auth,database
-```
-
-### `pnpm template doctor`
-
-Verify the project. The doctor checks the template invariants, then runs the existing tools:
-
-- No `@v1/` references remain after the rename.
-- Every scoped dependency resolves to a workspace, and no package workspace depends on an application workspace.
-- Every `@import` in an environment contract points at an existing fragment, and every `@generateTsTypes` output exists.
-- Every pattern in the `build` task `env` list of `turbo.json` matches a declared key.
-- Template-only content matches the project state: markers and `v1` fields are gone from a scaffolded project, and present in the template.
-- `README.md` in a scaffolded project is no longer the template README.
-- Every backend client file in an app has its backend workspace and dependency.
-- `pnpm run check`, `pnpm run boundaries`, `pnpm run analyze`, `pnpm run env:check`, and `pnpm run build` pass.
-
-```bash
-pnpm template doctor
-pnpm template doctor --fast # skip the build
 ```
 
 ### `pnpm template add <kind> <name>`
@@ -83,4 +65,4 @@ pnpm template diff --update-stamp
 { "template": "metaideas/v1", "commit": "<sha>", "createdAt": "<ISO date>" }
 ```
 
-There is no automated merge. Run `pnpm template diff`, apply the relevant hunks, including upstream deletions, then record the new baseline with `--update-stamp` and run `pnpm template doctor`. The `update-from-template` skill walks a coding agent through this.
+There is no automated merge. Run `pnpm template diff`, apply the relevant hunks, including upstream deletions, then record the new baseline with `--update-stamp`, and run `pnpm run check` and `pnpm run analyze`. The `update-from-template` skill walks a coding agent through this.

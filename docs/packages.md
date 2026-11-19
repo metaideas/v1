@@ -22,7 +22,7 @@ export const auth = createServerAuth({
 })
 ```
 
-Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/ui`. `@v1/utils` imports no other workspace, which `pnpm run boundaries` checks. When a package needs another capability, it declares the smallest interface it needs, such as `sendPasswordReset` above, and the application connects the two. `pnpm template doctor` reports a package that depends on another capability package or reads `ENV` in its source.
+Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/ui`. When a package needs another capability, it declares the smallest interface it needs, such as `sendPasswordReset` above, and the application connects the two. Each package's `turbo.json` tags it as `foundation` (`core`, `ui`, and `utils`), `capability` (every other package), or `composing` (`backend`), and `pnpm run boundaries` reports a dependency that the tags don't allow. `packages/backend` composes packages the way an application does, so it can depend on capability packages such as `@v1/auth`.
 
 ## Convex Backend
 

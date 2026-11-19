@@ -139,7 +139,7 @@ export default defineCommand({
     const ref = stamp?.commit ?? head
     const copiedPaths = await addWorkspaces(rootDir, ref, scope, [target], new Set([targetPath]))
     consola.success(
-      `Added ${copiedPaths.join(", ")} from ${TEMPLATE_REPO}@${ref.slice(0, 12)}. Run pnpm install, then pnpm template doctor.`
+      `Added ${copiedPaths.join(", ")} from ${TEMPLATE_REPO}@${ref.slice(0, 12)}. Run pnpm install, then pnpm run check and pnpm run analyze.`
     )
     if (copiedPaths.includes("apps/mobile"))
       consola.warn(

@@ -5,7 +5,6 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "nod
 import { promisify } from "node:util"
 import { parseJSON, stringifyJSON } from "confbox"
 import {
-  type KnipConfig,
   type PackageJson,
   PackageJsonSchema,
   type TemplateStamp,
@@ -27,7 +26,7 @@ export type WorkspaceNode = Workspace & {
 
 export const TEMPLATE_SCOPE = "v1"
 export const TEMPLATE_REPO = "metaideas/v1"
-export const TEMPLATE_STAMP_FILE = ".template.json"
+const TEMPLATE_STAMP_FILE = ".template.json"
 
 const TEMPLATE_REMOTE = "template"
 export const TEMPLATE_SECTION_START = "<!-- TEMPLATE:START -->"
@@ -278,28 +277,6 @@ export function checkIsRemovedByCleanup(
     const cleanupTarget = resolve(rootDir, cleanupPath)
     return path === cleanupTarget || checkIsPathWithinRoot(cleanupTarget, path)
   })
-}
-
-/**
- * Lists the application and package workspaces that a knip config configures by path but the
- * project does not have. Globs such as `apps/*` always resolve.
- */
-export function findUnknownKnipWorkspaces(config: KnipConfig, workspacePaths: ReadonlySet<string>) {
-  return Object.keys(config.workspaces ?? {}).filter(
-    (path) => /^(?:apps|packages)\/[^*]+$/.test(path) && !workspacePaths.has(path)
-  )
-}
-
-/**
- * Lists the folders under `packages/core/src/services/` that share a name with a package workspace.
- * A contract that only one package uses belongs to that package, so removing the package removes
- * it.
- */
-export function findPackageOwnedCoreServices(
-  serviceNames: readonly string[],
-  packageNames: ReadonlySet<string>
-) {
-  return serviceNames.filter((name) => packageNames.has(name))
 }
 
 function joinAroundRemovedSection(before: string, after: string) {
