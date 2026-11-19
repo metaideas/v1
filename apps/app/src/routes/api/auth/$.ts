@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { withAuth } from "#shared/server/middleware.ts"
+import { withServices } from "#shared/server/middleware.ts"
 
 export const Route = createFileRoute("/api/auth/$")({
   server: {
@@ -7,6 +7,6 @@ export const Route = createFileRoute("/api/auth/$")({
       GET: ({ context, request }) => context.auth.handler(request),
       POST: ({ context, request }) => context.auth.handler(request),
     },
-    middleware: [withAuth],
+    middleware: [withServices],
   },
 })

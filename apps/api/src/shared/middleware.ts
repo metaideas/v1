@@ -10,7 +10,7 @@ import { languageDetector } from "hono/language"
 import type { AccessTokenAppContext, AppContext, AuthenticatedAppContext } from "#shared/types.ts"
 import { ENV } from "#shared/env.generated.ts"
 import { baseLocale, locales } from "#shared/internationalization/runtime.js"
-import { limiter } from "#shared/services.ts"
+import { services } from "#shared/services.ts"
 
 export const withLanguageDetection = languageDetector({
   caches: false,
@@ -75,7 +75,7 @@ function identifyCaller(c: Context<AppContext>) {
  * when Redis cannot count the request, status 503.
  */
 export function withRateLimiting({ limit, name, window }: RateLimitingOptions) {
-  const perCaller = limiter({
+  const perCaller = services.limiter({
     algorithm: fixedWindow({ limit, window }),
     identify: identifyCaller,
     name,

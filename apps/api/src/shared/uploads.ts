@@ -17,7 +17,7 @@ export async function upsertUpload(file: UploadRecord) {
     type: file.type,
   }
 
-  await ctx.var.db
+  await ctx.var.database
     .insert(uploads)
     .values({ ...record, key: file.key, ownerId: userId })
     .onConflictDoUpdate({ set: { ...record, updatedAt: new Date() }, target: uploads.key })
@@ -27,7 +27,7 @@ export async function deleteUpload(key: string) {
   const ctx = context<AccessTokenAppContext>()
   const userId = UserIdSchema.parse(ctx.var.userId)
 
-  await ctx.var.db
+  await ctx.var.database
     .delete(uploads)
     .where(operators.and(operators.eq(uploads.key, key), operators.eq(uploads.ownerId, userId)))
 }

@@ -13,7 +13,7 @@ import realtimeRoutes from "#routes/realtime.ts"
 import trpcRoutes from "#routes/trpc.ts"
 import v1Routes from "#routes/v1/index.ts"
 import { withLanguageDetection } from "#shared/middleware.ts"
-import { auth, database, dispatcher, kv, realtime, storage, workflows } from "#shared/services.ts"
+import { services } from "#shared/services.ts"
 import { allowedOrigins, factory, toContentfulStatusCode } from "#shared/utils.ts"
 
 const app = factory.createApp()
@@ -37,14 +37,16 @@ app.use(
   })
 )
 
+// Each service reaches handlers under its own name, such as `c.var.database`. The loop reads the
+// names from `services`, so a service added there needs no other edit.
+function checkIsServiceName(name: string): name is keyof typeof services {
+  return Object.hasOwn(services, name)
+}
+
 app.use(async (c, next) => {
-  c.set("auth", auth)
-  c.set("db", database)
-  c.set("dispatcher", dispatcher)
-  c.set("kv", kv)
-  c.set("realtime", realtime)
-  c.set("storage", storage)
-  c.set("workflows", workflows)
+  for (const name of Object.keys(services)) {
+    if (checkIsServiceName(name)) c.set(name, services[name])
+  }
   await next()
 })
 

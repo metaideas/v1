@@ -9,24 +9,34 @@ Use the `v1-workspace` skill to restore an available package workspace that setu
 
 ## Services
 
-A package workspace is a service that applications compose. It exports `create*` factories and never creates clients, reads `ENV`, or configures process-wide state when imported. Each application builds its services once in its composition root (`#shared/services.ts`, or `#shared/server/services.ts` in a full-stack application), passes configuration from its own `ENV`, and hands the instances to handlers through the framework context:
+A package workspace is a service that applications compose. It exports `create*` factories and never creates clients, reads `ENV`, or configures process-wide state when imported. Each application builds its services once in its composition root (`#shared/services.ts`, or `#shared/server/services.ts` in a full-stack application), passes configuration from its own `ENV`, and exports them as one `services` object with one `close` function that releases their connections:
 
 ```ts
-export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
+const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 
-export const auth = createServerAuth({
+const auth = createServerAuth({
   database,
   sendPasswordReset: ({ email, url }) =>
     mailer.send("password-reset", { appName, resetUrl: url }, { to: [email] }),
   // ...
 })
+
+export const services = { auth, database, mailer }
+
+export async function close() {
+  await database.close()
+}
 ```
+
+Handlers read the services from the framework context: `c.var.database` in `apps/api` and `ctx.database` in its tRPC procedures, and `context.database` in the server functions of `apps/app`. The API's middleware sets each entry of `services` under its own name, and the app's middleware passes `services` as context, so a service added to `services` reaches every handler with no other edit. `apps/api` calls `close` from `lifecycle` once its server stops taking requests, and `apps/app` registers it on Nitro's `close` hook in its composition root. The Inngest client of `apps/worker` holds no connection, so its services need no `close`, and the worker closes its runners from `src/runners.ts` instead.
 
 Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/ui`. When a package needs another capability, it declares the smallest interface it needs, such as `sendPasswordReset` above, and the application connects the two. Each package's `turbo.json` tags it as `foundation` (`core`, `ui`, and `utils`), `capability` (every other package), or `composing` (`backend`), and `pnpm run boundaries` reports a dependency that the tags don't allow. `packages/backend` composes packages the way an application does, so it can depend on capability packages such as `@v1/auth`.
 
 ## Convex Backend
 
 `packages/backend` is a hosted backend built with Convex and Better Auth. Application workspaces consume its generated API types and React client as a package workspace. Convex deploys the functions independently.
+
+`@v1/auth` owns the auth policy: sessions, cookies, email and password, and logging. `createAuthOptions` from `@v1/auth/server` builds it, `createAuth` builds Better Auth on it for any database adapter, and `createServerAuth` does the same for the Drizzle tables in `@v1/database`. `apps/api` and `apps/app` call `createServerAuth`, and `packages/backend` calls `createAuth` with the Convex adapter, so a policy change reaches all three.
 
 `@v1/backend/client` and `@v1/backend/client/auth` re-export the Convex, Convex React Query, and Convex Better Auth client libraries on purpose, including exports that no application uses yet. Applications import them from the backend package and never depend on a Convex library directly, so every client runs the same Convex versions as the deployed functions. This is an exception to deleting vendor pass-throughs: keep the re-exports when an audit reports them as unused.
 
@@ -48,18 +58,18 @@ Run `pnpm --filter @v1/backend run dev` to connect the package to a Convex deplo
 
 ```ts
 import { createMailer } from "@v1/email/mailer"
-import { selectTransport } from "@v1/email/transports"
+import { createTransport } from "@v1/email/transports"
 
 export const mailer = createMailer({
   from: ENV.EMAIL_FROM,
   logger: log,
-  transport: selectTransport({ resendApiKey: ENV.RESEND_API_KEY, smtpUrl: ENV.SMTP_URL }),
+  transport: createTransport({ resendApiKey: ENV.RESEND_API_KEY, smtpUrl: ENV.SMTP_URL }),
 })
 
 await mailer.send("password-reset", { appName, resetUrl }, { to: [user.email] })
 ```
 
-Each template registers its subject in `src/registry.ts`, so `send` type-checks the template name and its props. `selectTransport` uses Resend when `RESEND_API_KEY` is set and SMTP otherwise. Locally, `SMTP_URL` points at Mailpit from Docker Compose, which keeps every message and shows it at http://localhost:8005.
+Each template registers its subject in `src/registry.ts`, so `send` type-checks the template name and its props. `createTransport` uses Resend when `RESEND_API_KEY` is set and SMTP otherwise. Locally, `SMTP_URL` points at Mailpit from Docker Compose, which keeps every message and shows it at http://localhost:8005.
 
 `send` retries temporary failures, such as a dropped connection or a rate limit, with exponential backoff under one deadline. It reuses one idempotency key across the retries of a send, so Resend never delivers the same message twice. A failure that a retry cannot fix, such as an invalid sender, fails on the first attempt. `send` returns a failed delivery as a `SendEmailError` value instead of throwing, with the transport error as its `cause`. Pass `attempts` and `timeoutMs` to `createMailer` to change the policy.
 
@@ -68,12 +78,10 @@ Each template registers its subject in `src/registry.ts`, so `send` type-checks 
 `packages/database` owns the Drizzle schema, migrations, and helpers. An application workspace creates one client in its composition root and passes its logger to log queries at debug level:
 
 ```ts
-import { createDatabase } from "@v1/database/client"
+import { createDatabase } from "@v1/database/server"
 
 export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 ```
-
-`withTransaction(database, operation)` from `@v1/database/helpers/transaction` runs an operation in a transaction, and nested calls reuse the active one.
 
 ## Payments
 
@@ -180,7 +188,7 @@ await c.var.dispatcher.dispatch("default", "greet-user", { userId }, { id: `gree
 
 `dispatch` type-checks the queue, the job name on that queue, and its payload, and validates the payload before it reaches Redis. Dispatches with the same `id` add one job while BullMQ keeps it. Pass `delayMs` to run a job later. A failed dispatch comes back as a `DispatchJobError` or `JobPayloadError` value instead of throwing. While Redis is unreachable, a dispatch fails after 5 seconds instead of holding the request open.
 
-`apps/worker` consumes queues with a jobs runner. A runner takes handlers by queue and job, and consumes every queue it lists. It must handle every job on those queues, so adding a job to a queue fails type checking in each runner that consumes it until a handler exists:
+`apps/worker` consumes queues with a jobs runner, which it builds in `src/runners.ts` from the handlers of its features. A runner takes handlers by queue and job, and consumes every queue it lists. It must handle every job on those queues, so adding a job to a queue fails type checking in each runner that consumes it until a handler exists:
 
 ```ts
 import { createJobsRunner } from "@v1/jobs/runner"
@@ -310,7 +318,7 @@ export const events = { billing, demo }
 Each application workspace that sends events or runs functions creates one client in its composition root. Its `id` names the application in Inngest:
 
 ```ts
-import { createWorkflows } from "@v1/workflows/client"
+import { createWorkflows } from "@v1/workflows/server"
 
 export const workflows = createWorkflows({
   baseUrl: ENV.INNGEST_BASE_URL,
@@ -332,7 +340,7 @@ await c.var.workflows.send(
 Functions live in the `handlers.ts` of a worker feature. Wrap each side effect in `step.run`. Inngest calls the function again for each step and returns saved results for the steps that already finished, so code outside a step runs more than once. A step can also run more than once, so keep its side effects idempotent. `step.sleep` waits without holding the worker. The options of `createFunction` set retries and flow control, such as `concurrency`, `throttle`, `rateLimit`, and `debounce`:
 
 ```ts
-export const welcomeUser = workflows.createFunction(
+export const welcomeUser = services.workflows.createFunction(
   { concurrency: { limit: 10 }, id: "welcome-user", triggers: [events.demo.welcome.requested] },
   async ({ event, logger, step }) => {
     const message = await step.run("compose-welcome", () => `Welcome, ${event.data.userId}`)
@@ -354,7 +362,7 @@ export const welcomeUser = workflows.createFunction(
 import { createWorkflowsRunner } from "@v1/workflows/runner"
 
 const workflows = createWorkflowsRunner({
-  client: workflowsClient,
+  client: services.workflows,
   functions: [welcomeUser],
   gatewayUrl: ENV.INNGEST_CONNECT_GATEWAY_URL,
   logger: log,

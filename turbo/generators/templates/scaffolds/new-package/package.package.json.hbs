@@ -1,14 +1,20 @@
 {
   "name": "{{ packageScope }}/{{ kebabCase name }}",
   "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
+  "description": {{{ descriptionJson }}},
   "license": "MIT",
+  "type": "module",
+  "imports": {
+    "#*": "./src/*"
+  },
+  "exports": {
+    "./server": "./src/server.ts"
+  },
   "scripts": {
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "typecheck": "tsc --noEmit"
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
+  },
+  "dependencies": {
+    "{{ packageScope }}/core": "workspace:*"
   },
   "devDependencies": {
     "{{ toolingPackage }}": "workspace:*",

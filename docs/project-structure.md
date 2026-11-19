@@ -131,7 +131,8 @@ A Node process that consumes `@v1/jobs` queues and runs `@v1/workflows` function
 apps/worker/src
   ├── shared/       # Logger, service composition, and app-wide utilities
   ├── features/     # Feature folders whose handlers.ts handles jobs and defines workflows
-  └── index.ts      # Worker entry point that subscribes to queues and connects to Inngest
+  ├── runners.ts    # Jobs and workflows runners built from the feature handlers
+  └── index.ts      # Worker entry point that starts the runners and closes them on shutdown
 ```
 
 ### App

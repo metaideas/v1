@@ -22,6 +22,7 @@ export const NewFeatureAnswersSchema = z.object({
 })
 
 export const NewPackageAnswersSchema = z.object({
+  description: z.string().trim().min(1, "Describe the package in one line"),
   name: z.string().regex(/^[a-z]/i, "Start the package name with a letter"),
 })
 

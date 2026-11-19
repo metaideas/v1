@@ -1,6 +1,6 @@
 import { createAuthClient } from "{{authPackage}}/client"
 import { AUTH_API_COOKIE_PREFIX } from "{{authPackage}}/constants"
-import { electronClient } from "{{authPackage}}/electron"
+import { createElectronClient } from "{{authPackage}}/electron"
 import { buildApiUrl } from "#shared/utils.ts"
 
 /**
@@ -10,7 +10,7 @@ import { buildApiUrl } from "#shared/utils.ts"
 const PROTOCOL = "com.desktop.app"
 
 export const auth = createAuthClient(buildApiUrl("/auth"), [
-  electronClient({
+  createElectronClient({
     cookiePrefix: AUTH_API_COOKIE_PREFIX,
     protocol: PROTOCOL,
     // Better Auth opens this page for social sign-in in the system browser, which the app does not

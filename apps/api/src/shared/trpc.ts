@@ -6,12 +6,11 @@ import superjson from "superjson"
 import type { AppContext } from "#shared/types.ts"
 
 export function createTRPCContext(opts: FetchCreateContextFnOptions, c: Context<AppContext>) {
+  // The context carries every variable the Hono middleware set, so each service reaches procedures
+  // under its own name, such as `ctx.database`.
   return {
-    auth: c.var.auth,
-    db: c.var.db,
+    ...c.var,
     info: opts.info,
-    kv: c.var.kv,
-    log: c.var.log,
     req: opts.req,
     resHeaders: opts.resHeaders,
   }

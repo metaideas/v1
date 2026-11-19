@@ -8,9 +8,11 @@
     "#*": "./src/*"
   },
   "exports": {
+    "./lifecycle": "./src/lifecycle.ts",
     "./schema": "./src/schema/index.ts",
     "./schema/mini": "./src/schema/mini.ts",
-    "./*": "./src/*.ts"
+    "./type": "./src/type.ts",
+    "./url": "./src/url.ts"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
@@ -18,9 +20,7 @@
   },
   "dependencies": {
     "@sanely/duration": "0.1.0",
-    "@sanely/errors": "0.1.0",
     "@sanely/try": "0.1.0",
-    "nanoid": "6.0.2",
     "ufo": "1.6.4",
     "zod": "4.6.5"
   },

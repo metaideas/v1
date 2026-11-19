@@ -1,0 +1,21 @@
+import type { Logger } from "{{ packageScope }}/core/services/logging"
+
+type {{pascalCase name}}Options = {
+  logger?: Logger
+}
+
+/**
+ * Builds the service. An application builds it once in its composition root and passes
+ * configuration, such as values from its `ENV`, and other services as options.
+ */
+export function create{{pascalCase name}}({ logger }: {{pascalCase name}}Options) {
+  return {
+    ping() {
+      logger?.debug({ message: "ping", scope: "{{kebabCase name}}" })
+
+      return "pong"
+    },
+  }
+}
+
+export type {{pascalCase name}} = ReturnType<typeof create{{pascalCase name}}>

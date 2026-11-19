@@ -8,9 +8,9 @@
     "#*": "./src/*"
   },
   "exports": {
-    "./client": "./src/client.ts",
     "./events": "./src/events/index.ts",
-    "./runner": "./src/runner.ts"
+    "./runner": "./src/runner.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",

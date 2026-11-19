@@ -1,4 +1,4 @@
-import { checkIsLocalDatabase } from "@v1/database/client"
+import { checkIsLocalDatabase } from "@v1/database/server"
 import { defineConfig } from "drizzle-kit"
 import { is } from "drizzle-orm"
 import { PgSchema } from "drizzle-orm/pg-core"

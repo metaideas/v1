@@ -4,8 +4,9 @@ import postgres from "postgres"
 import { relations } from "#relations.ts"
 
 export function createDatabase({ logger, url }: { url: string; logger?: Logger }) {
-  return drizzle({
-    client: postgres(url),
+  const client = postgres(url)
+  const database = drizzle({
+    client,
     logger: logger
       ? {
           // Bound parameters carry values such as session tokens and password hashes, which
@@ -16,6 +17,13 @@ export function createDatabase({ logger, url }: { url: string; logger?: Logger }
         }
       : false,
     relations,
+  })
+
+  return Object.assign(database, {
+    /**
+     * Waits for the queries in progress, then closes every connection in the pool.
+     */
+    close: () => client.end(),
   })
 }
 

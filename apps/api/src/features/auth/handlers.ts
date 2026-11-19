@@ -6,7 +6,7 @@ export default createRouter({
     emailAvailable: publicProcedure
       .input(z.object({ email: z.email() }))
       .query(async ({ input, ctx }) => {
-        const user = await ctx.db.query.users.findFirst({
+        const user = await ctx.database.query.users.findFirst({
           where: { email: input.email },
         })
 

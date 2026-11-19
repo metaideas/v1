@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { EmailDeliveryError } from "#errors.ts"
-import { resendTransport, smtpTransport } from "#transports.ts"
+import { createResendTransport, createSmtpTransport } from "#transports.ts"
 
 const message = {
   from: "v1 <dev@example.com>",
@@ -19,7 +19,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe("resendTransport", () => {
+describe("createResendTransport", () => {
   test("reports a Resend server error as a retryable delivery error", async () => {
     stubResendResponse(503, {
       message: "API is temporarily unavailable",
@@ -27,7 +27,7 @@ describe("resendTransport", () => {
       statusCode: 503,
     })
 
-    const error = await resendTransport("re_test")
+    const error = await createResendTransport("re_test")
       .send(message, { idempotencyKey: "key" })
       .catch((error: unknown) => error)
 
@@ -41,7 +41,7 @@ describe("resendTransport", () => {
       statusCode: 429,
     })
 
-    const error = await resendTransport("re_test")
+    const error = await createResendTransport("re_test")
       .send(message, { idempotencyKey: "key" })
       .catch((error: unknown) => error)
 
@@ -49,9 +49,9 @@ describe("resendTransport", () => {
   })
 })
 
-describe("smtpTransport", () => {
+describe("createSmtpTransport", () => {
   test("reports an unreachable server as a retryable delivery error", async () => {
-    const transport = smtpTransport("smtp://127.0.0.1:1")
+    const transport = createSmtpTransport("smtp://127.0.0.1:1")
 
     const error = await transport
       .send(message, { idempotencyKey: "key" })

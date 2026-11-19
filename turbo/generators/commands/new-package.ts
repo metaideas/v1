@@ -2,12 +2,14 @@ import type { PlopTypes } from "@turbo/gen"
 
 import type * as z from "zod"
 
+import { existsSync } from "node:fs"
 import { glob } from "node:fs/promises"
 import { runCommand } from "../run-command"
 import { NewPackageAnswersSchema, readPackageJson, readPackageName } from "../schemas"
 
 type NewPackageAnswers = PlopTypes.Answers
   & z.infer<typeof NewPackageAnswersSchema> & {
+    descriptionJson?: string
     packageScope?: string
     toolingPackage?: string
     typescriptVersion?: string
@@ -26,6 +28,13 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
       return [
         async () => {
           const rootPackageJson = await readPackageJson("package.json")
+          // A new package takes the logger contract from packages/core, which setup can remove.
+          if (!existsSync("packages/core/package.json")) {
+            throw new Error(
+              "A new package builds on packages/core. Restore it with the v1-workspace skill, then run new-package again."
+            )
+          }
+
           const toolingPackageName = await readPackageName("tooling/tsconfig/package.json")
           let packageScope: string | undefined
 
@@ -46,6 +55,8 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
             throw new Error("The root package.json must declare TypeScript in devDependencies.")
 
           Object.assign(answers, {
+            // The manifest takes the description as a JSON string, so quotes stay valid JSON.
+            descriptionJson: JSON.stringify(answers.description),
             name,
             packageScope: `@${packageScope}`,
             toolingPackage: toolingPackageName,
@@ -72,9 +83,27 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
           type: "add",
         },
         {
-          path: "packages/{{kebabCase name}}/src/index.ts",
+          path: "packages/{{kebabCase name}}/README.md",
           skipIfExists: true,
-          templateFile: "templates/scaffolds/new-package/index.ts.hbs",
+          templateFile: "templates/scaffolds/new-package/README.md.hbs",
+          type: "add",
+        },
+        {
+          path: "packages/{{kebabCase name}}/reset.d.ts",
+          skipIfExists: true,
+          templateFile: "templates/scaffolds/new-package/reset.d.ts.hbs",
+          type: "add",
+        },
+        {
+          path: "packages/{{kebabCase name}}/env/.env.server",
+          skipIfExists: true,
+          templateFile: "templates/scaffolds/new-package/env.server.hbs",
+          type: "add",
+        },
+        {
+          path: "packages/{{kebabCase name}}/src/server.ts",
+          skipIfExists: true,
+          templateFile: "templates/scaffolds/new-package/server.ts.hbs",
           type: "add",
         },
         async () => {
@@ -88,6 +117,11 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
       {
         message: "What is the name of the package?",
         name: "name",
+        type: "input",
+      },
+      {
+        message: "What does the package do, in one line?",
+        name: "description",
         type: "input",
       },
     ],
