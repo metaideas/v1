@@ -52,7 +52,6 @@
   "packageManager": "pnpm@12.9.0",
   "v1": {
     "cleanupPaths": [
-      ".agents/skills/v1-setup",
       ".changeset",
       ".github/assets/v1-nebula.png",
       ".github/workflows/pullfrog.yml",

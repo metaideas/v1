@@ -54,6 +54,9 @@ jobs:
           --description "A project that CI scaffolds from the template."
           --keep-apps ${{ matrix.apps }} --keep-packages ${{ matrix.packages }}
 
+      - name: Check that setup removed its own skill
+        run: test ! -e .agents/skills/v1-setup
+
       - name: Run check
         run: pnpm run check
 

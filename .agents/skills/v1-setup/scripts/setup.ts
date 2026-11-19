@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process"
 import { existsSync } from "node:fs"
-import { glob, readFile, writeFile } from "node:fs/promises"
+import { glob, readFile, rm, writeFile } from "node:fs/promises"
 import { basename, join, relative } from "node:path"
 import { defineCommand, runMain } from "citty"
 import consola from "consola"
@@ -36,6 +36,9 @@ import {
 } from "./cleanup.ts"
 
 const GitHubCommitSchema = z.object({ sha: z.string() })
+
+// Setup deletes its own skill only after every step succeeds, so a failed run can be retried.
+const SETUP_SKILL_DIR = join(import.meta.dirname, "..")
 
 // These helpers serve only setup, which deletes itself, so they live here instead of in the
 // v1-update helpers that a project keeps.
@@ -270,6 +273,10 @@ async function writeReadme(rootDir: string, projectName: string, description: st
 
 // Setup leaves no template scope, cleanup marker, or template README behind. Running it reports what
 // a partial run left, so a second run can finish the job.
+function checkIsOutsideSetup(path: string) {
+  return relative(SETUP_SKILL_DIR, path).startsWith("..")
+}
+
 async function findLeftovers(rootDir: string, scope: string) {
   const scopeReferences =
     normalizeScope(scope) === TEMPLATE_SCOPE
@@ -280,12 +287,14 @@ async function findLeftovers(rootDir: string, scope: string) {
   const packageJson = await readPackageJson(join(rootDir, "package.json"))
 
   return [
-    ...scopeReferences.map(
-      (path) => `${relative(rootDir, path)} still references ${getScopePrefix(TEMPLATE_SCOPE)}`
-    ),
-    ...markers.map(
-      (path) => `${relative(rootDir, path)} still has a ${TEMPLATE_SECTION_START} marker`
-    ),
+    ...scopeReferences
+      .filter((path) => checkIsOutsideSetup(path))
+      .map(
+        (path) => `${relative(rootDir, path)} still references ${getScopePrefix(TEMPLATE_SCOPE)}`
+      ),
+    ...markers
+      .filter((path) => checkIsOutsideSetup(path))
+      .map((path) => `${relative(rootDir, path)} still has a ${TEMPLATE_SECTION_START} marker`),
     ...(existsSync(readme) && checkIsTemplateReadme(await readFile(readme, "utf8"))
       ? ["README.md is still the template README"]
       : []),
@@ -493,6 +502,7 @@ await runMain(
         return
       }
 
+      await rm(SETUP_SKILL_DIR, { force: true, recursive: true })
       consola.success("Template setup complete.")
     },
   })
