@@ -1,10 +1,7 @@
 <!-- TEMPLATE:README -->
 
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./.github/assets/v1-logo-dark.svg">
-    <img src="./.github/assets/v1-logo-light.svg" alt="v1" width="160">
-  </picture>
+  <img src="./.github/assets/v1-nebula.png" alt="v1" width="100%">
 
   <p align="center">
     <em><strong>Start once. Ship everywhere.</strong></em>
