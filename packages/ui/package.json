@@ -14,7 +14,6 @@
     "./hooks/use-highlighted-code": "./src/hooks/use-highlighted-code.ts"
   },
   "scripts": {
-    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "components:add": "shadcn add",
     "components:diff": "shadcn add --diff",

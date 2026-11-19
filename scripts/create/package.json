@@ -19,7 +19,6 @@
   },
   "scripts": {
     "build": "tsdown",
-    "bump:deps": "pnpm update --interactive",
     "changeset": "cd ../.. && changeset",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "prepack": "tsdown",

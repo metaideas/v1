@@ -8,7 +8,6 @@
   },
   "scripts": {
     "build": "vite build",
-    "bump:deps": "pnpm update --interactive",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "codegen": "pnpm run \"/^codegen:/\"",
     "codegen:env": "varlock codegen",
