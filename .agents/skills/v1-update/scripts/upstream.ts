@@ -12,17 +12,6 @@ import {
   writeTemplateStamp,
 } from "./template.ts"
 
-async function readStampedCommit(rootDir: string) {
-  const stamp = await readTemplateStamp(rootDir)
-  if (!stamp?.commit) {
-    throw new Error(
-      "No template commit is recorded in .template.json. Record one with the stamp command."
-    )
-  }
-
-  return { ...stamp, commit: stamp.commit }
-}
-
 const diff = defineCommand({
   args: {
     "name-only": {
@@ -36,7 +25,16 @@ const diff = defineCommand({
   },
   run: async ({ args }) => {
     const rootDir = process.cwd()
-    const { commit } = await readStampedCommit(rootDir)
+    const recorded = await readTemplateStamp(rootDir)
+    const commit = recorded?.commit
+    if (!commit) {
+      consola.error(
+        "No template commit is recorded in .template.json. Run the stamp command to record the latest template commit as the baseline."
+      )
+      process.exitCode = 1
+      return
+    }
+
     const head = await fetchTemplate(rootDir)
     if (head === commit) {
       consola.success(`The project matches ${TEMPLATE_REPO}@${head.slice(0, 12)}.`)
@@ -61,10 +59,14 @@ const stamp = defineCommand({
   },
   run: async () => {
     const rootDir = process.cwd()
-    const current = await readStampedCommit(rootDir)
+    const current = await readTemplateStamp(rootDir)
     const head = await fetchTemplate(rootDir)
 
-    await writeTemplateStamp(rootDir, { ...current, commit: head })
+    await writeTemplateStamp(rootDir, {
+      commit: head,
+      createdAt: current?.createdAt ?? new Date().toISOString(),
+      template: TEMPLATE_REPO,
+    })
     consola.success(`Recorded ${TEMPLATE_REPO}@${head.slice(0, 12)} in .template.json.`)
   },
 })
