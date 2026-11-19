@@ -41,7 +41,7 @@ root
   │   ├── utils                 # Shared helpers and constants for packages and apps
   │   └── workflows             # Durable background workflows and their events using Inngest
   │
-  ├── scripts             # Template commands (pnpm template setup, add, remove, diff)
+  ├── scripts             # The pnpm create @metaideas/v1 initializer
   │
   ├── tooling             # Shared development and build tools
   │   ├── internationalization  # Inlang project configuration and translations
@@ -229,5 +229,5 @@ Run the following command to create a new package workspace:
 pnpm run generate new-package
 ```
 
-Apply the `connect-backend` skill to connect an application workspace to an existing backend
+Apply the `v1-feature` skill to connect an application workspace to an existing backend
 workspace. See [Project generators](./generators.md) for the generator workflows.

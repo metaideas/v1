@@ -24,7 +24,7 @@ pnpm create @metaideas/v1 my-app
 cd my-app
 ```
 
-The command downloads the latest template release into `my-app`, starts a new Git repository, installs the dependencies, and runs `pnpm template setup`. Options after the directory go to `pnpm template setup`, such as `pnpm create @metaideas/v1 my-app --yes`.
+The command downloads the latest template release into `my-app`, starts a new Git repository, installs the dependencies, and runs the setup script of the `v1-setup` skill. Options after the directory go to setup, such as `pnpm create @metaideas/v1 my-app --yes`.
 
 To create the GitHub repository at the same time, use the [GitHub CLI](https://cli.github.com/) instead, then install the dependencies and run setup yourself. This copies the template's `main` branch rather than its latest release.
 
@@ -32,12 +32,12 @@ To create the GitHub repository at the same time, use the [GitHub CLI](https://c
 gh repo create my-app --template metaideas/v1 --private --clone
 cd my-app
 pnpm install
-pnpm template setup
+node .agents/skills/v1-setup/scripts/setup.ts
 ```
 
 ## Setup
 
-`pnpm template setup` does the following:
+Setup does the following:
 
 - It lets you select the workspaces to include.
 - It renames the project and updates all imports.
@@ -48,7 +48,7 @@ pnpm template setup
 
 ### Choosing Workspaces
 
-`template setup` prompts first for application workspaces and then for package workspaces. Add workspaces later with `pnpm template add app <name>` or `pnpm template add package <name>`.
+Setup prompts first for application workspaces and then for package workspaces. Restore a workspace later with the `v1-workspace` skill.
 
 ### Choosing a Backend
 
@@ -58,7 +58,7 @@ pnpm template setup
 
 These are alternatives, not layers that every project must run. Application workspaces connect to a backend explicitly. No client connects to `packages/backend` by default.
 
-After you select a backend alternative, connect an application workspace with the `connect-backend` skill in `.agents/skills/`. It configures local connections. It does not deploy a backend or create external credentials.
+After you select a backend alternative, connect an application workspace with the `v1-feature` skill in `.agents/skills/`. It configures local connections. It does not deploy a backend or create external credentials.
 
 3. Generate source files and types. Run the command again after you change an environment contract or a message catalog:
 
@@ -86,7 +86,7 @@ At the repository root, `pnpm run dev` runs all workspaces through Turbo. Inside
 
 ### First Run Checklist
 
-- Run `pnpm template setup`.
+- Set up the project with `pnpm create @metaideas/v1` or the `v1-setup` skill.
 - Generate source files and types with `pnpm run codegen`.
 - Start services with `pnpm run docker:up`.
 - Start the development servers with `pnpm run dev`.

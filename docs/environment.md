@@ -92,6 +92,6 @@ Convex backend values do not pass through Varlock. Declare required keys in `pac
 
 Do not synchronize Varlock-resolved values into Convex. Expo and other clients own their non-sensitive Convex deployment and site URLs in their application schema. A local Convex command can generate ignored `.env.local` client URLs. These values remain local data, not a second contract.
 
-## Template commands
+## Template skills
 
-The `connect-backend` skill adds only schema keys and development values for the selected connection. Removing a backend-specific key does not remove a similarly named application key. After you change workspace selection, run `VARLOCK_ENV=development pnpm run env:check`. It reports environment imports that point at deleted packages.
+The `v1-feature` skill adds only schema keys and development values for the selected connection. Removing a backend-specific key does not remove a similarly named application key. After you change workspace selection, run `VARLOCK_ENV=development pnpm run env:check`. It reports environment imports that point at deleted packages.

@@ -5,7 +5,7 @@ description: Understand the shared package workspaces, hosted backend package, k
 
 Shared libraries and hosted backends are in `packages/`. Application workspaces consume them through workspace dependencies. Package names use the configured scope of the project.
 
-Use `pnpm template add package <name>` to restore an available package workspace that setup removed. See [Project structure](./project-structure.md) for the full package catalog.
+Use the `v1-workspace` skill to restore an available package workspace that setup removed. See [Project structure](./project-structure.md) for the full package catalog.
 
 ## Services
 
@@ -30,7 +30,7 @@ Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/
 
 `@v1/backend/client` and `@v1/backend/client/auth` re-export the Convex, Convex React Query, and Convex Better Auth client libraries on purpose, including exports that no application uses yet. Applications import them from the backend package and never depend on a Convex library directly, so every client runs the same Convex versions as the deployed functions. This is an exception to deleting vendor pass-throughs: keep the re-exports when an audit reports them as unused.
 
-Use the `connect-backend` skill in `.agents/skills/` to add the client, environment, provider, and optional example connections to `apps/app`, `apps/desktop`, or `apps/mobile`. It does not deploy Convex or create credentials.
+Use the `v1-feature` skill in `.agents/skills/` to add the client, environment, provider, and optional example connections to `apps/app`, `apps/desktop`, or `apps/mobile`. It does not deploy Convex or create credentials.
 
 Run `pnpm --filter @v1/backend run dev` to connect the package to a Convex deployment.
 

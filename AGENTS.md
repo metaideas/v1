@@ -17,7 +17,7 @@ When working with `v1`, you should always keep the following in mind:
 7. A package workspace owns a contract that is not its vendor's API, such as templates, a schema, a state machine, or a configuration policy. If replacing the vendor would change the package's public API one for one, delete the package and let applications use the vendor directly. Instrumentation, such as logging, error monitoring, and product analytics, belongs to application workspaces, and template recipes add the optional vendors.
 8. Local development works with only the repository and its Docker Compose services. Cloud services and external accounts are opt-in.
 9. Keep the scaffold small. Ship optional code as a template recipe in `turbo/generators/` that a scaffolded project adds when it needs it. Add code to a workspace only when every scaffolded project that selects the workspace uses it.
-10. Content that only maintainers use is an internal cleanup path, and `pnpm template setup` removes it. List a whole file or folder in `v1.cleanupPaths` in the root `package.json`. For part of a file that ships, wrap it in `TEMPLATE:START` and `TEMPLATE:END` comments and list the file in `v1.cleanupSections`.
+10. Content that only maintainers use is an internal cleanup path, and the `v1-setup` skill removes it. List a whole file or folder in `v1.cleanupPaths` in the root `package.json`. For part of a file that ships, wrap it in `TEMPLATE:START` and `TEMPLATE:END` comments and list the file in `v1.cleanupSections`.
 11. `pnpm create @metaideas/v1` downloads the template at its last release, not at `main`. When a pull request changes what scaffolded projects get, add a changeset with `pnpm --filter @metaideas/create-v1 changeset`. Merging the release pull request publishes `scripts/create` and tags the release.
 12. Run one-off codemods from a temporary directory outside the repository. Before opening or updating a pull request, check that the diff excludes the codemod.
 
@@ -31,17 +31,17 @@ Use these terms in issues, plans, code, and documentation. Do not use the altern
 - **Application workspace**: a product surface that users see or that runs independently. Not "app package".
 - **Package workspace**: runtime code that application workspaces or other package workspaces share. Not "application package".
 - **Template recipe**: copy-once code in `turbo/generators/` that a scaffolded project owns after generation. Not "plugin" or "recipe package".
-- **Template command**: a local command that configures a scaffolded project or manages its workspaces, such as `pnpm template setup` or `pnpm template add`. Use "Turbo generator" only for the mechanism that runs a template recipe.
+- **Template skill**: a `v1-` skill in `.agents/skills/` that configures a scaffolded project or manages its workspaces, such as `v1-setup` or `v1-workspace`. Its bundled scripts do the steps that must come out the same every time. Not "template command". Use "Turbo generator" only for the mechanism that runs a template recipe.
 - **Internal cleanup path**: content that only maintainers use. Setup removes it from a scaffolded project.
 - **Backend alternative**: an optional backend shape that a scaffolded project selects. Not "required backend" or "backend layer".
-- **Preset**: a reusable configuration for an environment or tooling that a template command selects.
-- **Skill**: an agent workflow in `.agents/skills/` that drives template commands and generators and names the checks that prove the result.
+- **Preset**: a reusable configuration for an environment or tooling that a template skill selects.
+- **Skill**: an agent workflow in `.agents/skills/` that drives its bundled scripts and generators and names the checks that prove the result.
 
 <!-- TEMPLATE:END -->
 
 ## Skills
 
-Template work runs through the skills in `.agents/skills/`. Each skill states which template command or Turbo generator does the mechanical part and which checks prove the result. Lint, `pnpm run boundaries`, typecheck, and tests enforce the template's structure, and CI runs them on every pull request. Reach for `setup`, `add-workspace`, `remove-workspace`, `connect-backend`, `new-package`, `new-feature`, or `update-from-template` before editing those areas by hand.
+Template work runs through the skills in `.agents/skills/`. Each skill states which bundled script or Turbo generator does the mechanical part and which checks prove the result. Lint, `pnpm run boundaries`, typecheck, and tests enforce the template's structure, and CI runs them on every pull request. Reach for `v1-setup`, `v1-workspace`, `v1-feature`, or `v1-update` before editing those areas by hand.
 
 ## Architecture
 

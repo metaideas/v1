@@ -78,7 +78,9 @@ export function registerSkewGenerator(plop: PlopTypes.NodePlopAPI) {
     actions: () => [
       async () => {
         if (!existsSync(`${APP_PATH}/package.json`)) {
-          throw new Error(`The update notice needs ${APP_PATH}. Add it with pnpm template add.`)
+          throw new Error(
+            `The update notice needs ${APP_PATH}. Restore it with the v1-workspace skill.`
+          )
         }
 
         const app = await readPackageJson(`${APP_PATH}/package.json`)
