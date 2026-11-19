@@ -5,7 +5,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/metaideas/v1.git",
-    "directory": "tooling/create"
+    "directory": "scripts/create"
   },
   "bin": {
     "create-v1": "dist/index.js"
