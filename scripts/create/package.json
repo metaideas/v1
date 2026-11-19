@@ -24,12 +24,14 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "prepack": "tsdown",
     "release": "cd ../.. && changeset publish",
+    "test": "vitest run",
     "version": "cd ../.. && changeset version"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",
     "@types/node": "26.6.4",
-    "tsdown": "0.23.5"
+    "tsdown": "0.23.5",
+    "vitest": "5.1.0"
   },
   "engines": {
     "node": ">=26"
