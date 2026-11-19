@@ -15,4 +15,4 @@ description: Restore an application or package workspace from the v1 template in
 2. Run `pnpm install`.
 3. Connect it. A package needs a consumer: add it as a `workspace:*` dependency where it is used and import its `.env` fragment from that app's `.env.schema`. An app needs its `.env.development` values and, when it talks to a backend, the connect-backend skill.
 4. If the template has moved on since the stamp, `pnpm template diff --name-only` shows which upstream files changed. Only apply changes inside the workspace you just added.
-5. Run `pnpm template doctor` and fix what it reports. Finish when it passes.
+5. Run `pnpm run codegen`, then `pnpm run check`, `pnpm run analyze`, and `pnpm run boundaries`, and fix what they report. Finish when they pass.

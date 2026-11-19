@@ -31,17 +31,17 @@ Use these terms in issues, plans, code, and documentation. Do not use the altern
 - **Application workspace**: a product surface that users see or that runs independently. Not "app package".
 - **Package workspace**: runtime code that application workspaces or other package workspaces share. Not "application package".
 - **Template recipe**: copy-once code in `turbo/generators/` that a scaffolded project owns after generation. Not "plugin" or "recipe package".
-- **Template command**: a local command that configures a scaffolded project or manages its workspaces, such as `pnpm template setup` or `pnpm template doctor`. Use "Turbo generator" only for the mechanism that runs a template recipe.
+- **Template command**: a local command that configures a scaffolded project or manages its workspaces, such as `pnpm template setup` or `pnpm template add`. Use "Turbo generator" only for the mechanism that runs a template recipe.
 - **Internal cleanup path**: content that only maintainers use. Setup removes it from a scaffolded project.
 - **Backend alternative**: an optional backend shape that a scaffolded project selects. Not "required backend" or "backend layer".
 - **Preset**: a reusable configuration for an environment or tooling that a template command selects.
-- **Skill**: an agent workflow in `.agents/skills/` that drives template commands and generators toward a passing `pnpm template doctor`.
+- **Skill**: an agent workflow in `.agents/skills/` that drives template commands and generators and names the checks that prove the result.
 
 <!-- TEMPLATE:END -->
 
 ## Skills
 
-Template work runs through the skills in `.agents/skills/`. Each skill states which template command or Turbo generator does the mechanical part and ends with `pnpm template doctor`; a passing doctor is the definition of done for setup, workspace changes, backend connections, and template updates. Reach for `setup`, `add-workspace`, `remove-workspace`, `connect-backend`, `new-package`, `new-feature`, `update-from-template`, or `doctor` before editing those areas by hand.
+Template work runs through the skills in `.agents/skills/`. Each skill states which template command or Turbo generator does the mechanical part and which checks prove the result. Lint, `pnpm run boundaries`, typecheck, and tests enforce the template's structure, and CI runs them on every pull request. Reach for `setup`, `add-workspace`, `remove-workspace`, `connect-backend`, `new-package`, `new-feature`, or `update-from-template` before editing those areas by hand.
 
 ## Architecture
 

@@ -296,7 +296,8 @@ export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
         'Query content with `getEmDashCollection()` from "emdash" in a page that sets `export const prerender = false`.',
       () =>
         `Uploaded media live in ${WEB_PATH}/uploads, so the server needs a persistent disk. Run \`pnpm run --filter web build\`, then \`pnpm run --filter web start\`, and remove ${WEB_PATH}/vercel.json if you no longer deploy to Vercel.`,
-      () => "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm template doctor`.",
+      () =>
+        "Run `pnpm run codegen` and `pnpm run fix`, then `pnpm run check` and `pnpm run analyze`.",
     ],
     description: "Add the EmDash CMS to apps/web",
     prompts: [],

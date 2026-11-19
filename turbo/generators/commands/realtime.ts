@@ -131,7 +131,7 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
         () =>
           "Subscribe with `useRealtime` from #shared/realtime.ts, passing `enabled` only once a session loads. `POST /v1/demo/realtime` on the API sends a `greeted` event to the signed-in user's `demo` channel.",
         () =>
-          "Run `pnpm run fix`, then `pnpm template doctor` once a component calls `useRealtime`; until then, the doctor reports it as unused.",
+          "Run `pnpm run fix`, then `pnpm run check` and `pnpm run analyze` once a component calls `useRealtime`. Until then, `analyze` reports it as unused.",
       ]
     },
     description: "Add the realtime client to an application workspace",

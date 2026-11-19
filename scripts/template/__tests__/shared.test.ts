@@ -1,11 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import {
-  checkIsRemovedByCleanup,
-  checkIsTemplateReadme,
-  findPackageOwnedCoreServices,
-  findUnknownKnipWorkspaces,
-} from "../shared.ts"
+import { checkIsRemovedByCleanup, checkIsTemplateReadme } from "../shared.ts"
 
 const ROOT_DIR = "/project"
 
@@ -31,46 +26,6 @@ describe("checkIsRemovedByCleanup", () => {
     expect(
       checkIsRemovedByCleanup(ROOT_DIR, "docs/coding-standards.md", ["docs/coding", "doc"])
     ).toBe(false)
-  })
-})
-
-describe("findUnknownKnipWorkspaces", () => {
-  const workspacePaths = new Set(["apps/api", "apps/mobile", "packages/database"])
-
-  test("lists a configured workspace that does not exist", () => {
-    expect(
-      findUnknownKnipWorkspaces(
-        { workspaces: { "apps/mobile": {}, "packages/jobs": {} } },
-        workspacePaths
-      )
-    ).toEqual(["packages/jobs"])
-  })
-
-  test("ignores globs, tooling workspaces, and paths outside the workspaces block", () => {
-    expect(
-      findUnknownKnipWorkspaces(
-        {
-          ignoreIssues: { "apps/api/src/shared/context.ts": ["exports"] },
-          workspaces: { ".": {}, "apps/*": {}, "packages/database": {}, "tooling/linting": {} },
-        },
-        workspacePaths
-      )
-    ).toEqual([])
-  })
-})
-
-describe("findPackageOwnedCoreServices", () => {
-  const packageNames = new Set(["core", "email", "jobs"])
-
-  test("lists a core service named after a package workspace", () => {
-    expect(findPackageOwnedCoreServices(["email", "jobs", "logging"], packageNames)).toEqual([
-      "email",
-      "jobs",
-    ])
-  })
-
-  test("keeps a contract that no single package owns", () => {
-    expect(findPackageOwnedCoreServices(["logging"], packageNames)).toEqual([])
   })
 })
 

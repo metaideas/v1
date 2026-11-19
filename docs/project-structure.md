@@ -41,7 +41,7 @@ root
   │   ├── utils                 # Shared helpers and constants for packages and apps
   │   └── workflows             # Durable background workflows and their events using Inngest
   │
-  ├── scripts             # Template commands (pnpm template setup, doctor, add, remove, diff)
+  ├── scripts             # Template commands (pnpm template setup, add, remove, diff)
   │
   ├── tooling             # Shared development and build tools
   │   ├── internationalization  # Inlang project configuration and translations

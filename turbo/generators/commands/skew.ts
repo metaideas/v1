@@ -116,7 +116,7 @@ export function registerSkewGenerator(plop: PlopTypes.NodePlopAPI) {
       },
       () =>
         "The notice appears only after a new deployment. To see it, build and start the app, open a page, then build and start the app again.",
-      () => "Run `pnpm run fix`, then `pnpm template doctor`.",
+      () => "Run `pnpm run fix`, then `pnpm run check` and `pnpm run analyze`.",
     ],
     description: "Add a notice to apps/app that asks users to reload after a new deployment",
     prompts: [],

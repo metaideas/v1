@@ -536,8 +536,7 @@ export default function ShowcaseLayout() {
           </Typography.List>
           <Typography.H4>People stopped telling jokes</Typography.H4>
           <Typography.P>
-            Run <Typography.InlineCode>pnpm template doctor</Typography.InlineCode> to verify the
-            kingdom.
+            Run <Typography.InlineCode>pnpm run check</Typography.InlineCode> to verify the kingdom.
           </Typography.P>
           <Typography.Table>
             <Typography.TableRoot>

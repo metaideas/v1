@@ -21,4 +21,4 @@ description: Pull improvements from the upstream v1 template into a scaffolded p
    pnpm template diff --update-stamp > /dev/null
    ```
 
-5. Run `pnpm template doctor` and fix what it reports. Finish when it passes and report what was applied, adapted, and skipped.
+5. Run `pnpm run check`, `pnpm run analyze`, and `pnpm run boundaries`, and fix what they report. Finish when they pass and report what was applied, adapted, and skipped.

@@ -94,4 +94,4 @@ Do not synchronize Varlock-resolved values into Convex. Expo and other clients o
 
 ## Template commands
 
-The `connect-backend` skill adds only schema keys and development values for the selected connection. Removing a backend-specific key does not remove a similarly named application key. After you change workspace selection, run `pnpm template doctor`. It reports environment imports that point at deleted packages.
+The `connect-backend` skill adds only schema keys and development values for the selected connection. Removing a backend-specific key does not remove a similarly named application key. After you change workspace selection, run `pnpm run env:check`. It reports environment imports that point at deleted packages.
