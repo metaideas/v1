@@ -6,7 +6,7 @@ import app from "#routes/index.ts"
 import { realtimeHandler } from "#routes/realtime.ts"
 import { ENV } from "#shared/env.generated.ts"
 import { log } from "#shared/logger.ts"
-import { database, dispatcher, kv, realtime, redis } from "#shared/services.ts"
+import { close } from "#shared/services.ts"
 
 const handleRequest = getRequestListener(app.fetch)
 
@@ -26,20 +26,11 @@ server.on("request", (_request, response) => {
 
 // The server stops taking requests and finishes the ones in progress before the services close.
 // Realtime streams never finish on their own, so they end once the server stops taking requests.
-async function close() {
+async function shutdown() {
   const stopped = server.listening && once(server.close(), "close")
   realtimeHandler.close()
   await stopped
-  // A reconnecting Redis client may never answer the commands that `close()` waits for, so it is
-  // destroyed instead. A client that is not open throws on both.
-  if (redis.isOpen && !redis.isReady) redis.destroy()
-  await Promise.all([
-    dispatcher.close(),
-    kv.dispose(),
-    realtime.close(),
-    redis.isReady && redis.close(),
-    database.$client.end(),
-  ])
+  await close()
 }
 
 await lifecycle(
@@ -48,7 +39,7 @@ await lifecycle(
     await once(server, "listening")
   },
   {
-    close,
+    close: shutdown,
     onError: (error, message) => {
       log.error({ error, message, scope: "api" })
     },

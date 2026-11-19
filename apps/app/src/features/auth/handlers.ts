@@ -51,7 +51,7 @@ export const validateSession = createIsomorphicFn()
 export const checkEmailAvailability = publicFunction
   .validator(z.object({ email: EmailSchema }))
   .handler(async ({ context, data }) => {
-    const user = await context.database.query.users.findFirst({
+    const user = await context.services.database.query.users.findFirst({
       where: { email: data.email },
     })
 

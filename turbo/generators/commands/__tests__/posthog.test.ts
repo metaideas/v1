@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest"
 
 import { registerPostHogGenerator } from "../posthog"
-import { API_CLOSE_BODY, API_ENTRYPOINT } from "./fixtures/api-entrypoint"
+import { API_SHUTDOWN_BODY, API_ENTRYPOINT } from "./fixtures/api-entrypoint"
 import { runRecipe } from "./run-recipe"
 
 describe("registerPostHogGenerator", () => {
@@ -17,7 +17,7 @@ describe("registerPostHogGenerator", () => {
     )
 
     expect(reports).toContain("apps/api/src/index.ts: connected PostHog")
-    expect(API_CLOSE_BODY.exec(files["apps/api/src/index.ts"] ?? "")?.groups?.body).toContain(
+    expect(API_SHUTDOWN_BODY.exec(files["apps/api/src/index.ts"] ?? "")?.groups?.body).toContain(
       "await analytics?.shutdown()"
     )
 

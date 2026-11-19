@@ -13,7 +13,7 @@ import realtimeRoutes from "#routes/realtime.ts"
 import trpcRoutes from "#routes/trpc.ts"
 import v1Routes from "#routes/v1/index.ts"
 import { withLanguageDetection } from "#shared/middleware.ts"
-import { auth, database, dispatcher, kv, realtime, storage, workflows } from "#shared/services.ts"
+import { services } from "#shared/services.ts"
 import { allowedOrigins, factory, toContentfulStatusCode } from "#shared/utils.ts"
 
 const app = factory.createApp()
@@ -38,13 +38,7 @@ app.use(
 )
 
 app.use(async (c, next) => {
-  c.set("auth", auth)
-  c.set("db", database)
-  c.set("dispatcher", dispatcher)
-  c.set("kv", kv)
-  c.set("realtime", realtime)
-  c.set("storage", storage)
-  c.set("workflows", workflows)
+  c.set("services", services)
   await next()
 })
 
@@ -69,7 +63,7 @@ app.onError((error, c) => {
   )
 })
 
-app.on(["POST", "GET"], "/auth/**", (c) => c.var.auth.handler(c.req.raw))
+app.on(["POST", "GET"], "/auth/**", (c) => c.var.services.auth.handler(c.req.raw))
 
 export const router = app
   .get(

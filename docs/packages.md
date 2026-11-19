@@ -9,18 +9,26 @@ Use the `v1-workspace` skill to restore an available package workspace that setu
 
 ## Services
 
-A package workspace is a service that applications compose. It exports `create*` factories and never creates clients, reads `ENV`, or configures process-wide state when imported. Each application builds its services once in its composition root (`#shared/services.ts`, or `#shared/server/services.ts` in a full-stack application), passes configuration from its own `ENV`, and hands the instances to handlers through the framework context:
+A package workspace is a service that applications compose. It exports `create*` factories and never creates clients, reads `ENV`, or configures process-wide state when imported. Each application builds its services once in its composition root (`#shared/services.ts`, or `#shared/server/services.ts` in a full-stack application), passes configuration from its own `ENV`, and exports them as one `services` object with one `close` function that releases their connections:
 
 ```ts
-export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
+const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 
-export const auth = createServerAuth({
+const auth = createServerAuth({
   database,
   sendPasswordReset: ({ email, url }) =>
     mailer.send("password-reset", { appName, resetUrl: url }, { to: [email] }),
   // ...
 })
+
+export const services = { auth, database, mailer }
+
+export async function close() {
+  await database.close()
+}
 ```
+
+Handlers read the services from the framework context: `c.var.services.database` in `apps/api` and `ctx.services.database` in its tRPC procedures, and `context.services.database` in the server functions of `apps/app`. A service added to `services` reaches every handler with no other edit. `apps/api` calls `close` from `lifecycle` once its server stops taking requests, and `apps/app` registers it on Nitro's `close` hook in its composition root. The Inngest client of `apps/worker` holds no connection, so its services need no `close`, and the worker closes its runners from `src/runners.ts` instead.
 
 Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/ui`. When a package needs another capability, it declares the smallest interface it needs, such as `sendPasswordReset` above, and the application connects the two. Each package's `turbo.json` tags it as `foundation` (`core`, `ui`, and `utils`), `capability` (every other package), or `composing` (`backend`), and `pnpm run boundaries` reports a dependency that the tags don't allow. `packages/backend` composes packages the way an application does, so it can depend on capability packages such as `@v1/auth`.
 
@@ -123,7 +131,7 @@ export const { useFile, useList, useSearch, useUpload } = createUploadStorageCli
 
 ## Key-Value Storage
 
-There is no key-value package workspace. An application workspace that needs one creates an [unstorage](https://unstorage.unjs.io/) instance in its composition root. `apps/api` uses the Redis driver against Redis from Docker Compose and passes the instance to handlers as `c.var.kv`. Namespace keys per feature with unstorage's `prefixStorage`. Values must be JSON-serializable; dates come back as strings.
+There is no key-value package workspace. An application workspace that needs one creates an [unstorage](https://unstorage.unjs.io/) instance in its composition root. `apps/api` uses the Redis driver against Redis from Docker Compose and passes the instance to handlers as `c.var.services.kv`. Namespace keys per feature with unstorage's `prefixStorage`. Values must be JSON-serializable; dates come back as strings.
 
 ## Rate Limiting
 
@@ -173,12 +181,17 @@ import { createDispatcher } from "@v1/jobs/dispatcher"
 
 export const dispatcher = createDispatcher({ logger: log, url: ENV.JOBS_REDIS_URL })
 
-await c.var.dispatcher.dispatch("default", "greet-user", { userId }, { id: `greet-${userId}` })
+await c.var.services.dispatcher.dispatch(
+  "default",
+  "greet-user",
+  { userId },
+  { id: `greet-${userId}` }
+)
 ```
 
 `dispatch` type-checks the queue, the job name on that queue, and its payload, and validates the payload before it reaches Redis. Dispatches with the same `id` add one job while BullMQ keeps it. Pass `delayMs` to run a job later. A failed dispatch comes back as a `DispatchJobError` or `JobPayloadError` value instead of throwing. While Redis is unreachable, a dispatch fails after 5 seconds instead of holding the request open.
 
-`apps/worker` consumes queues with a jobs runner. A runner takes handlers by queue and job, and consumes every queue it lists. It must handle every job on those queues, so adding a job to a queue fails type checking in each runner that consumes it until a handler exists:
+`apps/worker` consumes queues with a jobs runner, which it builds in `src/runners.ts` from the handlers of its features. A runner takes handlers by queue and job, and consumes every queue it lists. It must handle every job on those queues, so adding a job to a queue fails type checking in each runner that consumes it until a handler exists:
 
 ```ts
 import { createJobsRunner } from "@v1/jobs/runner"
@@ -234,7 +247,7 @@ import { createRealtime } from "@v1/realtime/server"
 
 export const realtime = createRealtime({ logger: log, url: ENV.REALTIME_REDIS_URL })
 
-await c.var.realtime.channel("notifications", { userId }).emit("created", { id, title })
+await c.var.services.realtime.channel("notifications", { userId }).emit("created", { id, title })
 ```
 
 `emit` type-checks the channel, its params, the event name, and its data, and validates them before they reach Redis. It appends the event to the channel's Redis stream and publishes it in one atomic step, so subscribers receive events in the order they were emitted. A failed emit comes back as a `RealtimePayloadError` or `PublishEventError` value instead of throwing. A process that only emits, such as `apps/worker`, never opens a subscriber connection.
@@ -320,7 +333,7 @@ export const workflows = createWorkflows({
   signingKeyFallback: ENV.INNGEST_SIGNING_KEY_FALLBACK,
 })
 
-await c.var.workflows.send(
+await c.var.services.workflows.send(
   events.demo.welcome.requested.create({ userId }, { id: `welcome-${userId}` })
 )
 ```
@@ -330,7 +343,7 @@ await c.var.workflows.send(
 Functions live in the `handlers.ts` of a worker feature. Wrap each side effect in `step.run`. Inngest calls the function again for each step and returns saved results for the steps that already finished, so code outside a step runs more than once. A step can also run more than once, so keep its side effects idempotent. `step.sleep` waits without holding the worker. The options of `createFunction` set retries and flow control, such as `concurrency`, `throttle`, `rateLimit`, and `debounce`:
 
 ```ts
-export const welcomeUser = workflows.createFunction(
+export const welcomeUser = services.workflows.createFunction(
   { concurrency: { limit: 10 }, id: "welcome-user", triggers: [events.demo.welcome.requested] },
   async ({ event, logger, step }) => {
     const message = await step.run("compose-welcome", () => `Welcome, ${event.data.userId}`)
@@ -352,7 +365,7 @@ export const welcomeUser = workflows.createFunction(
 import { createWorkflowsRunner } from "@v1/workflows/runner"
 
 const workflows = createWorkflowsRunner({
-  client: workflowsClient,
+  client: services.workflows,
   functions: [welcomeUser],
   gatewayUrl: ENV.INNGEST_CONNECT_GATEWAY_URL,
   logger: log,

@@ -7,13 +7,11 @@ import type { AppContext } from "#shared/types.ts"
 
 export function createTRPCContext(opts: FetchCreateContextFnOptions, c: Context<AppContext>) {
   return {
-    auth: c.var.auth,
-    db: c.var.db,
     info: opts.info,
-    kv: c.var.kv,
     log: c.var.log,
     req: opts.req,
     resHeaders: opts.resHeaders,
+    services: c.var.services,
   }
 }
 
@@ -39,7 +37,7 @@ export const createRouter = t.router
 
 export const publicProcedure = t.procedure
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
-  const session = await ctx.auth.api.getSession({ headers: ctx.req.headers })
+  const session = await ctx.services.auth.api.getSession({ headers: ctx.req.headers })
 
   if (!session) {
     throw new TRPCError({ code: "UNAUTHORIZED" })

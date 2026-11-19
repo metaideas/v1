@@ -99,23 +99,18 @@ const EDITS: readonly Edit[] = [
     path: "src/routes/index.ts",
     replacements: [
       [
-        'app.on(["POST", "GET"], "/auth/**", (c) => c.var.auth.handler(c.req.raw))\n',
-        'app.on(["POST", "GET"], "/auth/**", (c) => c.var.auth.handler(c.req.raw))\n\nif (jobsDashboard) {\n  app.route(jobsDashboard.path, jobsDashboard.routes)\n}\n',
+        'app.on(["POST", "GET"], "/auth/**", (c) => c.var.services.auth.handler(c.req.raw))\n',
+        'app.on(["POST", "GET"], "/auth/**", (c) => c.var.services.auth.handler(c.req.raw))\n\nif (jobsDashboard) {\n  app.route(jobsDashboard.path, jobsDashboard.routes)\n}\n',
       ],
     ],
   },
   {
     imports: [DASHBOARD_IMPORT],
     manual:
-      "Call `await jobsDashboard?.close()` in the `close` that src/index.ts passes to `lifecycle`.",
+      "Call `await jobsDashboard?.close()` after `await close()` in `shutdown` in src/index.ts.",
     marker: "jobsDashboard?.close()",
     path: "src/index.ts",
-    replacements: [
-      [
-        "    database.$client.end(),\n  ])\n",
-        "    database.$client.end(),\n  ])\n  await jobsDashboard?.close()\n",
-      ],
-    ],
+    replacements: [["  await close()\n", "  await close()\n  await jobsDashboard?.close()\n"]],
   },
 ]
 

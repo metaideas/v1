@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest"
 
 import { registerSentryGenerator } from "../sentry"
-import { API_CLOSE_BODY, API_ENTRYPOINT } from "./fixtures/api-entrypoint"
+import { API_SHUTDOWN_BODY, API_ENTRYPOINT } from "./fixtures/api-entrypoint"
 import { runRecipe } from "./run-recipe"
 
 describe("registerSentryGenerator", () => {
@@ -17,7 +17,7 @@ describe("registerSentryGenerator", () => {
     )
 
     expect(reports).toContain("apps/api/src/index.ts: connected Sentry")
-    expect(API_CLOSE_BODY.exec(files["apps/api/src/index.ts"] ?? "")?.groups?.body).toContain(
+    expect(API_SHUTDOWN_BODY.exec(files["apps/api/src/index.ts"] ?? "")?.groups?.body).toContain(
       "await drain?.flush()"
     )
 
