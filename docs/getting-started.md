@@ -24,7 +24,7 @@ pnpm create @metaideas/v1 my-app
 cd my-app
 ```
 
-The command downloads the latest template release into `my-app`, starts a new Git repository, installs the dependencies, and runs the setup script of the `v1-setup` skill. Options after the directory go to setup, such as `pnpm create @metaideas/v1 my-app --yes`.
+The command downloads the latest template release into `my-app`, starts a new Git repository, and installs the dependencies. Then open the project in a coding agent and run the `v1-setup` skill. It asks what the product is, keeps the workspaces it needs, and names the project. To run setup without an agent, run `node .agents/skills/v1-setup/scripts/setup.ts`.
 
 To create the GitHub repository at the same time, use the [GitHub CLI](https://cli.github.com/) instead, then install the dependencies and run setup yourself. This copies the template's `main` branch rather than its latest release.
 
@@ -86,7 +86,7 @@ At the repository root, `pnpm run dev` runs all workspaces through Turbo. Inside
 
 ### First Run Checklist
 
-- Set up the project with `pnpm create @metaideas/v1` or the `v1-setup` skill.
+- Run the `v1-setup` skill in a coding agent.
 - Generate source files and types with `pnpm run codegen`.
 - Start services with `pnpm run docker:up`.
 - Start the development servers with `pnpm run dev`.
