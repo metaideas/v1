@@ -1,6 +1,6 @@
 {
   "name": "@metaideas/create-v1",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Create a project from the v1 template",
   "repository": {
     "type": "git",
