@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs"
 import { glob, readFile, writeFile } from "node:fs/promises"
-import { join } from "node:path"
+import { basename, join } from "node:path"
 
 import {
   getScopePrefix,
@@ -52,13 +52,45 @@ async function renameExpoApps(rootDir: string, scope: string) {
   return changedFiles.filter((path): path is string => path !== null)
 }
 
+const DEPENDENCY_FIELDS = ["dependencies", "devDependencies", "peerDependencies"] as const
+
+function sortByName(dependencies: Readonly<Record<string, string>> | undefined) {
+  return dependencies === undefined
+    ? undefined
+    : Object.fromEntries(
+        Object.entries(dependencies).toSorted(([left], [right]) => (left < right ? -1 : 1))
+      )
+}
+
+// Renaming the scope moves the workspace dependencies within each sorted dependency list, so the
+// rename sorts the lists of every manifest it changed.
+async function sortDependencies(paths: readonly string[]) {
+  await Promise.all(
+    paths
+      .filter((path) => basename(path) === "package.json")
+      .map(async (path) => {
+        const packageJson = await readPackageJson(path)
+        const sorted = Object.fromEntries(
+          DEPENDENCY_FIELDS.flatMap((field) => {
+            const dependencies = sortByName(packageJson[field])
+            return dependencies === undefined ? [] : [[field, dependencies]]
+          })
+        )
+        await writeJson(path, { ...packageJson, ...sorted })
+      })
+  )
+}
+
 export async function renameProject({ rootDir, projectName, scope, sourceScope }: RenameOptions) {
+  const renamedFiles = await replaceTextInFiles(
+    rootDir,
+    getScopePrefix(normalizeScope(sourceScope)),
+    getScopePrefix(normalizeScope(scope))
+  )
+  await sortDependencies(renamedFiles)
+
   const changedFiles = new Set([
-    ...(await replaceTextInFiles(
-      rootDir,
-      getScopePrefix(normalizeScope(sourceScope)),
-      getScopePrefix(normalizeScope(scope))
-    )),
+    ...renamedFiles,
     ...(await renameExpoApps(rootDir, normalizeScope(scope))),
   ])
 

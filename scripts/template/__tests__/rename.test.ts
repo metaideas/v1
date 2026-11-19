@@ -4,6 +4,7 @@ import { dirname, join } from "node:path"
 import { afterEach, describe, expect, test } from "vitest"
 
 import { getExpoAppId, renameProject } from "../rename.ts"
+import { readPackageJson } from "../shared.ts"
 
 const EXPO_CONFIG = 'const APP_ID = "v1"\nconst APP_NAME = "v1"\n'
 
@@ -49,5 +50,20 @@ describe("renameProject", () => {
     expect(await readFile(join(rootDir, configPath), "utf8")).toBe(
       'const APP_ID = "app-123-project"\nconst APP_NAME = "123-Project"\n'
     )
+  })
+
+  test("keeps dependencies sorted after the scope changes", async () => {
+    const rootDir = await createProject("apps/mobile/app.config.js")
+    const packageJsonPath = join(rootDir, "apps/api/package.json")
+    await mkdir(dirname(packageJsonPath), { recursive: true })
+    await writeFile(
+      packageJsonPath,
+      `${JSON.stringify({ dependencies: { "@sanely/errors": "1.0.0", "@source/core": "workspace:*", hono: "4.0.0" } }, null, 2)}\n`
+    )
+
+    await renameProject({ rootDir, scope: "acme", sourceScope: "source" })
+
+    const { dependencies } = await readPackageJson(packageJsonPath)
+    expect(Object.keys(dependencies ?? {})).toEqual(["@acme/core", "@sanely/errors", "hono"])
   })
 })

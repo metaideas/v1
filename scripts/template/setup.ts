@@ -7,7 +7,10 @@ import consola from "consola"
 import { renameProject } from "./rename.ts"
 import { GitHubCommitSchema, type TemplateCleanup, TemplateCleanupSchema } from "./schemas.ts"
 import {
+  checkIsTemplateReadme,
+  findTextReferences,
   getProjectScope,
+  getScopePrefix,
   getWorkspaceGraph,
   getWorkspacePath,
   getWorkspaces,
@@ -20,6 +23,7 @@ import {
   runCommand,
   TEMPLATE_REPO,
   TEMPLATE_SCOPE,
+  TEMPLATE_SECTION_START,
   type Workspace,
   type WorkspaceKind,
   type WorkspaceNode,
@@ -206,6 +210,34 @@ async function writeReadme(rootDir: string, projectName: string, description: st
   await writeFile(join(rootDir, "README.md"), `${sections.join("\n\n")}\n`)
 }
 
+// Setup leaves no template scope, cleanup marker, or template README behind. Running it reports what
+// a partial run left, so a second run can finish the job.
+async function findLeftovers(rootDir: string, scope: string) {
+  const isTemplateCode = (path: string) => relative(rootDir, path).startsWith("scripts/")
+  const scopeReferences =
+    normalizeScope(scope) === TEMPLATE_SCOPE
+      ? []
+      : await findTextReferences(rootDir, getScopePrefix(TEMPLATE_SCOPE))
+  const markers = await findTextReferences(rootDir, TEMPLATE_SECTION_START)
+  const readme = join(rootDir, "README.md")
+  const packageJson = await readPackageJson(join(rootDir, "package.json"))
+
+  return [
+    ...scopeReferences
+      .filter((path) => !isTemplateCode(path))
+      .map(
+        (path) => `${relative(rootDir, path)} still references ${getScopePrefix(TEMPLATE_SCOPE)}`
+      ),
+    ...markers
+      .filter((path) => !isTemplateCode(path))
+      .map((path) => `${relative(rootDir, path)} still has a ${TEMPLATE_SECTION_START} marker`),
+    ...(existsSync(readme) && checkIsTemplateReadme(await readFile(readme, "utf8"))
+      ? ["README.md is still the template README"]
+      : []),
+    ...("v1" in packageJson ? ["package.json still has the v1 field"] : []),
+  ]
+}
+
 export default defineCommand({
   args: {
     description: {
@@ -374,7 +406,8 @@ export default defineCommand({
     if (shouldInitializeGit && !existsSync(join(rootDir, ".git")))
       await runCommand(["git", "init"], rootDir)
     if (shouldInstall) {
-      await runCommand(["pnpm", "install"], rootDir)
+      // Removing workspaces changes the lockfile, which pnpm refuses to do by default in CI.
+      await runCommand(["pnpm", "install", "--no-frozen-lockfile"], rootDir)
       await runCommand(["pnpm", "run", "codegen"], rootDir)
     }
     // Prebuild regenerates the committed native projects from app.config.js, but it can only
@@ -387,7 +420,21 @@ export default defineCommand({
           "Run `pnpm run --filter mobile prebuild` on macOS to rename the native iOS and Android projects."
         )
     }
+    // Renaming the scope changes how imports sort, and prebuild writes unformatted native project
+    // files, so setup formats the result last.
+    if (shouldInstall) await runCommand(["pnpm", "run", "fix"], rootDir)
+    else
+      consola.warn(
+        "After `pnpm install`, run `pnpm run codegen` and `pnpm run fix` to sort the renamed imports."
+      )
 
-    consola.success("Template setup complete. Run `pnpm template doctor` to verify the project.")
+    const leftovers = await findLeftovers(rootDir, projectName)
+    if (leftovers.length > 0) {
+      for (const leftover of leftovers) consola.error(leftover)
+      process.exitCode = 1
+      return
+    }
+
+    consola.success("Template setup complete.")
   },
 })
