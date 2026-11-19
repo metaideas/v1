@@ -28,7 +28,6 @@
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",
-    "@tooling/tsconfig": "workspace:*",
     "@types/node": "26.6.4",
     "tsdown": "0.23.5"
   },

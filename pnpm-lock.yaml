@@ -1450,9 +1450,6 @@ importers:
       '@changesets/cli':
         specifier: 3.0.3
         version: 3.0.3
-      '@tooling/tsconfig':
-        specifier: workspace:*
-        version: link:../../tooling/tsconfig
       '@types/node':
         specifier: 26.6.4
         version: 26.6.4

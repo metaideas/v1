@@ -1,7 +1,0 @@
-{
-  "extends": "@tooling/tsconfig/internal-package.json",
-  "compilerOptions": {
-    "types": ["node"]
-  },
-  "include": ["src", "tsdown.config.ts"]
-}
