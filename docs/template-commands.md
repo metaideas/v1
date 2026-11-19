@@ -14,7 +14,7 @@ Configure a newly created project. This command does the following:
 - It prompts you to select the application and package workspaces to keep, and keeps the packages they depend on.
 - It sets the project name, which is also the package scope, and rewrites `@v1/` references.
 - It sets the Expo app ID and name in `apps/mobile/app.config.js` to the project name. On macOS, it regenerates the native iOS and Android projects with `expo prebuild`. On other systems, run `pnpm --filter mobile run prebuild` on a Mac afterward.
-- It records the source template, commit, and creation time in `.template.json`. `pnpm create @metaideas/v1` passes the commit it downloaded with `--commit`. Without it, setup records the head of the template's `main` branch. Running setup again keeps the recorded commit.
+- It records the source template, commit, and creation time in `.template.json` when the file doesn't exist. `pnpm create @metaideas/v1` writes the file with the commit it downloaded, so setup keeps it. A project created another way, such as with `gh repo create`, records the head of the template's `main` branch.
 - It replaces the template `README.md` with one that lists the project name, its description, the kept workspaces, and the docs.
 - It removes content that only template maintainers use, including the marked template sections of `AGENTS.md`.
 
@@ -77,7 +77,7 @@ pnpm template diff --update-stamp
 
 ## Updating your project
 
-`pnpm template setup` creates `.template.json`:
+`pnpm create @metaideas/v1` or `pnpm template setup` creates `.template.json`:
 
 ```json
 { "template": "metaideas/v1", "commit": "<sha>", "createdAt": "<ISO date>" }

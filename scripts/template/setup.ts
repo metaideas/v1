@@ -55,19 +55,19 @@ async function getTemplateCommit() {
   return GitHubCommitSchema.parse(await response.json()).sha
 }
 
-// The initializer passes the commit it downloaded. A project created another way records main's
-// head, and running setup again keeps the stamp that the first run wrote.
-async function stampProject(rootDir: string, commit: string | undefined) {
-  const existing = await readTemplateStamp(rootDir)
+// `pnpm create @metaideas/v1` writes the stamp with the commit it downloaded, and a second run of
+// setup finds the stamp that the first run wrote. Only a project without a stamp, such as one
+// created with `gh repo create --template`, records the head of main.
+async function stampProject(rootDir: string) {
+  if (await readTemplateStamp(rootDir)) return
+
+  const commit = await getTemplateCommit().catch((error: unknown): undefined => {
+    consola.warn("Could not record the template commit.", error)
+  })
 
   await writeTemplateStamp(rootDir, {
-    commit:
-      commit
-      ?? existing?.commit
-      ?? (await getTemplateCommit().catch((error: unknown): undefined => {
-        consola.warn("Could not record the template commit.", error)
-      })),
-    createdAt: existing?.createdAt ?? new Date().toISOString(),
+    commit,
+    createdAt: new Date().toISOString(),
     template: TEMPLATE_REPO,
   })
 }
@@ -134,6 +134,19 @@ async function cleanupTemplateFiles(
   const packageJson = await readPackageJson(packageJsonPath)
 
   await Promise.all(cleanupPaths.map((path) => removePath(rootDir, path)))
+
+  // A cleanup path can be a workspace, such as scripts/create, so its pnpm-workspace.yaml entry
+  // goes with it. The file keeps its comments because only matching list items are dropped.
+  const workspaceFilePath = join(rootDir, "pnpm-workspace.yaml")
+  const workspaceFile = await readFile(workspaceFilePath, "utf8")
+  await writeFile(
+    workspaceFilePath,
+    workspaceFile
+      .split("\n")
+      .filter((line) => !cleanupPaths.some((path) => line.trim() === `- ${path}`))
+      .join("\n")
+  )
+
   await Promise.all(
     cleanupSections.map(async (relativePath) => {
       const path = resolvePathWithinRoot(rootDir, relativePath)
@@ -195,10 +208,6 @@ async function writeReadme(rootDir: string, projectName: string, description: st
 
 export default defineCommand({
   args: {
-    commit: {
-      description: "Template commit to record in .template.json",
-      type: "string",
-    },
     description: {
       description: "One-sentence description of the project for the README",
       type: "string",
@@ -358,7 +367,7 @@ export default defineCommand({
     await pruneWorkspaces(rootDir, apps, selection.keepApps)
     await pruneWorkspaces(rootDir, packages, selection.keepPackages)
     await renameProject({ projectName, rootDir, scope: projectName, sourceScope })
-    await stampProject(rootDir, args.commit)
+    await stampProject(rootDir)
     await cleanupTemplateFiles(rootDir, cleanup.data)
     await writeReadme(rootDir, projectName, description.trim())
 
