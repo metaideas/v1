@@ -58,7 +58,7 @@ Do not read project configuration from `process.env` or `import.meta.env` in app
 
 ## Environment selection
 
-`VARLOCK_ENV` selects development, test, preview, or production. Local commands use safe `.env.development` values and `.env.local` overrides. CI and deployment commands must set their target explicitly. Before a remote build or mutation, run `varlock load` or the workspace's wrapped command. Node does not load dotenv files automatically. This prevents precedence-rule conflicts.
+`VARLOCK_ENV` selects development, test, preview, or production. Local commands use safe `.env.development` values and `.env.local` overrides. CI and deployment commands must set their target explicitly. Varlock may not pick development when `CI` is set, so set `VARLOCK_ENV=development` for local checks in a shell that sets `CI`, such as an agent's. Before a remote build or mutation, run `varlock load` or the workspace's wrapped command. Node does not load dotenv files automatically. This prevents precedence-rule conflicts.
 
 Required production credentials are absent from committed development files when no safe substitute exists. Every Varlock workspace owns an `env:check` script that runs `varlock load`. The root `pnpm run env:check` runs these scripts in parallel through Turbo. Turbo passes deployment variables without a cached validation result.
 
@@ -94,4 +94,4 @@ Do not synchronize Varlock-resolved values into Convex. Expo and other clients o
 
 ## Template commands
 
-The `connect-backend` skill adds only schema keys and development values for the selected connection. Removing a backend-specific key does not remove a similarly named application key. After you change workspace selection, run `pnpm run env:check`. It reports environment imports that point at deleted packages.
+The `connect-backend` skill adds only schema keys and development values for the selected connection. Removing a backend-specific key does not remove a similarly named application key. After you change workspace selection, run `VARLOCK_ENV=development pnpm run env:check`. It reports environment imports that point at deleted packages.

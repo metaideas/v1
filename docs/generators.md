@@ -25,7 +25,7 @@ Both scaffold template commands preserve existing files on a repeat run.
 
 ## Connect a backend
 
-Backend connections are not a generator. The `connect-backend` skill in `.agents/skills/connect-backend/` carries the supported connections, their environment keys, and reference sources. A coding agent applies it and verifies the result with `pnpm run check`, `pnpm run analyze`, and `pnpm run env:check`.
+Backend connections are not a generator. The `connect-backend` skill in `.agents/skills/connect-backend/` carries the supported connections, their environment keys, and reference sources. A coding agent applies it and verifies the result with `pnpm run check`, `pnpm run analyze`, and `VARLOCK_ENV=development pnpm run env:check`.
 
 ## Add Sentry
 
