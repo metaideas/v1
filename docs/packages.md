@@ -83,6 +83,15 @@ import { createDatabase } from "@v1/database/server"
 export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 ```
 
+`database.withTransaction(operation)` runs an operation in a transaction. A call inside another call on the same database reuses its transaction, so operations that each open one still commit or roll back together, and concurrent calls each get their own. Run each query through the `transaction` it passes, because `database` itself writes outside the transaction. A savepoint from `transaction.transaction()` doesn't change what a nested `withTransaction` reuses, so pass the savepoint to code that must roll back with it:
+
+```ts
+await c.var.database.withTransaction(async (transaction) => {
+  await transaction.insert(uploads).values(upload)
+  await recordActivity(c.var.database, upload)
+})
+```
+
 ## Payments
 
 `packages/payments` wraps Stripe with a subscription cache. `createPayments({ secretKey, webhookSecret, storage })` takes any [unstorage](https://unstorage.unjs.io/) instance for the cache, such as the Redis instance that `apps/api` creates in its composition root. `parseWebhook` verifies a webhook request and returns its event, or an `InvalidWebhookError` value. `syncSubscription` caches the latest subscription from Stripe, and `getSubscription` reads the cache and falls back to Stripe on a miss.
