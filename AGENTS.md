@@ -18,6 +18,7 @@ When working with `v1`, you should always keep the following in mind:
 8. Local development works with only the repository and its Docker Compose services. Cloud services and external accounts are opt-in.
 9. Keep the scaffold small. Ship optional code as a template recipe in `turbo/generators/` that a scaffolded project adds when it needs it. Add code to a workspace only when every scaffolded project that selects the workspace uses it.
 10. Content that only maintainers use is an internal cleanup path, and `pnpm template setup` removes it. List a whole file or folder in `v1.cleanupPaths` in the root `package.json`. For part of a file that ships, wrap it in `TEMPLATE:START` and `TEMPLATE:END` comments and list the file in `v1.cleanupSections`.
+11. `pnpm create @metaideas/v1` downloads the template at its last release, not at `main`. When a pull request changes what scaffolded projects get, add a changeset with `pnpm --filter @metaideas/create-v1 changeset`. Merging the release pull request publishes `tooling/create` and tags the release.
 
 ## Template vocabulary
 

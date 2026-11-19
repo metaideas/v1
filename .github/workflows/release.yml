@@ -1,0 +1,57 @@
+name: release
+
+on:
+  workflow_run:
+    workflows: ["tests"]
+    branches: [main]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write # Required for npm trusted publishing over OIDC
+
+# Only runs that will do work share the group, so a skipped stale workflow_run cannot cancel or
+# replace the run for the current commit.
+concurrency: ${{ github.workflow }}-${{ (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_sha == github.sha) && github.ref || github.run_id }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: >-
+      github.repository == 'metaideas/v1' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_sha == github.sha
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Setup Node.js and pnpm, and install dependencies
+        uses: pnpm/setup@v3.1.2
+        with:
+          cache: true
+          require-lockfile: true
+
+      # Keep npm authentication configuration scoped to the publish step.
+      - name: Setup npm registry
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: ".node-version"
+          registry-url: "https://registry.npmjs.org"
+
+      # The publish tags the release commit `@metaideas/create-v1@<version>`, which is the tag that
+      # version of the initializer downloads.
+      - name: Create the release pull request or publish to npm
+        uses: changesets/action@v2
+        with:
+          version-script: pnpm --filter @metaideas/create-v1 run version
+          publish-script: pnpm --filter @metaideas/create-v1 run release
+          pr-title: "chore: release"
+          commit-message: "chore: release"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
