@@ -2,6 +2,7 @@ import type { PlopTypes } from "@turbo/gen"
 
 import type * as z from "zod"
 
+import { existsSync } from "node:fs"
 import { glob } from "node:fs/promises"
 import { runCommand } from "../run-command"
 import { NewPackageAnswersSchema, readPackageJson, readPackageName } from "../schemas"
@@ -27,6 +28,13 @@ export function registerNewPackageGenerator(plop: PlopTypes.NodePlopAPI) {
       return [
         async () => {
           const rootPackageJson = await readPackageJson("package.json")
+          // A new package takes the logger contract from packages/core, which setup can remove.
+          if (!existsSync("packages/core/package.json")) {
+            throw new Error(
+              "A new package builds on packages/core. Restore it with the v1-workspace skill, then run new-package again."
+            )
+          }
+
           const toolingPackageName = await readPackageName("tooling/tsconfig/package.json")
           let packageScope: string | undefined
 
