@@ -338,12 +338,12 @@ await runMain(
       const hasEmptyKeepAppsOption = rawArgs.some(
         (argument, index) =>
           (argument === "--keep-apps" || argument === "--keepApps")
-          && rawArgs[index + 1]?.startsWith("-")
+          && rawArgs[index + 1]?.startsWith("-") !== false
       )
       const hasEmptyKeepPackagesOption = rawArgs.some(
         (argument, index) =>
           (argument === "--keep-packages" || argument === "--keepPackages")
-          && rawArgs[index + 1]?.startsWith("-")
+          && rawArgs[index + 1]?.startsWith("-") !== false
       )
 
       if (hasEmptyKeepAppsOption) {
