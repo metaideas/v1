@@ -15,7 +15,7 @@ Run `pnpm run generate` to open the Turbo generator menu. Generators use local t
 pnpm run generate new-feature
 ```
 
-`new-package` creates a workspace under `packages/`. It uses the current npm scope, shared TypeScript configuration, and TypeScript version of the project:
+`new-package` creates a workspace under `packages/` with the same manifest shape as the existing package workspaces: a `./server` subpath export, `#*` imports, an `env/` fragment, and a `create*` factory that accepts an optional `logger`. It uses the current npm scope, shared TypeScript configuration, and TypeScript version of the project:
 
 ```bash
 pnpm run generate new-package
