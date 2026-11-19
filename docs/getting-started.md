@@ -8,7 +8,7 @@ sidebar:
 ## Prerequisites
 
 - Install [pnpm](https://pnpm.io/installation), the package manager.
-- Install the [GitHub CLI](https://cli.github.com/) to create the project.
+- Install Git.
 - Install Node.js. See the tooling requirements below.
 - Install Docker to run the local services: Postgres, Redis, SeaweedFS, Mailpit, and the Inngest Dev Server. Use [OrbStack](https://orbstack.dev/) to manage containers.
 
@@ -20,25 +20,24 @@ sidebar:
 ## Create a Project
 
 ```bash
+pnpm create @metaideas/v1 my-app
+cd my-app
+```
+
+The command downloads the latest template release into `my-app`, starts a new Git repository, installs the dependencies, and runs `pnpm template setup`. Options after the directory go to `pnpm template setup`, such as `pnpm create @metaideas/v1 my-app --yes`.
+
+To create the GitHub repository at the same time, use the [GitHub CLI](https://cli.github.com/) instead, then install the dependencies and run setup yourself. This copies the template's `main` branch rather than its latest release.
+
+```bash
 gh repo create my-app --template metaideas/v1 --private --clone
 cd my-app
+pnpm install
+pnpm template setup
 ```
 
 ## Setup
 
-1. Install the dependencies with `pnpm`:
-
-```bash
-pnpm install
-```
-
-2. Configure the template:
-
-```bash
-pnpm template setup
-```
-
-The command does the following:
+`pnpm template setup` does the following:
 
 - It lets you select the workspaces to include.
 - It renames the project and updates all imports.

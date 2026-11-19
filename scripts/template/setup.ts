@@ -13,6 +13,7 @@ import {
   getWorkspaces,
   normalizeScope,
   readPackageJson,
+  readTemplateStamp,
   removePath,
   removeTemplateSections,
   resolvePathWithinRoot,
@@ -54,7 +55,12 @@ async function getTemplateCommit() {
   return GitHubCommitSchema.parse(await response.json()).sha
 }
 
+// `pnpm create @metaideas/v1` writes the stamp with the commit it downloaded, and a second run of
+// setup finds the stamp that the first run wrote. Only a project without a stamp, such as one
+// created with `gh repo create --template`, records the head of main.
 async function stampProject(rootDir: string) {
+  if (await readTemplateStamp(rootDir)) return
+
   const commit = await getTemplateCommit().catch((error: unknown): undefined => {
     consola.warn("Could not record the template commit.", error)
   })
@@ -128,6 +134,19 @@ async function cleanupTemplateFiles(
   const packageJson = await readPackageJson(packageJsonPath)
 
   await Promise.all(cleanupPaths.map((path) => removePath(rootDir, path)))
+
+  // A cleanup path can be a workspace, such as scripts/create, so its pnpm-workspace.yaml entry
+  // goes with it. The file keeps its comments because only matching list items are dropped.
+  const workspaceFilePath = join(rootDir, "pnpm-workspace.yaml")
+  const workspaceFile = await readFile(workspaceFilePath, "utf8")
+  await writeFile(
+    workspaceFilePath,
+    workspaceFile
+      .split("\n")
+      .filter((line) => !cleanupPaths.some((path) => line.trim() === `- ${path}`))
+      .join("\n")
+  )
+
   await Promise.all(
     cleanupSections.map(async (relativePath) => {
       const path = resolvePathWithinRoot(rootDir, relativePath)

@@ -11,7 +11,7 @@
   </p>
 
   <p align="center">
-    <code>gh repo create my-app --template metaideas/v1 --private --clone</code>
+    <code>pnpm create @metaideas/v1 my-app</code>
   </p>
 </div>
 
