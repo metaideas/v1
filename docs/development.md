@@ -58,6 +58,8 @@ Each HTTP-serving workspace runs its framework command directly as its `dev` scr
 
 To find a workspace's URL, read its port from the place the table names. When you add a workspace that serves HTTP, give it the next free port in its block. Framework configuration reads the port from the typed `ENV` binding rather than hard-coding it.
 
+`apps/app` requires a running `apps/api`. For local web development, start the Compose services, apply the database migrations, then run `pnpm run dev --filter app --filter api`. The app is available on port 3001 and forwards `/api/*` to the API on port 3000. To test OAuth callbacks through the app, set `AUTH_WEB_ORIGIN=http://localhost:3001` in the API's local environment.
+
 ## Managing Dependencies
 
 - `pnpm -w run bump:deps` - Choose dependency updates across all workspaces.

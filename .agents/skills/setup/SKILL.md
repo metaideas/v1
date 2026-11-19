@@ -7,7 +7,7 @@ Turn the template into the user's project. `pnpm template setup` does the mechan
 
 1. Ask what the product is and which surfaces it needs. Map the answer to workspaces:
    - `apps/app` for a full-stack web application, `apps/web` for a marketing site, `apps/docs` for documentation, `apps/mobile` for Expo, `apps/desktop` for Electron, `apps/extension` for a browser extension.
-   - `apps/api` for a separate Hono service, `packages/backend` for Convex. Neither is required; `apps/app` is full-stack on its own.
+   - `apps/api` for a Hono service and `packages/backend` for Convex. Selecting `apps/app` also keeps `apps/api` for tRPC and authentication.
    - `apps/worker` when the product runs fire-and-forget background jobs, such as sending email or processing uploads. It consumes the queues that `apps/api` dispatches to.
    - Package workspaces such as `auth`, `database`, `email`, `payments`, `jobs`, `workflows` only when the product needs them. Setup keeps any package a kept workspace depends on.
 2. Confirm the project name. It becomes the root package name and the npm scope of every package workspace.

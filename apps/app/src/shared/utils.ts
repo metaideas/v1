@@ -10,5 +10,5 @@ const baseUrl = hasWindow ? globalThis.location.origin : ENV.PUBLIC_BASE_URL
 
 export const buildUrl = createUrlBuilder(baseUrl, getProtocol(baseUrl))
 
-const apiUrl = ENV.PUBLIC_API_URL ?? `${baseUrl}/api`
+const apiUrl = `${baseUrl}/api`
 export const buildApiUrl = createUrlBuilder(apiUrl, getProtocol(apiUrl))

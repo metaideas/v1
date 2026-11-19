@@ -4,18 +4,7 @@
   "tags": ["application"],
   "tasks": {
     "build": {
-      "env": [
-        "AUTH_*",
-        "DATABASE_URL",
-        "EMAIL_FROM",
-        "GITHUB_*",
-        "GOOGLE_*",
-        "PORT",
-        "PUBLIC_*",
-        "RESEND_API_KEY",
-        "RUN_PRODUCTION_MIGRATIONS",
-        "SMTP_URL"
-      ],
+      "env": ["API_URL", "PORT", "PUBLIC_*"],
       "outputs": [".output/**"]
     }
   }

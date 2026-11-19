@@ -115,7 +115,7 @@ The template command sets a workflow `env` block. `TURBO_TOKEN` reads the `TURBO
 pnpm run generate realtime
 ```
 
-The client streams from the realtime route of `apps/api` and authenticates with an access token from the session, so connect the app to `apps/api` first with the `connect-backend` skill: `apps/app` with `PUBLIC_API_URL` set, and `apps/desktop`, `apps/extension`, and `apps/mobile` with auth. The template command stops with that step when the app is not connected. It adds the package as a workspace dependency and creates `src/shared/realtime.ts`, which exports `useRealtime`. In `apps/desktop`, the client streams through the main process's API proxy and gets its token over the bridge, so the renderer never holds the session. In `apps/mobile`, the client streams with `fetch` from `expo/fetch` and reconnects when the app returns to the foreground.
+The client streams from the realtime route of `apps/api` and authenticates with an access token from the session. `apps/app` uses its same-origin API proxy. Connect `apps/desktop`, `apps/extension`, and `apps/mobile` to the API with auth using the `connect-backend` skill before running the recipe. The recipe adds the package as a workspace dependency and creates `src/shared/realtime.ts`, which exports `useRealtime`. In `apps/desktop`, the client streams through the main process's API proxy and gets its token over the bridge, so the renderer never holds the session. In `apps/mobile`, the client streams with `fetch` from `expo/fetch` and reconnects when the app returns to the foreground.
 
 Subscribe once a session loads, and test the connection with `POST /v1/demo/realtime` on the API, which sends a `greeted` event to the signed-in user's `demo` channel:
 
