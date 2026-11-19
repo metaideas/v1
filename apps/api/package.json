@@ -28,7 +28,7 @@
     "@sanely/request": "0.1.0",
     "@sanely/try": "0.1.0",
     "@scalar/hono-api-reference": "0.12.10",
-    "@trpc/server": "11.19.0",
+    "@trpc/server": "11.28.2",
     "@v1/auth": "workspace:*",
     "@v1/database": "workspace:*",
     "@v1/email": "workspace:*",

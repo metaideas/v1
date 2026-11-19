@@ -1,24 +1,41 @@
-import { useQuery } from "@tanstack/react-query"
+import type { inferQueryHandle } from "@trpc/tanstack-react-query/unstable-handles"
+import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
+import { ensureEntry, fromHandle, loadHandles } from "@trpc/tanstack-react-query/unstable-handles"
+import { Suspense } from "react"
+import type { TRPC } from "#shared/trpc.tsx"
 import { useTRPC } from "#shared/trpc.tsx"
 
 export const Route = createFileRoute("/trpc-example")({
   component: TRPCExample,
+  loader: async ({ context: { trpc } }) => {
+    const [handles] = await loadHandles(trpc, {
+      email: ensureEntry(trpc.auth.checks.emailAvailable, { email: "example@example.com" }),
+    })
+
+    return handles
+  },
 })
 
-function TRPCExample() {
+function EmailAvailability({
+  email,
+}: {
+  email: inferQueryHandle<TRPC["auth"]["checks"]["emailAvailable"]>
+}) {
   const trpc = useTRPC()
-  const result = useQuery(
-    trpc.auth.checks.emailAvailable.queryOptions({ email: "example@example.com" })
-  )
+  const result = useSuspenseQuery(fromHandle(trpc, email))
+
+  return <p>Example email is {result.data.isAvailable ? "available" : "already used"}.</p>
+}
+
+function TRPCExample() {
+  const handles = Route.useLoaderData()
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <p>
-        {result.isPending
-          ? "Loading…"
-          : `Example email is ${result.data?.isAvailable ? "available" : "already used"}.`}
-      </p>
+      <Suspense fallback={<p>Loading…</p>}>
+        <EmailAvailability email={handles.email} />
+      </Suspense>
     </main>
   )
 }
