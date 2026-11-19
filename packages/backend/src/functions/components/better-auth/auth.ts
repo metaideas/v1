@@ -1,7 +1,7 @@
 import type { GenericQueryCtx } from "convex/server"
 import { createAuth } from "@v1/auth/server"
 import type { DataModel } from "#functions/_generated/dataModel.js"
-import { createAuthOptions } from "#functions/shared/auth.ts"
+import { getConvexAuthOptions } from "#functions/shared/auth.ts"
 
 function unavailable(): never {
   throw new Error("Better Auth schema generation does not run database operations.")
@@ -26,6 +26,4 @@ const schemaGenerationContext: GenericQueryCtx<DataModel> = {
   storage: { getMetadata: unavailable, getUrl: unavailable },
 }
 
-export const auth = createAuth({
-  ...createAuthOptions(schemaGenerationContext),
-})
+export const auth = createAuth(getConvexAuthOptions(schemaGenerationContext))

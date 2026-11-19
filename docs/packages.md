@@ -36,6 +36,8 @@ Packages do not import each other, apart from `@v1/core`, `@v1/utils`, and `@v1/
 
 `packages/backend` is a hosted backend built with Convex and Better Auth. Application workspaces consume its generated API types and React client as a package workspace. Convex deploys the functions independently.
 
+`@v1/auth` owns the auth policy: sessions, cookies, email and password, and logging. `createAuthOptions` from `@v1/auth/server` builds it, `createAuth` builds Better Auth on it for any database adapter, and `createServerAuth` does the same for the Drizzle tables in `@v1/database`. `apps/api` and `apps/app` call `createServerAuth`, and `packages/backend` calls `createAuth` with the Convex adapter, so a policy change reaches all three.
+
 `@v1/backend/client` and `@v1/backend/client/auth` re-export the Convex, Convex React Query, and Convex Better Auth client libraries on purpose, including exports that no application uses yet. Applications import them from the backend package and never depend on a Convex library directly, so every client runs the same Convex versions as the deployed functions. This is an exception to deleting vendor pass-throughs: keep the re-exports when an audit reports them as unused.
 
 Use the `v1-feature` skill in `.agents/skills/` to add the client, environment, provider, and optional example connections to `apps/app`, `apps/desktop`, or `apps/mobile`. It does not deploy Convex or create credentials.

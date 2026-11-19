@@ -1,5 +1,5 @@
 import type { Logger } from "@v1/core/services/logging"
-import type { BetterAuthPlugin, SocialProviders } from "better-auth"
+import type { BetterAuthOptions, BetterAuthPlugin, SocialProviders } from "better-auth"
 import { type DB, drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2"
 import { betterAuth } from "better-auth/minimal"
 import { jwt } from "better-auth/plugins/jwt"
@@ -11,20 +11,15 @@ import {
   AUTH_SESSION_OPTIONS,
 } from "#constants.ts"
 
-export {
-  type BetterAuthOptions as AuthOptions,
-  betterAuth as createAuth,
-} from "better-auth/minimal"
-
-type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = {
+type AuthOptions<Plugins extends BetterAuthPlugin[]> = {
   /**
    * Path where the application mounts the auth handler, such as `/api/auth`.
    */
-  basePath: string
+  basePath?: string
   /**
    * Public origin where the application serves auth.
    */
-  baseUrl: string
+  baseUrl?: string
   /**
    * Parent domain that shares the session cookie across subdomains, such as `example.com`.
    */
@@ -33,42 +28,47 @@ type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = {
    * Prefix for auth cookies. Applications that share a host use different prefixes.
    */
   cookiePrefix?: string
-  database: DB
+  /**
+   * The Better Auth adapter for the database that holds the user tables.
+   */
+  database: BetterAuthOptions["database"]
   logger?: Logger
   /**
    * Better Auth plugins. Pass `[]` for none, so the returned type keeps each plugin's endpoints and
    * session fields.
    */
   plugins: Plugins
-  secret: string
+  secret?: string
   /**
    * Delivers a password reset link. Without it, password reset is unavailable.
    */
   sendPasswordReset?: (input: { email: string; url: string }) => Promise<unknown>
   socialProviders?: SocialProviders
+  trustedOrigins?: string[]
+}
+
+type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = Omit<
+  AuthOptions<Plugins>,
+  "basePath" | "baseUrl" | "database" | "secret" | "trustedOrigins"
+> & {
+  basePath: string
+  baseUrl: string
+  database: DB
+  secret: string
   trustedOrigins: string[]
 }
 
 /**
- * Issues short-lived access tokens at `/token` and publishes their keys at `/jwks`. A client sends
- * one as a bearer token to a service on another origin, and the service checks it with
- * `auth.api.verifyJWT`. It stores signing keys in the `jwks` table.
+ * Builds Better Auth options that hold the template's session, cookie, email-and-password, and
+ * logging policy. Every auth instance starts here, so a policy change reaches each server, whether
+ * it owns its user tables or keeps them in Convex.
  */
-export function createAccessTokenPlugin() {
-  return jwt({ jwt: AUTH_ACCESS_TOKEN_OPTIONS, schema: { jwks: { modelName: "jwk" } } })
-}
-
-/**
- * Better Auth for a server that owns its user tables. The template's session, cookie, and
- * email-and-password policy lives here, so each application passes only where it serves auth, its
- * secrets, and its integrations.
- */
-export function createServerAuth<const Plugins extends BetterAuthPlugin[] = []>(
-  options: ServerAuthOptions<Plugins>
+export function createAuthOptions<const Plugins extends BetterAuthPlugin[]>(
+  options: AuthOptions<Plugins>
 ) {
   const { logger, sendPasswordReset } = options
 
-  return betterAuth({
+  return {
     advanced: {
       ...AUTH_ADVANCED_OPTIONS,
       cookiePrefix: options.cookiePrefix ?? AUTH_ADVANCED_OPTIONS.cookiePrefix,
@@ -80,11 +80,7 @@ export function createServerAuth<const Plugins extends BetterAuthPlugin[] = []>(
     appName: AUTH_APP_NAME,
     basePath: options.basePath,
     baseURL: options.baseUrl,
-    database: drizzleAdapter(options.database, {
-      // By default, we use PostgreSQL. Change this to another provider if needed.
-      provider: "pg",
-      usePlural: true,
-    }),
+    database: options.database,
     emailAndPassword: {
       ...AUTH_EMAIL_AND_PASSWORD_OPTIONS,
       sendResetPassword: sendPasswordReset
@@ -105,6 +101,41 @@ export function createServerAuth<const Plugins extends BetterAuthPlugin[] = []>(
     session: AUTH_SESSION_OPTIONS,
     socialProviders: options.socialProviders,
     trustedOrigins: options.trustedOrigins,
+  } satisfies BetterAuthOptions
+}
+
+/**
+ * Better Auth with the template's policy, for any database adapter.
+ */
+export function createAuth<const Plugins extends BetterAuthPlugin[] = []>(
+  options: AuthOptions<Plugins>
+) {
+  return betterAuth(createAuthOptions(options))
+}
+
+/**
+ * Issues short-lived access tokens at `/token` and publishes their keys at `/jwks`. A client sends
+ * one as a bearer token to a service on another origin, and the service checks it with
+ * `auth.api.verifyJWT`. It stores signing keys in the `jwks` table.
+ */
+export function createAccessTokenPlugin() {
+  return jwt({ jwt: AUTH_ACCESS_TOKEN_OPTIONS, schema: { jwks: { modelName: "jwk" } } })
+}
+
+/**
+ * Better Auth for a server that owns its user tables in `@v1/database`. Each application passes
+ * only where it serves auth, its secrets, and its integrations.
+ */
+export function createServerAuth<const Plugins extends BetterAuthPlugin[] = []>(
+  options: ServerAuthOptions<Plugins>
+) {
+  return createAuth({
+    ...options,
+    database: drizzleAdapter(options.database, {
+      // By default, we use PostgreSQL. Change this to another provider if needed.
+      provider: "pg",
+      usePlural: true,
+    }),
   })
 }
 
