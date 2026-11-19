@@ -3,15 +3,6 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 
-const ROOT = join(import.meta.dirname, "../../../..")
-
-/**
- * Reads a file from the template, so a test runs a recipe against the code that the recipe edits.
- */
-export function readTemplateFile(path: string) {
-  return readFile(join(ROOT, path), "utf8")
-}
-
 /**
  * Runs a template recipe's function actions in a temporary project that holds `files`. Returns what
  * each action reported, and each of `files` after the run. Plop renders the template actions
