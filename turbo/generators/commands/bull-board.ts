@@ -99,8 +99,8 @@ const EDITS: readonly Edit[] = [
     path: "src/routes/index.ts",
     replacements: [
       [
-        'app.on(["POST", "GET"], "/auth/**", (c) => c.var.services.auth.handler(c.req.raw))\n',
-        'app.on(["POST", "GET"], "/auth/**", (c) => c.var.services.auth.handler(c.req.raw))\n\nif (jobsDashboard) {\n  app.route(jobsDashboard.path, jobsDashboard.routes)\n}\n',
+        'app.on(["POST", "GET"], "/auth/**", (c) => c.var.auth.handler(c.req.raw))\n',
+        'app.on(["POST", "GET"], "/auth/**", (c) => c.var.auth.handler(c.req.raw))\n\nif (jobsDashboard) {\n  app.route(jobsDashboard.path, jobsDashboard.routes)\n}\n',
       ],
     ],
   },

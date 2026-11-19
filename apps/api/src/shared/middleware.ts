@@ -20,7 +20,7 @@ export const withLanguageDetection = languageDetector({
 })
 
 export const requireSession = createMiddleware<AuthenticatedAppContext>(async (c, next) => {
-  const session = await c.var.services.auth.api.getSession({
+  const session = await c.var.auth.api.getSession({
     headers: c.req.raw.headers,
   })
 
@@ -40,7 +40,7 @@ export const requireSession = createMiddleware<AuthenticatedAppContext>(async (c
  */
 export const requireAccessToken = createMiddleware<AccessTokenAppContext>(async (c, next) => {
   const token = /^Bearer (?<token>\S+)$/iu.exec(c.req.header("authorization") ?? "")?.groups?.token
-  const result = token ? await c.var.services.auth.api.verifyJWT({ body: { token } }) : undefined
+  const result = token ? await c.var.auth.api.verifyJWT({ body: { token } }) : undefined
 
   if (!result?.payload) {
     throw new HTTPException(401, { message: "Unauthorized" })

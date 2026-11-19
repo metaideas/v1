@@ -37,8 +37,16 @@ app.use(
   })
 )
 
+// Each service reaches handlers under its own name, such as `c.var.database`. The loop reads the
+// names from `services`, so a service added there needs no other edit.
+function checkIsServiceName(name: string): name is keyof typeof services {
+  return Object.hasOwn(services, name)
+}
+
 app.use(async (c, next) => {
-  c.set("services", services)
+  for (const name of Object.keys(services)) {
+    if (checkIsServiceName(name)) c.set(name, services[name])
+  }
   await next()
 })
 
@@ -63,7 +71,7 @@ app.onError((error, c) => {
   )
 })
 
-app.on(["POST", "GET"], "/auth/**", (c) => c.var.services.auth.handler(c.req.raw))
+app.on(["POST", "GET"], "/auth/**", (c) => c.var.auth.handler(c.req.raw))
 
 export const router = app
   .get(

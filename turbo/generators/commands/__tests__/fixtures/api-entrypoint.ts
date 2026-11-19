@@ -13,7 +13,7 @@ export const API_ROUTES = `import { factory } from "#shared/utils.ts"
 
 const app = factory.createApp()
 
-app.on(["POST", "GET"], "/auth/**", (c) => c.var.services.auth.handler(c.req.raw))
+app.on(["POST", "GET"], "/auth/**", (c) => c.var.auth.handler(c.req.raw))
 
 export default app
 `

@@ -9,7 +9,7 @@ export default factory
   .post("/", requireSession, async (c) => {
     const event = events.demo.welcome.requested.create({ userId: c.var.session.user.id })
     // The Inngest client throws when it cannot send the event.
-    const result = await try$.run(() => c.var.services.workflows.send(event))
+    const result = await try$.run(() => c.var.workflows.send(event))
 
     if (result instanceof Error) {
       throw new HTTPException(503, {
@@ -21,7 +21,7 @@ export default factory
     return c.json({ id: result.ids[0] }, 202)
   })
   .post("/jobs", requireSession, async (c) => {
-    const result = await c.var.services.dispatcher.dispatch("default", "greet-user", {
+    const result = await c.var.dispatcher.dispatch("default", "greet-user", {
       userId: c.var.session.user.id,
     })
 
@@ -32,7 +32,7 @@ export default factory
     return c.json({ id: result.id }, 202)
   })
   .post("/realtime", requireSession, async (c) => {
-    const result = await c.var.services.realtime
+    const result = await c.var.realtime
       .channel("demo", { userId: c.var.session.user.id })
       .emit("greeted", { message: `Hello, ${c.var.session.user.name}` })
 

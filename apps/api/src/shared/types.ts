@@ -6,9 +6,8 @@ import type { Services, Session } from "#shared/services.ts"
 export type AppContext = DeepMerge<
   EvlogVariables,
   {
-    Variables: {
+    Variables: Services & {
       language: Locale
-      services: Services
     }
   }
 >
