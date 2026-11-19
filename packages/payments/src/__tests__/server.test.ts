@@ -1,7 +1,7 @@
 import { createStorage } from "unstorage"
 import { describe, expect, test } from "vitest"
-import { createPayments } from "#client.ts"
 import { InvalidWebhookError } from "#errors.ts"
+import { createPayments } from "#server.ts"
 
 const webhookSecret = "whsec_test_secret"
 

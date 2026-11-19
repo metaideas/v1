@@ -7,7 +7,7 @@ import { AUTH_COOKIE_PREFIX } from "#constants.ts"
  * operating system's keychain, stores it in the app's user data, and sends it with every request
  * from the main process, so the renderer never sees it.
  */
-export function electronClient(
+export function createElectronClient(
   opts: Omit<Parameters<typeof baseElectronClient>[0], "storage"> & { cookiePrefix: string }
 ) {
   return baseElectronClient({

@@ -1,9 +1,9 @@
 import { AUTH_APP_NAME } from "@v1/auth/constants"
 import { createServerAuth } from "@v1/auth/server"
 import { tanstackStartCookies } from "@v1/auth/start"
-import { createDatabase } from "@v1/database/client"
+import { createDatabase } from "@v1/database/server"
 import { createMailer } from "@v1/email/mailer"
-import { selectTransport } from "@v1/email/transports"
+import { createTransport } from "@v1/email/transports"
 import { ENV } from "#shared/env.generated.ts"
 import { log } from "#shared/logger.ts"
 
@@ -12,7 +12,7 @@ export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 export const mailer = createMailer({
   from: ENV.EMAIL_FROM,
   logger: log,
-  transport: selectTransport({ resendApiKey: ENV.RESEND_API_KEY, smtpUrl: ENV.SMTP_URL }),
+  transport: createTransport({ resendApiKey: ENV.RESEND_API_KEY, smtpUrl: ENV.SMTP_URL }),
 })
 
 export const auth = createServerAuth({

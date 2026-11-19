@@ -8,10 +8,10 @@
     "#*": "./src/*"
   },
   "exports": {
-    "./client": "./src/client.ts",
     "./helpers/sql": "./src/helpers/sql.ts",
     "./schema": "./src/schema/index.ts",
-    "./schemas": "./src/schemas.ts"
+    "./schemas": "./src/schemas.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",

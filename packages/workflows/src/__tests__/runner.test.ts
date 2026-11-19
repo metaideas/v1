@@ -1,6 +1,6 @@
 import { setTimeout as sleep } from "node:timers/promises"
 import { beforeEach, describe, expect, test, vi } from "vitest"
-import { createWorkflows } from "#client.ts"
+import { createWorkflows } from "#server.ts"
 
 const connection = { close: vi.fn(() => Promise.resolve()) }
 const connect = vi.fn(() => Promise.resolve(connection))

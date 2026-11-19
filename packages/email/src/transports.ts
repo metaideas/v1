@@ -1,6 +1,6 @@
 import type { ErrorResponse } from "resend"
 import * as try$ from "@sanely/try"
-import { createTransport } from "nodemailer"
+import { createTransport as createSmtpClient } from "nodemailer"
 import { Resend } from "resend"
 import { EmailDeliveryError, EmailFault } from "#errors.ts"
 
@@ -48,7 +48,7 @@ function isPermanentSmtpFailure(error: unknown) {
   return typeof error.responseCode === "number" && error.responseCode >= 500
 }
 
-export function resendTransport(apiKey: string): EmailTransport {
+export function createResendTransport(apiKey: string): EmailTransport {
   const resend = new Resend(apiKey)
 
   return {
@@ -75,8 +75,8 @@ export function resendTransport(apiKey: string): EmailTransport {
 /**
  * Sends through any SMTP server. Local development points it at Mailpit from Docker Compose.
  */
-export function smtpTransport(url: string): EmailTransport {
-  const smtp = createTransport(url)
+export function createSmtpTransport(url: string): EmailTransport {
+  const smtp = createSmtpClient(url)
 
   return {
     async send(message) {
@@ -101,13 +101,13 @@ export function smtpTransport(url: string): EmailTransport {
 /**
  * Sends through Resend when an API key is configured and through SMTP otherwise.
  */
-export function selectTransport({ resendApiKey, smtpUrl }: TransportConfig) {
+export function createTransport({ resendApiKey, smtpUrl }: TransportConfig) {
   if (resendApiKey) {
-    return resendTransport(resendApiKey)
+    return createResendTransport(resendApiKey)
   }
 
   if (smtpUrl) {
-    return smtpTransport(smtpUrl)
+    return createSmtpTransport(smtpUrl)
   }
 
   throw EmailFault.create("EmailConfigurationError").withMessage(

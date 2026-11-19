@@ -2,13 +2,13 @@ import { buildLimiter } from "@sanely/ratelimit"
 import { redisStore } from "@sanely/ratelimit/stores/redis"
 import { AUTH_API_COOKIE_PREFIX, AUTH_APP_NAME } from "@v1/auth/constants"
 import { createAccessTokenPlugin, createServerAuth } from "@v1/auth/server"
-import { createDatabase } from "@v1/database/client"
+import { createDatabase } from "@v1/database/server"
 import { createMailer } from "@v1/email/mailer"
-import { selectTransport } from "@v1/email/transports"
+import { createTransport } from "@v1/email/transports"
 import { createDispatcher } from "@v1/jobs/dispatcher"
 import { createRealtime } from "@v1/realtime/server"
 import { createUploadStorage, createS3Adapter } from "@v1/storage/server"
-import { createWorkflows } from "@v1/workflows/client"
+import { createWorkflows } from "@v1/workflows/server"
 import { createClient } from "redis"
 import { createStorage } from "unstorage"
 import redisDriver from "unstorage/drivers/redis"
@@ -42,7 +42,7 @@ export const realtime = createRealtime({ logger: log, url: ENV.REALTIME_REDIS_UR
 export const mailer = createMailer({
   from: ENV.EMAIL_FROM,
   logger: log,
-  transport: selectTransport({ resendApiKey: ENV.RESEND_API_KEY, smtpUrl: ENV.SMTP_URL }),
+  transport: createTransport({ resendApiKey: ENV.RESEND_API_KEY, smtpUrl: ENV.SMTP_URL }),
 })
 
 export const auth = createServerAuth({

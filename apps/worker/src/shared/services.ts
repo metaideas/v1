@@ -1,4 +1,4 @@
-import { createWorkflows } from "@v1/workflows/client"
+import { createWorkflows } from "@v1/workflows/server"
 import { ENV } from "#shared/env.generated.ts"
 import { log } from "#shared/logger.ts"
 

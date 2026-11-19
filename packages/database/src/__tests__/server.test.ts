@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm"
 import { describe, expect, test, vi } from "vitest"
-import { createDatabase } from "#client.ts"
+import { createDatabase } from "#server.ts"
 
 describe("createDatabase", () => {
   test("logs the parameterized query without its bound values", async () => {

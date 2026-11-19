@@ -48,18 +48,18 @@ Run `pnpm --filter @v1/backend run dev` to connect the package to a Convex deplo
 
 ```ts
 import { createMailer } from "@v1/email/mailer"
-import { selectTransport } from "@v1/email/transports"
+import { createTransport } from "@v1/email/transports"
 
 export const mailer = createMailer({
   from: ENV.EMAIL_FROM,
   logger: log,
-  transport: selectTransport({ resendApiKey: ENV.RESEND_API_KEY, smtpUrl: ENV.SMTP_URL }),
+  transport: createTransport({ resendApiKey: ENV.RESEND_API_KEY, smtpUrl: ENV.SMTP_URL }),
 })
 
 await mailer.send("password-reset", { appName, resetUrl }, { to: [user.email] })
 ```
 
-Each template registers its subject in `src/registry.ts`, so `send` type-checks the template name and its props. `selectTransport` uses Resend when `RESEND_API_KEY` is set and SMTP otherwise. Locally, `SMTP_URL` points at Mailpit from Docker Compose, which keeps every message and shows it at http://localhost:8005.
+Each template registers its subject in `src/registry.ts`, so `send` type-checks the template name and its props. `createTransport` uses Resend when `RESEND_API_KEY` is set and SMTP otherwise. Locally, `SMTP_URL` points at Mailpit from Docker Compose, which keeps every message and shows it at http://localhost:8005.
 
 `send` retries temporary failures, such as a dropped connection or a rate limit, with exponential backoff under one deadline. It reuses one idempotency key across the retries of a send, so Resend never delivers the same message twice. A failure that a retry cannot fix, such as an invalid sender, fails on the first attempt. `send` returns a failed delivery as a `SendEmailError` value instead of throwing, with the transport error as its `cause`. Pass `attempts` and `timeoutMs` to `createMailer` to change the policy.
 
@@ -68,7 +68,7 @@ Each template registers its subject in `src/registry.ts`, so `send` type-checks 
 `packages/database` owns the Drizzle schema, migrations, and helpers. An application workspace creates one client in its composition root and passes its logger to log queries at debug level:
 
 ```ts
-import { createDatabase } from "@v1/database/client"
+import { createDatabase } from "@v1/database/server"
 
 export const database = createDatabase({ logger: log, url: ENV.DATABASE_URL })
 ```
@@ -308,7 +308,7 @@ export const events = { billing, demo }
 Each application workspace that sends events or runs functions creates one client in its composition root. Its `id` names the application in Inngest:
 
 ```ts
-import { createWorkflows } from "@v1/workflows/client"
+import { createWorkflows } from "@v1/workflows/server"
 
 export const workflows = createWorkflows({
   baseUrl: ENV.INNGEST_BASE_URL,

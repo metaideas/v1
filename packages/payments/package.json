@@ -8,8 +8,8 @@
     "#*": "./src/*"
   },
   "exports": {
-    "./client": "./src/client.ts",
-    "./errors": "./src/errors.ts"
+    "./errors": "./src/errors.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",

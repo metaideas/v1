@@ -1,11 +1,11 @@
 import { convexClient } from "{{backendPackage}}/client/auth"
 import { createAuthClient } from "{{authPackage}}/client"
-import { expoClient } from "{{authPackage}}/expo"
+import { createExpoClient } from "{{authPackage}}/expo"
 import * as SecureStore from "expo-secure-store"
 import { ENV } from "#shared/env.generated.ts"
 
 export const auth = createAuthClient(ENV.EXPO_PUBLIC_CONVEX_SITE_URL, [
-  expoClient({ storage: SecureStore }),
+  createExpoClient({ storage: SecureStore }),
   convexClient(),
 ])
 

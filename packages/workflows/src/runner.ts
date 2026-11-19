@@ -2,7 +2,7 @@ import type { Logger } from "@v1/core/services/logging"
 import type { InngestFunction } from "inngest"
 import * as try$ from "@sanely/try"
 import { connect as connectToInngest, type WorkerConnection } from "inngest/connect"
-import type { Workflows } from "#client.ts"
+import type { Workflows } from "#server.ts"
 
 export function createWorkflowsRunner({
   client,
