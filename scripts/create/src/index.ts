@@ -49,11 +49,16 @@ function create(directory: string, setupArgs: readonly string[]) {
   if (!checkHasPnpm())
     throw new Error("The template uses pnpm. Install it from https://pnpm.io/installation.")
 
+  const isExistingDirectory = existsSync(target)
   console.info(`Downloading ${TEMPLATE} at ${TAG}...`)
   try {
     download(target)
   } catch (error) {
-    rmSync(target, { force: true, recursive: true })
+    // Empty an existing directory instead of deleting it, because it can be the current directory.
+    const paths = isExistingDirectory
+      ? readdirSync(target).map((entry) => join(target, entry))
+      : [target]
+    for (const path of paths) rmSync(path, { force: true, recursive: true })
     throw new Error(`Could not download ${TEMPLATE} at ${TAG}.`, { cause: error })
   }
 
