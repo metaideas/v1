@@ -7,20 +7,22 @@ Wire a client into the app by hand from the reference files in `references/`. Co
 
 Supported connections. Anything else is unsupported; say so instead of improvising.
 
-| App         | Backend | Auth                                    |
-| ----------- | ------- | --------------------------------------- |
-| `app`       | hono    | optional, uses the existing auth client |
-| `app`       | trpc    | optional, uses the existing auth client |
-| `app`       | convex  | not supported                           |
-| `desktop`   | hono    | optional                                |
-| `desktop`   | trpc    | optional                                |
-| `desktop`   | convex  | not supported                           |
-| `extension` | hono    | optional, Chromium browsers only        |
-| `extension` | trpc    | optional, Chromium browsers only        |
-| `mobile`    | hono    | optional                                |
-| `mobile`    | convex  | required                                |
+| App         | Backend | Auth                                     |
+| ----------- | ------- | ---------------------------------------- |
+| `app`       | hono    | optional, uses the existing auth client  |
+| `app`       | trpc    | built in, uses the same-origin API proxy |
+| `app`       | convex  | not supported                            |
+| `desktop`   | hono    | optional                                 |
+| `desktop`   | trpc    | optional                                 |
+| `desktop`   | convex  | not supported                            |
+| `extension` | hono    | optional, Chromium browsers only         |
+| `extension` | trpc    | optional, Chromium browsers only         |
+| `mobile`    | hono    | optional                                 |
+| `mobile`    | convex  | required                                 |
 
-Each app reaches the API in its own way, because each runs on an origin that cannot share the API's session cookie the way a web page can:
+`apps/app` already has a tRPC client and a same-origin API proxy. For tRPC, go directly to step 6 if you need an example. For an additional Hono client, add the Hono reference in step 4. See [deployment configuration](../../../docs/environment.md#deployment-secrets) for the app and API origins.
+
+The other application workspaces reach the API through their platform transport:
 
 - `desktop` sends every API request through the main process, which keeps the session cookie encrypted with the operating system's keychain and streams each response back over IPC. The renderer never holds the session. Sign-in is email and password; social sign-in is not supported.
 - `extension` calls the API with the session cookie, which Chrome sends to hosts the extension lists in `host_permissions`. A fixed manifest `key` gives the extension a stable `chrome-extension://` origin for the API to trust. Firefox gives each install a random origin, so sign-in does not work there.
@@ -30,7 +32,7 @@ Each app reaches the API in its own way, because each runs on an origin that can
 
 1. Confirm the backend workspace exists: `apps/api` for hono and trpc, `packages/backend` for convex. Restore a missing one with `pnpm template add`.
 2. Add workspace dependencies to the app's `package.json` as `workspace:*`: the api package and the utils package for hono and trpc; the backend package for convex, plus the auth package on mobile; the auth package for desktop, extension, and mobile with auth.
-3. Add environment keys to the app's `.env.schema` and a value to `.env.development`, creating that file when the app has none. `apps/app` already declares an optional `PUBLIC_API_URL`; set it in `.env.development` to select the remote API.
+3. Add environment keys to the app's `.env.schema` and a value to `.env.development`, creating that file when the app has none.
 
    | App                    | Key                           | Schema comment                                                  | Development value              |
    | ---------------------- | ----------------------------- | --------------------------------------------------------------- | ------------------------------ |
@@ -45,7 +47,7 @@ Each app reaches the API in its own way, because each runs on an origin that can
 
 4. Copy the client files for the connection into `src/`:
    - **hono**: `references/hono/api.ts.hbs` to `shared/api.ts`. Mobile with auth takes `references/hono/mobile/api.ts.hbs` instead, which sends the session headers. Desktop and extension take `references/hono/<app>/api.ts.hbs` instead. Desktop, extension, and mobile also take `references/hono/<app>/utils.ts.hbs` to `shared/utils.ts`.
-   - **trpc**: `references/trpc/<app>/trpc.tsx.hbs` to `shared/trpc.tsx`. Desktop and extension also take `references/hono/<app>/utils.ts.hbs` to `shared/utils.ts`. Read the API's `@trpc/server` version and install matching clients inside the app: `pnpm add @trpc/client@<version> @trpc/tanstack-react-query@<version> superjson`. Handles require tRPC 11.25.1 or later. Keep every installed tRPC package on the same version, and satisfy its TanStack Query peer dependency. An app without `@tanstack/react-query`, such as extension, adds it at the version the other workspaces pin: `pnpm add @tanstack/react-query@<version>`. The desktop and extension clients batch calls into one response. A call streams each result as it resolves when it passes `trpc: { context: { stream: true } }`.
+   - **trpc** for desktop and extension: `references/trpc/<app>/trpc.tsx.hbs` to `shared/trpc.tsx`. Desktop and extension also take `references/hono/<app>/utils.ts.hbs` to `shared/utils.ts`. Read the API's `@trpc/server` version and install matching clients inside the app: `pnpm add @trpc/client@<version> @trpc/tanstack-react-query@<version> superjson`. Handles require tRPC 11.25.1 or later. Keep every installed tRPC package on the same version, and satisfy its TanStack Query peer dependency. An app without `@tanstack/react-query`, such as extension, adds it at the version the other workspaces pin: `pnpm add @tanstack/react-query@<version>`. The desktop and extension clients batch calls into one response. A call streams each result as it resolves when it passes `trpc: { context: { stream: true } }`.
    - **desktop API proxy** (hono or trpc): `references/shared/desktop/api-proxy.ts.hbs` to `shared/api-proxy.ts` and `shell-api-proxy.ts.hbs` to `shared/shell/api-proxy.ts`. Then edit the existing files:
      - `shared/bridge.ts`: export `const STREAM_CHANNEL_PREFIX = "stream:"` above the `Bridge` type, and add `listen: (channel: string, listener: (message: unknown) => void) => () => void` to the `Bridge` type.
      - `shell/preload.ts`: import `STREAM_CHANNEL_PREFIX` from `#shared/bridge.ts` and add `listen` to the bridge, before `send`:
@@ -101,7 +103,6 @@ Each app reaches the API in its own way, because each runs on an origin that can
 5. Wrap the provider tree in `src/shared/components/providers.tsx`. Edit the JSX, matching the file as it is now:
    - **trpc** in `desktop`: import `TRPCProvider` from `#shared/trpc.tsx` and place it inside `QueryClientProvider`, wrapping its children. In `shared/query-client.ts`, set `defaultOptions.queries.staleTime` to `60_000`, so mounting a handle reader reuses the loader's data. In `renderer/main.tsx`, import `createTRPCOptionsProxy` from `@trpc/tanstack-react-query` and `trpcClient` and `type TRPC` from `#shared/trpc.tsx`. Create `const trpc = createTRPCOptionsProxy({ client: trpcClient, queryClient })` before the router. Add `trpc: TRPC` to `RouterContext` and `trpc` to the router's `context`. Keep the existing `defaultPreloadStaleTime: 0`, so Query owns cache freshness.
    - **trpc** in `extension`: the extension has no provider tree, and `TRPCProvider` from `#shared/trpc.tsx` brings its own query client. Wrap the popup's `Router` in `entrypoints/popup/main.tsx` with it.
-   - **trpc** in `app`: connect in `src/router.tsx`, where each request creates its query client. Import `createTRPCOptionsProxy` from `@trpc/tanstack-react-query` and `makeTRPCClient`, `TRPCProvider`, and `type TRPC` from `#shared/trpc.tsx`. After the `QueryClient` is created, add `const trpcClient = makeTRPCClient()` and `const trpc = createTRPCOptionsProxy({ client: trpcClient, queryClient })`. Add `trpc: TRPC` to `RouterContext` and `trpc` to the router's `context`. Set `defaultOptions.queries.staleTime` to `60_000` on the query client and `defaultPreloadStaleTime: 0` on the router, so Query owns cache freshness. Add `Wrap: ({ children }) => <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>{children}</TRPCProvider>` to the router. Keep `setupRouterSsrQueryIntegration` and its SuperJSON serialization. With convex too, nest both providers in the one `Wrap`.
    - **convex** in `mobile` and `desktop`: import `ConvexProvider` from `#shared/components/convex-provider.tsx` and wrap the query client provider with it (`PersistQueryClientProvider` on mobile, `QueryClientProvider` on desktop).
    - **convex** in `app`: the query client is created per request in `src/router.tsx`, so connect there instead of in `providers.tsx`. After the `QueryClient` is created, call `createConvexClient(queryClient)` from `#shared/convex.ts` and add `Wrap: ({ children }) => <ConvexProvider client={convex}>{children}</ConvexProvider>` to the `createRouter` options.
    - **hono** needs no provider.
@@ -116,6 +117,4 @@ Each app reaches the API in its own way, because each runs on an origin that can
 
 7. Run `pnpm install` and `pnpm run codegen`, then `pnpm run check`, `pnpm run analyze`, and `VARLOCK_ENV=development pnpm run env:check`. Fix what they report. Finish when they pass.
 
-Convex in `app` and `desktop` reaches public functions only. `apps/app` keeps its own Better Auth sessions; moving them to Convex means migrating the `/api/auth` handler, server-side token handoff, and the sign-up, reset, and social flows together, which is outside this skill.
-
-For `apps/app`, keeping `PUBLIC_API_URL` set selects the remote Hono deployment and clearing it restores the local `/api` handler. When both run, keep the Better Auth cookie, secret, plugins, and trusted origins compatible. When the app and the API use different hostnames, set `AUTH_COOKIE_DOMAIN` in `apps/api` to their shared parent domain, such as `example.com`. Without it, the API's session cookie is host-only, so either the app's server or the browser's direct API calls miss the session.
+Convex connections in `app` and `desktop` reach public functions only. `apps/api` owns Better Auth sessions for `apps/app`.

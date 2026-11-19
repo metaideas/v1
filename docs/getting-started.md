@@ -52,13 +52,13 @@ pnpm template setup
 
 ### Choosing a Backend
 
-- Keep the TanStack Start server routes and functions in `apps/app` for a full-stack web application without a separate backend deployment.
+- Keep `apps/app` for a TanStack Start web application. Setup also keeps `apps/api`, which provides tRPC and authentication for the app.
 - Keep `packages/backend` when clients such as `apps/mobile` need Convex real-time data, managed functions, and a hosted database.
 - Keep `apps/api` for a self-managed Hono service, OpenAPI routes, or infrastructure control.
 
-These are alternatives, not layers that every project must run. Application workspaces connect to a backend explicitly. No client connects to `packages/backend` by default.
+Other application workspaces connect to a backend explicitly. No client connects to `packages/backend` by default.
 
-After you select a backend alternative, connect an application workspace with the `connect-backend` skill in `.agents/skills/`. It configures local connections. It does not deploy a backend or create external credentials.
+Use the `connect-backend` skill in `.agents/skills/` to add a backend connection to another application workspace.
 
 3. Generate source files and types. Run the command again after you change an environment contract or a message catalog:
 

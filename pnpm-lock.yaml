@@ -348,24 +348,27 @@ importers:
       '@tanstack/react-start':
         specifier: 1.169.1
         version: 1.169.1(esbuild@0.28.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rolldown@1.2.12)(supports-color@8.1.1)(vite@8.3.2(@types/node@26.6.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(yaml@2.9.1))
+      '@trpc/client':
+        specifier: 11.28.2
+        version: 11.28.2(@trpc/server@11.28.2(@types/aws-lambda@8.10.164)(@types/ws@8.18.1)(typescript@7.0.2))(typescript@7.0.2)
+      '@trpc/tanstack-react-query':
+        specifier: 11.28.2
+        version: 11.28.2(@tanstack/react-query@5.107.1(@types/react@19.2.4)(react@19.2.3))(@trpc/client@11.28.2(@trpc/server@11.28.2(@types/aws-lambda@8.10.164)(@types/ws@8.18.1)(typescript@7.0.2))(typescript@7.0.2))(@trpc/server@11.28.2(@types/aws-lambda@8.10.164)(@types/ws@8.18.1)(typescript@7.0.2))(react@19.2.3)(typescript@7.0.2)
       '@v1/auth':
         specifier: workspace:*
         version: link:../../packages/auth
       '@v1/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@v1/database':
-        specifier: workspace:*
-        version: link:../../packages/database
-      '@v1/email':
-        specifier: workspace:*
-        version: link:../../packages/email
       '@v1/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@v1/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      api:
+        specifier: workspace:*
+        version: link:../api
       cn:
         specifier: 0.4.0
         version: 0.4.0
@@ -7101,6 +7104,12 @@ packages:
     resolution: {integrity: sha512-xQcPxVrKr3yT9+ZEM3skYXikJc/ocZlGDIcsBQ3mMwL3Weq1QL7jx/uGLXvrSO2Yh0DWUjWI6Q/oiRCEUM6P8w==}
     engines: {node: '>=14'}
 
+  '@trpc/client@11.28.2':
+    resolution: {integrity: sha512-fmMAXYybpjy8L812i9fI3JbMDZE8OtE4Y9i5ch5pQLvJwT08Ioo35wdH0Z3CoweWlfnyQp1eCv0V7s2xjjPo2g==}
+    peerDependencies:
+      '@trpc/server': 11.28.2
+      typescript: '>=5.7.2'
+
   '@trpc/server@11.28.2':
     resolution: {integrity: sha512-7A55XS4c3xtxHFZQdLREckOYNuEY5sQXuEoZBniIZ5pNFcC5cLqm0rGg/a+2nqPfJOaTnznHf1g6MqKmw3O2zA==}
     peerDependencies:
@@ -7121,6 +7130,15 @@ packages:
         optional: true
       next:
         optional: true
+
+  '@trpc/tanstack-react-query@11.28.2':
+    resolution: {integrity: sha512-LBDr22JfiFiVfZ79jY6w7sik7ewqosv9st+9daznFVWujCPysWJZu4HkQI56M+7MoA1gEVJkYFb5eA7YXjQ4IA==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.106.0
+      '@trpc/client': 11.28.2
+      '@trpc/server': 11.28.2
+      react: 19.2.3
+      typescript: '>=5.7.2'
 
   '@ts-morph/common@0.27.0':
     resolution: {integrity: sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==}
@@ -19727,12 +19745,25 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@trpc/client@11.28.2(@trpc/server@11.28.2(@types/aws-lambda@8.10.164)(@types/ws@8.18.1)(typescript@7.0.2))(typescript@7.0.2)':
+    dependencies:
+      '@trpc/server': 11.28.2(@types/aws-lambda@8.10.164)(@types/ws@8.18.1)(typescript@7.0.2)
+      typescript: 7.0.2
+
   '@trpc/server@11.28.2(@types/aws-lambda@8.10.164)(@types/ws@8.18.1)(typescript@7.0.2)':
     dependencies:
       typescript: 7.0.2
     optionalDependencies:
       '@types/aws-lambda': 8.10.164
       '@types/ws': 8.18.1
+
+  '@trpc/tanstack-react-query@11.28.2(@tanstack/react-query@5.107.1(@types/react@19.2.4)(react@19.2.3))(@trpc/client@11.28.2(@trpc/server@11.28.2(@types/aws-lambda@8.10.164)(@types/ws@8.18.1)(typescript@7.0.2))(typescript@7.0.2))(@trpc/server@11.28.2(@types/aws-lambda@8.10.164)(@types/ws@8.18.1)(typescript@7.0.2))(react@19.2.3)(typescript@7.0.2)':
+    dependencies:
+      '@tanstack/react-query': 5.107.1(@types/react@19.2.4)(react@19.2.3)
+      '@trpc/client': 11.28.2(@trpc/server@11.28.2(@types/aws-lambda@8.10.164)(@types/ws@8.18.1)(typescript@7.0.2))(typescript@7.0.2)
+      '@trpc/server': 11.28.2(@types/aws-lambda@8.10.164)(@types/ws@8.18.1)(typescript@7.0.2)
+      react: 19.2.3
+      typescript: 7.0.2
 
   '@ts-morph/common@0.27.0':
     dependencies:

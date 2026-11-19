@@ -34,14 +34,10 @@ async function hasExport(path: string, name: string) {
 const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
   app: {
     check: async (appPath) => {
-      const environmentPath = `${appPath}/.env.development`
-      const isRemote =
-        existsSync(environmentPath)
-        && /^PUBLIC_API_URL=\S+/m.test(await readFile(environmentPath, "utf8"))
+      const hasAuth = await hasExport(`${appPath}/src/shared/auth.ts`, "authClient")
+      if (hasAuth && existsSync(`${appPath}/src/routes/api/$.ts`)) return
 
-      if (isRemote && (await hasExport(`${appPath}/src/shared/auth.ts`, "authClient"))) return
-
-      return "Realtime streams from apps/api, and apps/app signs in against its own backend until PUBLIC_API_URL points at the API. Connect apps/app to apps/api with the connect-backend skill first."
+      return "Realtime in apps/app needs the API proxy and an auth client. Restore the app's /api route and auth client."
     },
     templateFile: "templates/realtime/app-realtime.ts.hbs",
   },

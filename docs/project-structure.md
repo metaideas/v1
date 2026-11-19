@@ -136,12 +136,12 @@ apps/worker/src
 
 ### App
 
-A full-stack TanStack Start web application.
+A TanStack Start web application that uses the tRPC contract exported by `api/client`. Setup keeps `apps/api` whenever you select `apps/app`. The app forwards same-origin `/api/*` requests to the API, which owns authentication and data access.
 
 ```sh
 apps/app/src
   ├── routes/       # File-based routes, grouped by authentication state
-  ├── shared/       # Components, auth server, server middleware, and app-wide utilities
+  ├── shared/       # Components, API clients, server middleware, and app-wide utilities
   ├── features/     # Feature folders
   └── router.tsx    # Router factory and context
 ```

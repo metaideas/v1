@@ -69,7 +69,24 @@ app.onError((error, c) => {
   )
 })
 
-app.on(["POST", "GET"], "/auth/**", (c) => c.var.auth.handler(c.req.raw))
+app.on(["POST", "GET"], "/auth/**", (c) => {
+  const { auth } = c.var
+  const request = c.req.raw
+  if (auth.options.basePath === "/api/auth") {
+    // Keep /auth for direct API clients while Better Auth issues web callbacks under /api/auth.
+    const url = new URL(request.url)
+    url.pathname = `/api${url.pathname}`
+    return auth.handler(
+      new Request(url, {
+        body: request.body,
+        duplex: "half",
+        headers: request.headers,
+        method: request.method,
+      })
+    )
+  }
+  return auth.handler(request)
+})
 
 export const router = app
   .get(

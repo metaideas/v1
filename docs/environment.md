@@ -75,6 +75,8 @@ Run `pnpm run env:scan` to build each client artifact and scan it for sensitive 
 
 Plain secrets in the hosting, worker, or EAS platform are the supported default. Set the target environment explicitly. Before deployment, validate the configuration. Never echo resolved values. Development, preview, and production must use separate credentials. Preview must not inherit production secrets implicitly.
 
+When deploying `apps/app`, set its server-side `API_URL` to the origin of `apps/api`. Set `AUTH_WEB_ORIGIN` on `apps/api` to the app's public origin so Better Auth generates OAuth callbacks and password-reset links through the app's `/api/auth` proxy. Register `<app origin>/api/auth/callback/<provider>` with each OAuth provider you enable. The API deployment owns the database, auth, and email credentials. For API-only deployments, omit `AUTH_WEB_ORIGIN` to keep auth URLs on the API's `/auth` path.
+
 1Password is the reference optional secret store. A scaffolded-project owner can install the Varlock 1Password plugin. Use schema references with this form. Replace the identifiers with your identifiers:
 
 ```dotenv

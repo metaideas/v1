@@ -1,7 +1,7 @@
 {
   "name": "app",
   "private": true,
-  "description": "Full-stack TanStack Start application with local server functions",
+  "description": "TanStack Start application backed by the Hono API through tRPC",
   "type": "module",
   "imports": {
     "#*": "./src/*"
@@ -26,12 +26,13 @@
     "@tanstack/react-router": "1.170.44",
     "@tanstack/react-router-ssr-query": "1.167.3",
     "@tanstack/react-start": "1.169.1",
+    "@trpc/client": "11.28.2",
+    "@trpc/tanstack-react-query": "11.28.2",
     "@v1/auth": "workspace:*",
     "@v1/core": "workspace:*",
-    "@v1/database": "workspace:*",
-    "@v1/email": "workspace:*",
     "@v1/ui": "workspace:*",
     "@v1/utils": "workspace:*",
+    "api": "workspace:*",
     "cn": "0.4.0",
     "evlog": "2.30.0",
     "react": "19.2.3",

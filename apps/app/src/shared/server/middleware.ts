@@ -5,7 +5,6 @@ import { getRequest, getResponseStatus } from "@tanstack/react-start/server"
 import { createRequestLogger } from "evlog"
 import "#shared/logger.ts"
 import { resolveErrorStatus } from "#shared/server/error-status.ts"
-import { auth, database } from "#shared/server/services.ts"
 
 /**
  * Opens one wide event per server function call and emits it, with the response status, when the
@@ -45,7 +44,3 @@ export const withLogger = createMiddleware({ type: "function" }).server(
     }
   }
 )
-
-export const withAuth = createMiddleware().server(({ next }) => next({ context: { auth } }))
-
-export const withDatabase = createMiddleware().server(({ next }) => next({ context: { database } }))

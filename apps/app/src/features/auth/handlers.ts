@@ -6,6 +6,7 @@ import * as z from "@v1/utils/schema/mini"
 import { AUTHENTICATED_PATHNAME } from "#features/auth/constants.ts"
 import { EmailSchema, SignInWithPasswordFormSchema } from "#features/auth/schemas.ts"
 import { authClient } from "#shared/auth.ts"
+import { createServerAuthClient } from "#shared/server/auth.ts"
 import { publicFunction } from "#shared/server/functions.ts"
 import { buildUrl } from "#shared/utils.ts"
 
@@ -20,7 +21,15 @@ export type SignInFormState = {
 }
 
 // Request headers the auth server uses for its origin check, cookies, and session metadata.
-const FORWARDED_HEADERS = ["cookie", "origin", "referer", "user-agent", "x-forwarded-for"] as const
+const FORWARDED_HEADERS = [
+  "cookie",
+  "origin",
+  "referer",
+  "sec-fetch-dest",
+  "sec-fetch-mode",
+  "sec-fetch-site",
+  "user-agent",
+] as const
 
 function pickHeaders(headers: Headers, names: readonly string[]) {
   const picked = new Headers()
@@ -42,28 +51,18 @@ export const validateSession = createIsomorphicFn()
     return session
   })
   .server(async () => {
-    const { data: session } = await authClient.getSession({
-      fetchOptions: { headers: getRequestHeaders() },
+    const { data: session } = await createServerAuthClient().getSession({
+      fetchOptions: { headers: pickHeaders(getRequestHeaders(), FORWARDED_HEADERS) },
     })
     return session
-  })
-
-export const checkEmailAvailability = publicFunction
-  .validator(z.object({ email: EmailSchema }))
-  .handler(async ({ context, data }) => {
-    const user = await context.database.query.users.findFirst({
-      where: { email: data.email },
-    })
-
-    return { isAvailable: !user }
   })
 
 export const forgotPassword = publicFunction
   .validator(z.object({ email: EmailSchema }))
   .handler(async ({ data }) => {
-    const { error } = await authClient.requestPasswordReset({
+    const { error } = await createServerAuthClient().requestPasswordReset({
       email: data.email,
-      fetchOptions: { headers: getRequestHeaders() },
+      fetchOptions: { headers: pickHeaders(getRequestHeaders(), FORWARDED_HEADERS) },
       redirectTo: buildUrl("/reset-password"),
     })
 
@@ -110,10 +109,7 @@ export async function signInWithPasswordForm(
   }
 
   let setCookies: string[] = []
-  // Goes through the auth client, like `validateSession`, so the session belongs to whichever auth
-  // server `PUBLIC_API_URL` selects. On a separate hostname, that server must scope its cookies to a
-  // parent domain shared with this app (`AUTH_COOKIE_DOMAIN` in `apps/api`).
-  const { error } = await authClient.signIn.email({
+  const { error } = await createServerAuthClient().signIn.email({
     ...result.data,
     fetchOptions: {
       headers: pickHeaders(request.headers, FORWARDED_HEADERS),

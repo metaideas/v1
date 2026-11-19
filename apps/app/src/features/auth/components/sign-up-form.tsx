@@ -3,7 +3,6 @@ import { FieldGroup } from "@v1/ui/components/field"
 import { useForm } from "@v1/ui/components/form"
 import * as z from "@v1/utils/schema/mini"
 import { AUTHENTICATED_PATHNAME } from "#features/auth/constants.ts"
-import { checkEmailAvailability } from "#features/auth/handlers.ts"
 import {
   EmailSchema,
   NameSchema,
@@ -11,9 +10,11 @@ import {
   SignUpFormSchema,
 } from "#features/auth/schemas.ts"
 import { signUp } from "#shared/auth.ts"
+import { useTRPCClient } from "#shared/trpc.tsx"
 
 export default function SignUpForm() {
   const navigate = useNavigate()
+  const trpc = useTRPCClient()
   const form = useForm({
     defaultValues: { confirmPassword: "", email: "", name: "", password: "" },
     onSubmit: async ({ value }) => {
@@ -54,17 +55,14 @@ export default function SignUpForm() {
             validators={{
               onBlur: EmailSchema,
               onBlurAsync: async ({ value }) => {
-                const { isAvailable } = await checkEmailAvailability({
-                  data: {
+                try {
+                  const { isAvailable } = await trpc.auth.checks.emailAvailable.query({
                     email: value,
-                  },
-                })
-
-                if (isAvailable) {
-                  return
+                  })
+                  return isAvailable ? undefined : { message: "Email is already in use" }
+                } catch {
+                  return { message: "Could not check email availability. Try again." }
                 }
-
-                return { message: "Email is already in use" }
               },
             }}
           >

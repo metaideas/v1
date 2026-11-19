@@ -46,8 +46,8 @@ export const mailer = createMailer({
 })
 
 export const auth = createServerAuth({
-  basePath: "/auth",
-  baseUrl: ENV.BASE_URL,
+  basePath: ENV.AUTH_WEB_ORIGIN ? "/api/auth" : "/auth",
+  baseUrl: ENV.AUTH_WEB_ORIGIN ?? ENV.BASE_URL,
   cookieDomain: ENV.AUTH_COOKIE_DOMAIN,
   cookiePrefix: AUTH_API_COOKIE_PREFIX,
   database,
