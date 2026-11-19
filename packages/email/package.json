@@ -12,7 +12,6 @@
     "./transports": "./src/transports.ts"
   },
   "scripts": {
-    "bump:deps": "pnpm update --interactive --latest",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "email dev --dir src/templates --port ${PORT:-4001}",
     "export": "email export --dir src/templates",

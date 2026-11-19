@@ -8,7 +8,6 @@
   },
   "scripts": {
     "android": "varlock run -- expo run:android",
-    "bump:deps": "pnpm update --interactive --latest",
     "clean": "git clean -xdf .cache .turbo .expo dist node_modules",
     "codegen": "pnpm run \"/^codegen:/\"",
     "codegen:env": "varlock codegen",

@@ -60,7 +60,8 @@ To find a workspace's URL, read its port from the place the table names. When yo
 
 ## Managing Dependencies
 
-- `pnpm run bump:deps` - Choose dependency updates across all workspaces from the repository root. Run it from a workspace to update only that workspace.
+- `pnpm -w run bump:deps` - Choose dependency updates across all workspaces.
+- `pnpm -w run bump:deps --filter web` - Choose dependency updates for the `web` workspace.
 - `pnpm run analyze` - Detect unused dependencies, files, and exports.
 
 The update prompt can offer versions beyond the declared ranges, including major releases. Check the release notes before selecting a major update.
