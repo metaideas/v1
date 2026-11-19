@@ -1,20 +1,31 @@
-const FEATURE_PATH = /\/apps\/[^/]+\/src\/features\/[^/]+\/(?<entry>.+)$/u
-const ROLES = ["constants", "data", "errors", "handlers", "hooks", "middleware", "schemas"] as const
-const OPEN_FOLDERS = new Set(["assets", "components"])
+import path from "node:path"
+import { type FeatureRole, FOLDER_ROLES, readWorkspace } from "#workspace.ts"
+
+const FEATURE_PATH = /^(?<app>.*\/apps\/[^/]+)\/src\/features\/[^/]+\/(?<entry>.+)$/u
 const TEST_FOLDER = "__tests__"
 
-function isRole(name: string) {
-  return ROLES.some((role) => role === name)
+function findRole(roles: readonly FeatureRole[], name: string) {
+  return roles.find((role) => role === name)
 }
 
-function isRoleFile(file: string) {
-  const [name] = file.split(".")
-  return name !== undefined && isRole(name)
+/**
+ * Lists the files and folders that a feature in this workspace can hold, for error messages.
+ */
+export function listFeatureEntries(roles: readonly FeatureRole[]) {
+  return roles.map((role) => (FOLDER_ROLES.has(role) ? `${role}/` : `${role}.ts`)).join(", ")
 }
 
-export const FEATURE_ROLE_FILES = ROLES.map((role) => `${role}.ts`).join(", ")
+/**
+ * Finds the feature roles that the application workspace owning a feature file allows, or
+ * `undefined` when the file is not inside a feature folder.
+ */
+export function findFeatureRoles(filename: string) {
+  const app = FEATURE_PATH.exec(filename.replaceAll("\\", "/"))?.groups?.app
 
-export function isAllowedFeatureFile(filename: string) {
+  return app === undefined ? undefined : readWorkspace(path.posix.normalize(app)).features.roles
+}
+
+export function isAllowedFeatureFile(filename: string, roles: readonly FeatureRole[]) {
   const entry = FEATURE_PATH.exec(filename.replaceAll("\\", "/"))?.groups?.entry
 
   if (entry === undefined) {
@@ -28,13 +39,16 @@ export function isAllowedFeatureFile(filename: string) {
     return false
   }
 
-  if (OPEN_FOLDERS.has(first)) {
+  const folderRole = findRole(roles, first)
+
+  if (folderRole !== undefined && FOLDER_ROLES.has(folderRole)) {
     return rest.length > 0
   }
 
   if (rest.length === 0) {
-    return isRoleFile(first)
+    const fileRole = findRole(roles, first.split(".")[0] ?? first)
+    return fileRole !== undefined && !FOLDER_ROLES.has(fileRole)
   }
 
-  return isRole(first) && rest.length === 1
+  return folderRole !== undefined && rest.length === 1
 }

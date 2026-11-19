@@ -47,5 +47,32 @@
     "vite": "8.3.2",
     "web-ext": "10.7.0",
     "wxt": "0.21.4"
+  },
+  "workspace": {
+    "layers": {
+      "folders": [
+        "entrypoints"
+      ]
+    },
+    "features": {
+      "roles": [
+        "assets",
+        "components",
+        "constants",
+        "data",
+        "errors",
+        "hooks",
+        "schemas"
+      ]
+    },
+    "knip": {
+      "entry": [
+        "src/entrypoints/**/*.{ts,tsx}",
+        "src/shared/env.generated.ts",
+        "wxt.config.ts"
+      ],
+      "project": "src/**/*.{css,js,jsx,ts,tsx}",
+      "wxt": false
+    }
   }
 }

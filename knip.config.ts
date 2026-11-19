@@ -1,10 +1,38 @@
 import type { KnipConfig } from "knip"
+import { existsSync, globSync } from "node:fs"
+import path from "node:path"
+import { readWorkspace } from "@tooling/linting/workspace"
 import analyze, { ignoreDependencies } from "adamantite/analyze"
 
 // Knip skips loading a config file that only re-exports another package (webpro-nl/knip@ab775b1),
 // so it never reads `include` from the vitest.config.ts files that re-export @tooling/testing.
-// Drop these entries once Knip loads those files.
+// Drop this entry once Knip loads those files.
 const vitest = { entry: "src/**/*.test.{ts,tsx}" }
+
+const SOURCE_FILES = { project: "src/**/*.{js,jsx,ts,tsx}" }
+
+// Each workspace declares its own Knip settings in the `workspace` field of its package.json, so
+// removing a workspace removes them too. Knip uses the most specific entry for a workspace without
+// merging, so declared settings replace the defaults for applications and packages.
+function configureWorkspace(directory: string) {
+  const absolute = path.join(import.meta.dirname, directory)
+  const tests = existsSync(path.join(absolute, "vitest.config.ts")) ? { vitest } : {}
+  const { knip } = readWorkspace(absolute)
+
+  if (knip !== undefined) return { ...tests, ...knip }
+  if (directory.startsWith("tooling/")) return Object.keys(tests).length > 0 ? tests : undefined
+  return { ...SOURCE_FILES, ...tests }
+}
+
+const workspaces = Object.fromEntries(
+  globSync("{apps,packages,tooling}/*/package.json", { cwd: import.meta.dirname }).flatMap(
+    (file) => {
+      const directory = path.dirname(file)
+      const config = configureWorkspace(directory)
+      return config === undefined ? [] : [[directory, config]]
+    }
+  )
+)
 
 export default {
   ...analyze,
@@ -34,62 +62,6 @@ export default {
     ".": {
       project: "turbo/generators/**/*.ts",
     },
-    "apps/*": {
-      project: "src/**/*.{js,jsx,ts,tsx}",
-    },
-    "apps/app": {
-      entry: "src/routeTree.gen.{ts,js}",
-      vite: false,
-      vitest,
-    },
-    "apps/desktop": {
-      entry: [
-        "src/renderer/main.tsx",
-        "src/shared/env.generated.ts",
-        "src/shell/main.ts",
-        "src/shell/preload.ts",
-        "forge.config.ts",
-      ],
-      project: "src/**/*.{css,js,jsx,ts,tsx}",
-      vite: false,
-    },
-    "apps/docs": {
-      project: "src/**/*.{astro,css,js,jsx,mdx,ts,tsx}",
-    },
-    "apps/extension": {
-      entry: ["src/entrypoints/**/*.{ts,tsx}", "src/shared/env.generated.ts", "wxt.config.ts"],
-      project: "src/**/*.{css,js,jsx,ts,tsx}",
-      wxt: false,
-    },
-    "apps/mobile": {
-      entry: "src/shared/env.generated.ts",
-      project: "src/**/*.{css,js,jsx,ts,tsx}",
-    },
-    "apps/web": {
-      // Knip's Astro plugin lists src/content.config.ts but not the live collection config that the
-      // emdash template recipe adds. Drop src/live.config.ts once the plugin lists it.
-      entry: ["src/live.config.ts", "src/shared/env.generated.ts"],
-      project: "src/**/*.{astro,css,js,jsx,mdx,ts,tsx}",
-    },
-    "packages/*": {
-      project: "src/**/*.{js,jsx,ts,tsx}",
-      vitest,
-    },
-    "packages/database": {
-      drizzle: {
-        config: [],
-        entry: ["drizzle.config.ts", "src/relations.ts", "src/schema/index.ts"],
-      },
-      entry: ["scripts/*.ts"],
-      vitest,
-    },
-    "packages/ui": {
-      project: "src/**/*.{css,js,jsx,ts,tsx}",
-      vitest,
-    },
-    "tooling/linting": {
-      entry: "src/rules/*.ts",
-      vitest,
-    },
+    ...workspaces,
   },
 } satisfies KnipConfig

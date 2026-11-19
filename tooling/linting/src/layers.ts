@@ -1,14 +1,7 @@
 import path from "node:path"
+import { type Boundaries, readWorkspace } from "#workspace.ts"
 
-export type Boundaries = {
-  /**
-   * Maps a feature role, such as `handlers`, to the entrypoint tier that runs it.
-   */
-  featureTiers?: Readonly<Record<string, string>>
-  folders?: readonly string[]
-  routes?: string
-  tiers?: readonly string[]
-}
+export type { Boundaries } from "#workspace.ts"
 
 export type Layer =
   | { kind: "composition" }
@@ -49,10 +42,6 @@ const MODULE_EXTENSIONS = new Set([
   ".tsx",
 ])
 
-function isBoundaryMap(value: unknown): value is Readonly<Record<string, Boundaries>> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
 export function findSourceRoot(filename: string) {
   const groups = SOURCE_ROOT.exec(filename.replaceAll("\\", "/"))?.groups
 
@@ -63,8 +52,12 @@ export function findSourceRoot(filename: string) {
   return { app: groups.app, path: groups.root }
 }
 
-export function selectBoundaries(options: unknown, app: string): Boundaries {
-  return isBoundaryMap(options) ? (options[app] ?? {}) : {}
+/**
+ * Reads the layers that an application workspace declares in the `workspace` field of its
+ * `package.json`.
+ */
+export function readBoundaries(root: SourceRoot): Boundaries {
+  return readWorkspace(path.posix.dirname(root.path)).layers
 }
 
 export function resolveImport(root: SourceRoot, importer: string, specifier: string) {

@@ -63,5 +63,27 @@
     "typescript": "7.0.2",
     "vite": "8.3.2",
     "vitest": "5.1.0"
+  },
+  "workspace": {
+    "layers": {
+      "routes": "routes"
+    },
+    "features": {
+      "handlers": "app",
+      "roles": [
+        "assets",
+        "components",
+        "constants",
+        "data",
+        "errors",
+        "handlers",
+        "hooks",
+        "schemas"
+      ]
+    },
+    "knip": {
+      "entry": "src/routeTree.gen.{ts,js}",
+      "vite": false
+    }
   }
 }

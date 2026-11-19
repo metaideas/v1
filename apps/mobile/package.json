@@ -81,5 +81,25 @@
         "typescript"
       ]
     }
+  },
+  "workspace": {
+    "layers": {
+      "routes": "app"
+    },
+    "features": {
+      "roles": [
+        "assets",
+        "components",
+        "constants",
+        "data",
+        "errors",
+        "hooks",
+        "schemas"
+      ]
+    },
+    "knip": {
+      "entry": "src/shared/env.generated.ts",
+      "project": "src/**/*.{css,js,jsx,ts,tsx}"
+    }
   }
 }

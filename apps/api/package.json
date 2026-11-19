@@ -52,5 +52,22 @@
     "@tooling/tsconfig": "workspace:*",
     "@types/node": "26.6.4",
     "typescript": "7.0.2"
+  },
+  "workspace": {
+    "layers": {
+      "folders": [
+        "routes"
+      ]
+    },
+    "features": {
+      "handlers": "api",
+      "roles": [
+        "constants",
+        "errors",
+        "handlers",
+        "middleware",
+        "schemas"
+      ]
+    }
   }
 }

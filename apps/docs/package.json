@@ -38,5 +38,16 @@
     "@varlock/astro-integration": "1.4.2",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2"
+  },
+  "workspace": {
+    "layers": {
+      "routes": "pages"
+    },
+    "features": {
+      "roles": []
+    },
+    "knip": {
+      "project": "src/**/*.{astro,css,js,jsx,mdx,ts,tsx}"
+    }
   }
 }

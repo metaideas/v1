@@ -2,66 +2,52 @@ import type { PlopTypes } from "@turbo/gen"
 import { existsSync, globSync } from "node:fs"
 import { readFile, writeFile } from "node:fs/promises"
 
+import { type FeatureRole, FOLDER_ROLES, readWorkspace } from "@tooling/linting/workspace"
+
 import { addImports } from "../imports"
 import { NewFeatureAnswersSchema } from "../schemas"
 
-const FRONTEND_APPS: readonly string[] = ["app", "desktop", "extension", "mobile", "web"]
-const REACT_APPS: readonly string[] = ["app", "desktop", "extension", "mobile"]
-const SERVER_APPS: readonly string[] = ["api", "app", "worker"]
-const HANDLER_APPS: readonly string[] = [...SERVER_APPS, "desktop"]
-const APPS_WITHOUT_FEATURES = new Set(["docs"])
-const KNOWN_APPS = new Set([...APPS_WITHOUT_FEATURES, ...FRONTEND_APPS, ...SERVER_APPS])
-const DIRECTORY_ROLES = new Set(["assets", "components"])
-const DESKTOP_BRIDGE_PATH = "apps/desktop/src/shell/bridge.ts"
 const DESKTOP_ROUTERS = /mergeRouters\((?<routers>[^)]*)\)/
 
-const FEATURE_ROLES: ReadonlyArray<{
-  apps?: readonly string[]
-  isChecked?: boolean
-  name: string
-  value: string
-}> = [
-  { apps: FRONTEND_APPS, name: "assets/ - Static files the components import", value: "assets" },
-  {
-    apps: FRONTEND_APPS,
-    isChecked: true,
-    name: "components/ - UI components",
-    value: "components",
-  },
-  { name: "constants.ts - Static values and content", value: "constants" },
-  { apps: REACT_APPS, name: "data.ts - Query and mutation options", value: "data" },
-  { name: "errors.ts - Errors that stay inside the app", value: "errors" },
-  {
-    apps: HANDLER_APPS,
-    name: "handlers.ts - Server entry points, or main-process handlers in desktop",
-    value: "handlers",
-  },
-  { apps: REACT_APPS, name: "hooks.ts - React hooks for local and derived state", value: "hooks" },
-  {
-    apps: ["api"],
-    name: "middleware.ts - Middleware that the feature's routes use",
-    value: "middleware",
-  },
-  { isChecked: true, name: "schemas.ts - Schemas for forms and local models", value: "schemas" },
-]
+const ROLE_PROMPTS: Readonly<Record<FeatureRole, { isChecked?: boolean; name: string }>> = {
+  assets: { name: "assets/ - Static files the components import" },
+  components: { isChecked: true, name: "components/ - UI components" },
+  constants: { name: "constants.ts - Static values and content" },
+  data: { name: "data.ts - Query and mutation options, or content queries" },
+  errors: { name: "errors.ts - Errors that stay inside the app" },
+  handlers: { name: "handlers.ts - Server entry points, or main-process handlers in desktop" },
+  hooks: { name: "hooks.ts - React hooks for local and derived state" },
+  middleware: { name: "middleware.ts - Middleware that the feature's routes use" },
+  schemas: { isChecked: true, name: "schemas.ts - Schemas for forms and local models" },
+}
+
+// Each application workspace lists its feature roles, and the shape of its handlers, in the
+// `workspace` field of its package.json.
+function readFeatures(app: string) {
+  return readWorkspace(`apps/${app}`).features
+}
 
 function listRoles(app: string) {
-  const isKnownApp = KNOWN_APPS.has(app)
+  const { handlers, roles } = readFeatures(app)
 
-  return FEATURE_ROLES.filter(
-    (role) =>
-      role.apps === undefined
-      || role.apps.includes(app)
-      || (!isKnownApp && role.apps !== HANDLER_APPS)
-  ).map((role) => ({ checked: role.isChecked ?? false, name: role.name, value: role.value }))
+  return roles
+    .filter((role) => role !== "handlers" || handlers !== undefined)
+    .map((role) => ({
+      checked: ROLE_PROMPTS[role].isChecked ?? false,
+      name: ROLE_PROMPTS[role].name,
+      value: role,
+    }))
 }
 
 function templateFor(app: string, file: string) {
-  if (file === "handlers") {
-    return `handlers/${["api", "desktop", "worker"].includes(app) ? app : "app"}.ts.hbs`
+  if (file !== "handlers") return `${file}.ts.hbs`
+
+  const { handlers } = readFeatures(app)
+  if (handlers === undefined) {
+    throw new Error(`apps/${app} declares no workspace.features.handlers in its package.json.`)
   }
 
-  return `${file}.ts.hbs`
+  return `handlers/${handlers}.ts.hbs`
 }
 
 /**
@@ -155,7 +141,7 @@ export async function serveDesktopRouter(handlers: DesktopHandlers) {
 export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
   const apps = [...globSync("*/package.json", { cwd: `${process.cwd()}/apps` })]
     .map((entry) => entry.split("/")[0])
-    .filter((app): app is string => app !== undefined && !APPS_WITHOUT_FEATURES.has(app))
+    .filter((app): app is string => app !== undefined && readFeatures(app).roles.length > 0)
     .toSorted()
 
   plop.setGenerator("new-feature", {
@@ -165,7 +151,8 @@ export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
         files: selectedFiles,
         name,
       } = Object.assign(rawAnswers ?? {}, NewFeatureAnswersSchema.parse(rawAnswers))
-      const hasDesktopHandlers = app === "desktop" && selectedFiles.includes("handlers")
+      const hasDesktopHandlers =
+        readFeatures(app).handlers === "desktop" && selectedFiles.includes("handlers")
       const files =
         hasDesktopHandlers && !selectedFiles.includes("schemas")
           ? [...selectedFiles, "schemas"]
@@ -174,7 +161,7 @@ export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
       const actions: PlopTypes.Actions = []
 
       for (const file of files) {
-        if (DIRECTORY_ROLES.has(file)) {
+        if (FOLDER_ROLES.has(file)) {
           actions.push({
             path: `${featurePath}/${file}/.gitkeep`,
             skipIfExists: true,
@@ -196,12 +183,12 @@ export function registerNewFeatureGenerator(plop: PlopTypes.NodePlopAPI) {
         const feature = plop.renderString("{{kebabCase name}}", { name })
         const key = plop.renderString("{{camelCase name}}", { name })
         const handlers: DesktopHandlers = {
-          bridgePath: DESKTOP_BRIDGE_PATH,
+          bridgePath: `apps/${app}/src/shell/bridge.ts`,
           contract: `${key}Contract`,
           feature,
           key,
           router: `${key}Router`,
-          schemasPath: `apps/desktop/src/features/${feature}/schemas.ts`,
+          schemasPath: `apps/${app}/src/features/${feature}/schemas.ts`,
         }
 
         actions.push(

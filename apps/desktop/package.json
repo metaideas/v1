@@ -61,5 +61,44 @@
     "oxc-transform-react": "0.153.0",
     "typescript": "7.0.2",
     "vite": "8.3.2"
+  },
+  "workspace": {
+    "layers": {
+      "featureTiers": {
+        "components": "renderer",
+        "data": "renderer",
+        "handlers": "shell",
+        "hooks": "renderer"
+      },
+      "routes": "renderer/routes",
+      "tiers": [
+        "renderer",
+        "shell"
+      ]
+    },
+    "features": {
+      "handlers": "desktop",
+      "roles": [
+        "assets",
+        "components",
+        "constants",
+        "data",
+        "errors",
+        "handlers",
+        "hooks",
+        "schemas"
+      ]
+    },
+    "knip": {
+      "entry": [
+        "src/renderer/main.tsx",
+        "src/shared/env.generated.ts",
+        "src/shell/main.ts",
+        "src/shell/preload.ts",
+        "forge.config.ts"
+      ],
+      "project": "src/**/*.{css,js,jsx,ts,tsx}",
+      "vite": false
+    }
   }
 }

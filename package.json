@@ -29,6 +29,7 @@
     "test:watch": "turbo watch test test:template"
   },
   "devDependencies": {
+    "@tooling/linting": "workspace:*",
     "@turbo/gen": "2.11.11",
     "@types/node": "26.6.4",
     "adamantite": "0.43.0",

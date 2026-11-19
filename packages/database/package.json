@@ -40,5 +40,20 @@
     "drizzle-seed": "1.0.0-rc.5",
     "typescript": "7.0.2",
     "vitest": "5.1.0"
+  },
+  "workspace": {
+    "knip": {
+      "drizzle": {
+        "config": [],
+        "entry": [
+          "drizzle.config.ts",
+          "src/relations.ts",
+          "src/schema/index.ts"
+        ]
+      },
+      "entry": [
+        "scripts/*.ts"
+      ]
+    }
   }
 }

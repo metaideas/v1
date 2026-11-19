@@ -176,6 +176,9 @@ importers:
 
   .:
     devDependencies:
+      '@tooling/linting':
+        specifier: workspace:*
+        version: link:tooling/linting
       '@turbo/gen':
         specifier: 2.11.11
         version: 2.11.11(@types/node@26.6.4)

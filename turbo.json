@@ -50,28 +50,7 @@
   "concurrency": "15",
   "tasks": {
     "build": {
-      "dependsOn": ["codegen"],
-      "env": [
-        "ALLOWED_API_ORIGINS",
-        "AUTH_*",
-        "BASE_URL",
-        "DATABASE_URL",
-        "EMAIL_FROM",
-        "FILES_API_SECRET",
-        "GITHUB_*",
-        "GOOGLE_*",
-        "INNGEST_*",
-        "JOBS_REDIS_URL",
-        "PORT",
-        "PUBLIC_*",
-        "REALTIME_REDIS_URL",
-        "REDIS_URL",
-        "RESEND_API_KEY",
-        "RUN_PRODUCTION_MIGRATIONS",
-        "S3_*",
-        "SMTP_URL",
-        "STRIPE_*"
-      ]
+      "dependsOn": ["codegen"]
     },
     "clean": {
       "cache": false,

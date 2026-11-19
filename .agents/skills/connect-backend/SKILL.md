@@ -41,7 +41,7 @@ Each app reaches the API in its own way, because each runs on an origin that can
    | `mobile`               | `EXPO_PUBLIC_CONVEX_SITE_URL` | `# @public @static @type=url`                                   | `https://example.convex.site`  |
    | `app`, `desktop`       | `PUBLIC_CONVEX_URL`           | `# @public @required @type=url`                                 | `https://example.convex.cloud` |
 
-   Put a one-line description above each key, as the file's other keys have. The API URL keys belong to hono and trpc, and the Convex keys belong to convex. `EXTENSION_KEY` changes the built manifest, so also add it to the `build` task's `env` in the root `turbo.json`, which keeps Turbo from reusing a build with another key.
+   Put a one-line description above each key, as the file's other keys have. The API URL keys belong to hono and trpc, and the Convex keys belong to convex. `EXTENSION_KEY` changes the built manifest, so also add it to the `build` task's `env` in `apps/extension/turbo.json`, which keeps Turbo from reusing a build with another key.
 
 4. Copy the client files for the connection into `src/`:
    - **hono**: `references/hono/api.ts.hbs` to `shared/api.ts`. Mobile with auth takes `references/hono/mobile/api.ts.hbs` instead, which sends the session headers. Desktop and extension take `references/hono/<app>/api.ts.hbs` instead. Desktop, extension, and mobile also take `references/hono/<app>/utils.ts.hbs` to `shared/utils.ts`.
