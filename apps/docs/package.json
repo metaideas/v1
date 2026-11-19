@@ -9,7 +9,7 @@
   "scripts": {
     "astro": "astro",
     "build": "astro build",
-    "bump:deps": "pnpm update --interactive",
+    "bump:deps": "pnpm update --interactive --latest",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "codegen": "pnpm run \"/^codegen:(env|astro)$/\"",
     "codegen:astro": "pnpm run codegen:i18n && pnpm run codegen:types",

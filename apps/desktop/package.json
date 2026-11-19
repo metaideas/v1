@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "electron-forge package",
-    "bump:deps": "pnpm update --interactive",
+    "bump:deps": "pnpm update --interactive --latest",
     "clean": "git clean -xdf .cache .turbo .vite dist node_modules out",
     "codegen": "pnpm run \"/^codegen:/\"",
     "codegen:env": "varlock codegen",

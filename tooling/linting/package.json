@@ -7,7 +7,7 @@
     "#*": "./src/*"
   },
   "scripts": {
-    "bump:deps": "pnpm update --interactive",
+    "bump:deps": "pnpm update --interactive --latest",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "test": "vitest run"
   },

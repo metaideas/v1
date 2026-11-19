@@ -10,7 +10,7 @@
     "./client": "./src/client.ts"
   },
   "scripts": {
-    "bump:deps": "pnpm update --interactive",
+    "bump:deps": "pnpm update --interactive --latest",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "codegen": "pnpm run \"/^codegen:/\"",
     "codegen:env": "varlock codegen",
