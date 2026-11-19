@@ -46,4 +46,4 @@ export const withLogger = createMiddleware({ type: "function" }).server(
   }
 )
 
-export const withServices = createMiddleware().server(({ next }) => next({ context: { services } }))
+export const withServices = createMiddleware().server(({ next }) => next({ context: services }))
