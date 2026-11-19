@@ -39,11 +39,19 @@ const workspaces = globSync("{apps,packages}/*/turbo.json", { cwd: ROOT }).map((
   path.dirname(file)
 )
 
+// An application workspace declares its keys in `.env.schema`. A package workspace declares them in
+// the fragments under `env/` that applications import.
+function readWorkspaceKeys(workspace: string) {
+  const contracts = [".env.schema", ...globSync("env/.env.*", { cwd: path.join(ROOT, workspace) })]
+
+  return contracts.flatMap((contract) => readDeclaredKeys(path.join(ROOT, workspace, contract)))
+}
+
 describe("turbo.json env", () => {
   test.each(workspaces)(
     "%s lists only keys that its environment contract declares",
     (workspace) => {
-      const keys = readDeclaredKeys(path.join(ROOT, workspace, ".env.schema"))
+      const keys = readWorkspaceKeys(workspace)
       const undeclared = listEnvPatterns(path.join(ROOT, workspace, "turbo.json")).filter(
         (pattern) => !keys.some((key) => matches(pattern, key))
       )
@@ -53,9 +61,7 @@ describe("turbo.json env", () => {
   )
 
   test("the root lists only keys that some environment contract declares", () => {
-    const keys = workspaces.flatMap((workspace) =>
-      readDeclaredKeys(path.join(ROOT, workspace, ".env.schema"))
-    )
+    const keys = workspaces.flatMap((workspace) => readWorkspaceKeys(workspace))
     const undeclared = listEnvPatterns(path.join(ROOT, "turbo.json")).filter(
       (pattern) => !keys.some((key) => matches(pattern, key))
     )

@@ -1,5 +1,11 @@
 {
   "$schema": "https://v2-11-7.turborepo.dev/schema.json",
   "extends": ["//"],
-  "tags": ["capability"]
+  "tags": ["capability"],
+  "tasks": {
+    "test": {
+      // The database tests run only when DATABASE_URL points at a Postgres server.
+      "env": ["DATABASE_URL"]
+    }
+  }
 }
