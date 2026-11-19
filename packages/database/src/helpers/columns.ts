@@ -1,22 +1,24 @@
 import type * as z from "@v1/utils/schema"
 import type { ConstrainedString } from "@v1/utils/type"
-import { createIdGenerator } from "@v1/utils/id"
 import * as pg from "drizzle-orm/pg-core"
+import { customAlphabet } from "nanoid"
+
+const NO_LOOKALIKE_ALPHABET = "346789ABCDEFGHJKLMNPQRTUVWXYabcdefghijkmnpqrtwxyz"
 
 const UNIQUE_ID_LENGTH = 24
+
+const nanoid = customAlphabet(NO_LOOKALIKE_ALPHABET, UNIQUE_ID_LENGTH)
 
 export function id<Schema extends z.ZodType<string>, P extends string>(
   IdSchema: Schema,
   prefix: ConstrainedString<P, 4>
 ) {
-  const generateId = createIdGenerator({ prefix, size: UNIQUE_ID_LENGTH })
-
   return {
     id: pg
       .text()
       .notNull()
       .primaryKey()
-      .$defaultFn(() => generateId())
+      .$defaultFn(() => `${prefix}_${nanoid()}`)
       .$type<z.infer<typeof IdSchema>>(),
   }
 }
