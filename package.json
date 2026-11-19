@@ -53,11 +53,14 @@
   "packageManager": "pnpm@12.9.0",
   "v1": {
     "cleanupPaths": [
+      ".changeset",
       ".github/workflows/pullfrog.yml",
+      ".github/workflows/release.yml",
       "scripts/codemods",
       "scripts/template/__tests__/template-readme.test.ts",
       "apps/docs/vercel.json",
-      "apps/web/vercel.json"
+      "apps/web/vercel.json",
+      "tooling/create"
     ],
     "cleanupSections": [
       "AGENTS.md"
