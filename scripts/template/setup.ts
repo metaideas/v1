@@ -13,6 +13,7 @@ import {
   getWorkspaces,
   normalizeScope,
   readPackageJson,
+  readTemplateStamp,
   removePath,
   removeTemplateSections,
   resolvePathWithinRoot,
@@ -54,14 +55,19 @@ async function getTemplateCommit() {
   return GitHubCommitSchema.parse(await response.json()).sha
 }
 
-async function stampProject(rootDir: string) {
-  const commit = await getTemplateCommit().catch((error: unknown): undefined => {
-    consola.warn("Could not record the template commit.", error)
-  })
+// The initializer passes the commit it downloaded. A project created another way records main's
+// head, and running setup again keeps the stamp that the first run wrote.
+async function stampProject(rootDir: string, commit: string | undefined) {
+  const existing = await readTemplateStamp(rootDir)
 
   await writeTemplateStamp(rootDir, {
-    commit,
-    createdAt: new Date().toISOString(),
+    commit:
+      commit
+      ?? existing?.commit
+      ?? (await getTemplateCommit().catch((error: unknown): undefined => {
+        consola.warn("Could not record the template commit.", error)
+      })),
+    createdAt: existing?.createdAt ?? new Date().toISOString(),
     template: TEMPLATE_REPO,
   })
 }
@@ -189,6 +195,10 @@ async function writeReadme(rootDir: string, projectName: string, description: st
 
 export default defineCommand({
   args: {
+    commit: {
+      description: "Template commit to record in .template.json",
+      type: "string",
+    },
     description: {
       description: "One-sentence description of the project for the README",
       type: "string",
@@ -348,7 +358,7 @@ export default defineCommand({
     await pruneWorkspaces(rootDir, apps, selection.keepApps)
     await pruneWorkspaces(rootDir, packages, selection.keepPackages)
     await renameProject({ projectName, rootDir, scope: projectName, sourceScope })
-    await stampProject(rootDir)
+    await stampProject(rootDir, args.commit)
     await cleanupTemplateFiles(rootDir, cleanup.data)
     await writeReadme(rootDir, projectName, description.trim())
 
