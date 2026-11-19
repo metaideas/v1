@@ -57,6 +57,7 @@
       ".changeset",
       ".github/workflows/pullfrog.yml",
       ".github/workflows/release.yml",
+      ".github/workflows/scaffold.yml",
       "scripts/create",
       "scripts/template/__tests__/template-readme.test.ts",
       "apps/docs/vercel.json",

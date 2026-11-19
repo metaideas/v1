@@ -1,0 +1,73 @@
+name: scaffold
+
+# Runs setup the way a developer would, then checks the project it creates, so a change that
+# breaks a scaffolded project fails here. Setup removes this workflow from scaffolded projects.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: ${{ matrix.name }}
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VARLOCK_ENV: development
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: full-stack
+            apps: app,api,desktop
+            packages: auth,database
+          - name: client
+            apps: web,mobile,extension
+            packages: ui
+          - name: worker
+            apps: worker
+            packages: jobs,workflows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js and pnpm, and install dependencies
+        uses: pnpm/setup@v3.1.2
+        with:
+          cache: true
+          require-lockfile: true
+
+      - name: Set up a project from the template
+        run: >-
+          pnpm template setup --yes --name demo
+          --description "A project that CI scaffolds from the template."
+          --keep-apps ${{ matrix.apps }} --keep-packages ${{ matrix.packages }}
+
+      - name: Run check
+        run: pnpm run check
+
+      - name: Run analyze
+        run: pnpm run analyze
+
+      - name: Run boundaries
+        run: pnpm run boundaries
+
+      - name: Check environment contracts
+        run: pnpm run env:check
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Run tests
+        run: pnpm run test
