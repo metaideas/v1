@@ -1,5 +1,6 @@
 import type { PlopTypes } from "@turbo/gen"
 import { registerBullBoardGenerator } from "./commands/bull-board"
+import { registerConnectBackendGenerator } from "./commands/connect-backend"
 import { registerEmDashGenerator } from "./commands/emdash"
 import { registerNewFeatureGenerator } from "./commands/new-feature"
 import { registerNewPackageGenerator } from "./commands/new-package"
@@ -12,6 +13,7 @@ import { registerSkewGenerator } from "./commands/skew"
 export default function generator(plop: PlopTypes.NodePlopAPI) {
   registerNewFeatureGenerator(plop)
   registerNewPackageGenerator(plop)
+  registerConnectBackendGenerator(plop)
   registerSentryGenerator(plop)
   registerPostHogGenerator(plop)
   registerBullBoardGenerator(plop)

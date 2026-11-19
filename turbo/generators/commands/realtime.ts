@@ -41,7 +41,7 @@ const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
 
       if (isRemote && (await hasExport(`${appPath}/src/shared/auth.ts`, "authClient"))) return
 
-      return "Realtime streams from apps/api, and apps/app signs in against its own backend until PUBLIC_API_URL points at the API. Connect apps/app to apps/api with the connect-backend skill first."
+      return "Realtime streams from apps/api, and apps/app signs in against its own backend until PUBLIC_API_URL points at the API. Connect apps/app to apps/api with the v1-feature skill first."
     },
     templateFile: "templates/realtime/app-realtime.ts.hbs",
   },
@@ -54,7 +54,7 @@ const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
 
       if (isConnected) return
 
-      return "Realtime streams from apps/api through the shell's API proxy and needs a session. Connect apps/desktop to apps/api with auth using the connect-backend skill first."
+      return "Realtime streams from apps/api through the shell's API proxy and needs a session. Connect apps/desktop to apps/api with auth using the v1-feature skill first."
     },
     templateFile: "templates/realtime/desktop-realtime.ts.hbs",
   },
@@ -66,7 +66,7 @@ const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
 
       if (isConnected) return
 
-      return "Realtime streams from apps/api and needs a session. Connect apps/extension to apps/api with auth using the connect-backend skill first."
+      return "Realtime streams from apps/api and needs a session. Connect apps/extension to apps/api with auth using the v1-feature skill first."
     },
     templateFile: "templates/realtime/extension-realtime.ts.hbs",
   },
@@ -74,11 +74,11 @@ const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
     check: async (appPath) => {
       const isConnected =
         (await hasExport(`${appPath}/src/shared/auth.ts`, "auth"))
-        && (await hasExport(`${appPath}/src/shared/utils.ts`, "buildApiUrl"))
+        && (await hasExport(`${appPath}/src/shared/api-url.ts`, "buildApiUrl"))
 
       if (isConnected) return
 
-      return "Realtime streams from apps/api and needs a session. Connect apps/mobile to apps/api with auth (hono with auth) using the connect-backend skill first."
+      return "Realtime streams from apps/api and needs a session. Connect apps/mobile to apps/api with auth (hono with auth) using the v1-feature skill first."
     },
     templateFile: "templates/realtime/mobile-realtime.ts.hbs",
   },
@@ -100,7 +100,7 @@ export function registerRealtimeGenerator(plop: PlopTypes.NodePlopAPI) {
         async () => {
           if (!existsSync(`${REALTIME_PATH}/package.json`)) {
             throw new Error(
-              `The realtime client needs ${REALTIME_PATH}. Add it with pnpm template add.`
+              `The realtime client needs ${REALTIME_PATH}. Restore it with the v1-workspace skill.`
             )
           }
 

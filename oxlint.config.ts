@@ -18,6 +18,8 @@ export default defineConfig({
     custom({ dir: "./tooling/linting/src/rules", name: "v1" }),
   ],
   ignorePatterns: [
+    // .claude/skills links to .agents/skills, so lint reads those files once, through .agents.
+    ".claude/**",
     "**/*.hbs",
     "**/src/**/_generated",
     "**/*.d.ts",

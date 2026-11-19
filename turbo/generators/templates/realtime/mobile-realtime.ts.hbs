@@ -3,7 +3,7 @@ import { fetch } from "expo/fetch"
 import { AppState } from "react-native"
 import { auth } from "#shared/auth.ts"
 import { log } from "#shared/logger.ts"
-import { buildApiUrl } from "#shared/utils.ts"
+import { buildApiUrl } from "#shared/api-url.ts"
 
 async function getToken() {
   const { data, error } = await auth.token()

@@ -8,6 +8,13 @@ const PackageJsonSchema = z.looseObject({
   name: z.string().optional(),
 })
 
+export const ConnectBackendAnswersSchema = z.object({
+  app: z.enum(["app", "desktop", "extension", "mobile"]),
+  auth: z.boolean(),
+  backend: z.enum(["convex", "hono", "trpc"]),
+  example: z.boolean(),
+})
+
 export const NewFeatureAnswersSchema = z.object({
   app: z.string().min(1),
   files: z.array(z.string()),

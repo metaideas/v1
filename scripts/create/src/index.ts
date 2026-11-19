@@ -10,7 +10,7 @@ const REPOSITORY = `https://github.com/${TEMPLATE}.git`
 // Each release tags the commit it publishes with the package name and version, so this version of
 // the initializer always downloads the template it was released with.
 const TAG = `${packageJson.name}@${packageJson.version}`
-const USAGE = "Usage: pnpm create @metaideas/v1 <directory> [pnpm template setup options]"
+const USAGE = "Usage: pnpm create @metaideas/v1 <directory>"
 
 function run(command: string, args: readonly string[], cwd: string) {
   execFileSync(command, args, { cwd, stdio: "inherit" })
@@ -41,7 +41,7 @@ function download(target: string) {
   run("git", ["init", "--quiet"], target)
 }
 
-function create(directory: string, setupArgs: readonly string[]) {
+function create(directory: string) {
   const target = resolve(directory)
 
   if (!checkIsEmptyDirectory(target))
@@ -64,23 +64,26 @@ function create(directory: string, setupArgs: readonly string[]) {
 
   try {
     run("pnpm", ["install"], target)
-    run("pnpm", ["template", "setup", ...setupArgs], target)
   } catch (error) {
-    throw new Error(
-      `Setup did not finish. Run \`pnpm install && pnpm template setup\` in ${directory}.`,
-      { cause: error }
-    )
+    throw new Error(`Installing the dependencies failed. Run \`pnpm install\` in ${directory}.`, {
+      cause: error,
+    })
   }
+
+  // Setup asks what the product is and which workspaces it needs, so a coding agent runs it.
+  console.info(
+    `Created ${directory}. Open it in a coding agent and run the v1-setup skill to choose its workspaces and name.`
+  )
 }
 
-const [directory, ...setupArgs] = process.argv.slice(2)
+const [directory] = process.argv.slice(2)
 
 if (directory === undefined || directory.startsWith("-")) {
   console.error(USAGE)
   process.exitCode = 1
 } else {
   try {
-    create(directory, setupArgs)
+    create(directory)
   } catch (error) {
     console.error(error instanceof Error ? error.message : error)
     process.exitCode = 1

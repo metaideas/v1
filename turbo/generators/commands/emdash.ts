@@ -252,12 +252,12 @@ export function registerEmDashGenerator(plop: PlopTypes.NodePlopAPI) {
     actions: () => [
       async () => {
         if (!existsSync(`${WEB_PATH}/package.json`)) {
-          throw new Error(`EmDash needs ${WEB_PATH}. Add it with pnpm template add.`)
+          throw new Error(`EmDash needs ${WEB_PATH}. Restore it with the v1-workspace skill.`)
         }
 
         if (!existsSync(`${DATABASE_PATH}/package.json`)) {
           throw new Error(
-            `EmDash stores content in ${DATABASE_PATH}. Add it with pnpm template add.`
+            `EmDash stores content in ${DATABASE_PATH}. Restore it with the v1-workspace skill.`
           )
         }
 

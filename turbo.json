@@ -98,7 +98,7 @@
       // a codegen script. A change in a workspace this one depends on therefore reruns its tests.
       "dependsOn": ["codegen"]
     },
-    // Tests for the template commands in scripts/ and the template recipes in turbo/generators/.
+    // Tests for the repository checks, skill scripts, and template recipes that are not workspaces.
     "//#test:template": {}
   },
   "ui": "tui"

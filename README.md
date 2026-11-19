@@ -33,5 +33,5 @@ A modern monorepo template for the next product you build.
 - [Internationalization](./docs/internationalization.md)
 - [Project Structure](./docs/project-structure.md)
 - [Package Guidance](./docs/packages.md)
-- [Template Commands](./docs/template-commands.md)
+- [Template Skills](./docs/template-skills.md)
 - [Project Generators](./docs/generators.md)

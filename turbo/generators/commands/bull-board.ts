@@ -211,7 +211,9 @@ export function registerBullBoardGenerator(plop: PlopTypes.NodePlopAPI) {
       return [
         async () => {
           if (!existsSync(`${JOBS_PATH}/package.json`)) {
-            throw new Error(`The jobs dashboard needs ${JOBS_PATH}. Add it with pnpm template add.`)
+            throw new Error(
+              `The jobs dashboard needs ${JOBS_PATH}. Restore it with the v1-workspace skill.`
+            )
           }
 
           const api = await readPackageJson(`${API_PATH}/package.json`)
