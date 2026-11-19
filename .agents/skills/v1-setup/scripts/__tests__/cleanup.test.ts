@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import { checkIsRemovedByCleanup, checkIsTemplateReadme } from "../shared.ts"
+import { checkIsRemovedByCleanup, checkIsTemplateReadme } from "../cleanup.ts"
 
 const ROOT_DIR = "/project"
 

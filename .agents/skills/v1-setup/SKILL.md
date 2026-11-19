@@ -1,9 +1,9 @@
 ---
-name: setup
+name: v1-setup
 description: Configure a project freshly created from the v1 template. Use when the repository still has the template name, a v1 field in package.json, or the user asks to set up, configure, or trim the template.
 ---
 
-Turn the template into the user's project. `pnpm template setup` does the mechanical part; you choose what it keeps.
+Turn the template into the user's project. `scripts/setup.ts` does the mechanical part; you choose what it keeps. Setup deletes this skill when it finishes, because a project runs it once.
 
 1. Ask what the product is and which surfaces it needs. Map the answer to workspaces:
    - `apps/app` for a full-stack web application, `apps/web` for a marketing site, `apps/docs` for documentation, `apps/mobile` for Expo, `apps/desktop` for Electron, `apps/extension` for a browser extension.
@@ -15,7 +15,7 @@ Turn the template into the user's project. `pnpm template setup` does the mechan
 4. Run setup non-interactively with the choices:
 
    ```bash
-   pnpm template setup --yes --name <name> --description "<sentence>" --keep-apps <a,b> --keep-packages <c,d>
+   node .agents/skills/v1-setup/scripts/setup.ts --yes --name <name> --description "<sentence>" --keep-apps <a,b> --keep-packages <c,d>
    ```
 
    Add `--no-git` when the repository already has history and `--no-install` when the user will install later.

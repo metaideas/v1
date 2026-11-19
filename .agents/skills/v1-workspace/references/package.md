@@ -1,7 +1,4 @@
----
-name: new-package
-description: Create a package workspace under packages/ that owns one domain. Use when the user asks for a new shared package, a new integration package, or code that several application workspaces will share.
----
+# Create a package workspace
 
 A package workspace owns its constants, types, dependencies, and environment fragments. Scaffold it with the Turbo generator, then fill in the domain.
 

@@ -60,7 +60,9 @@ export default {
   },
   workspaces: {
     ".": {
-      project: "turbo/generators/**/*.ts",
+      // Each script a skill runs with `node` is an entry. Their shared modules are reached by import.
+      entry: [".agents/skills/*/scripts/{restore,setup,upstream}.ts"],
+      project: ["turbo/generators/**/*.ts", ".agents/skills/*/scripts/**/*.ts"],
     },
     ...workspaces,
   },

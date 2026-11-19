@@ -7,6 +7,6 @@
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["scripts", "turbo", "tooling"],
+  "include": [".agents/skills/*/scripts", "__tests__", "scripts", "turbo", "tooling"],
   "exclude": [".packref"]
 }

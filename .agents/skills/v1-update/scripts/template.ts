@@ -1,15 +1,29 @@
-import { execFile, spawn } from "node:child_process"
+import { execFile } from "node:child_process"
 import { existsSync } from "node:fs"
-import { glob, readFile, readdir, rm, writeFile } from "node:fs/promises"
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
+import { glob, readFile, readdir, writeFile } from "node:fs/promises"
+import { basename, dirname, join } from "node:path"
 import { promisify } from "node:util"
 import { parseJSON, stringifyJSON } from "confbox"
-import {
-  type PackageJson,
-  PackageJsonSchema,
-  type TemplateStamp,
-  TemplateStampSchema,
-} from "./schemas.ts"
+import * as z from "zod"
+
+const DependenciesSchema = z.record(z.string(), z.string()).optional()
+
+const PackageJsonSchema = z.looseObject({
+  dependencies: DependenciesSchema,
+  description: z.string().optional(),
+  devDependencies: DependenciesSchema,
+  name: z.string().optional(),
+  peerDependencies: DependenciesSchema,
+})
+
+const TemplateStampSchema = z.object({
+  commit: z.string().optional(),
+  createdAt: z.string(),
+  template: z.string(),
+})
+
+export type PackageJson = z.infer<typeof PackageJsonSchema>
+export type TemplateStamp = z.infer<typeof TemplateStampSchema>
 
 export type WorkspaceKind = "app" | "package"
 
@@ -29,17 +43,6 @@ export const TEMPLATE_REPO = "metaideas/v1"
 const TEMPLATE_STAMP_FILE = ".template.json"
 
 const TEMPLATE_REMOTE = "template"
-export const TEMPLATE_SECTION_START = "<!-- TEMPLATE:START -->"
-const TEMPLATE_SECTION_END = "<!-- TEMPLATE:END -->"
-
-// Setup replaces the template README, which carries this marker, with one that describes the
-// project. A README that still has the marker was never rewritten.
-const TEMPLATE_README_MARKER = "<!-- TEMPLATE:README -->"
-
-export function checkIsTemplateReadme(contents: string) {
-  return contents.includes(TEMPLATE_README_MARKER)
-}
-
 export const execFileAsync = promisify(execFile)
 
 const ignoredDirectories = new Set([".cache", ".git", ".turbo", "build", "dist", "node_modules"])
@@ -99,31 +102,6 @@ export async function getWorkspaces(rootDir: string, kind: WorkspaceKind) {
   return workspaces.toSorted((left, right) => left.name.localeCompare(right.name))
 }
 
-export async function getWorkspaceGraph(rootDir: string) {
-  const kinds = ["app", "package"] as const
-  const nodes = await Promise.all(
-    kinds.map(async (kind) => {
-      const workspaces = await getWorkspaces(rootDir, kind)
-
-      return Promise.all(
-        workspaces.map(async ({ directory, name }): Promise<WorkspaceNode> => {
-          const packageJson = await readPackageJson(join(directory, "package.json"))
-
-          return {
-            dependencies: getDependencyNames(packageJson),
-            directory,
-            kind,
-            name,
-            packageName: packageJson.name ?? "",
-          }
-        })
-      )
-    })
-  )
-
-  return nodes.flat()
-}
-
 export function getWorkspacePath(workspace: Pick<WorkspaceNode, "kind" | "name">) {
   return `${workspace.kind}s/${workspace.name}`
 }
@@ -181,7 +159,7 @@ async function listFiles(directory: string): Promise<string[]> {
   return files.flat()
 }
 
-async function getTextFiles(rootDir: string) {
+export async function getTextFiles(rootDir: string) {
   const paths = await listFiles(rootDir)
   const textFiles = await Promise.all(
     paths.map(async (path) => {
@@ -208,18 +186,6 @@ export async function replaceTextInFiles(rootDir: string, search: string, replac
   return changedFiles.filter((path): path is string => path !== null)
 }
 
-export async function findTextReferences(rootDir: string, search: string) {
-  const textFiles = await getTextFiles(rootDir)
-  const matchingFiles = await Promise.all(
-    textFiles.map(async (path) => {
-      const contents = await readFile(path, "utf8")
-      return contents.includes(search) ? path : null
-    })
-  )
-
-  return matchingFiles.filter((path): path is string => path !== null)
-}
-
 export async function getProjectScope(rootDir: string) {
   const workspaces = await Promise.all([
     getWorkspaces(rootDir, "app"),
@@ -238,91 +204,4 @@ export async function getProjectScope(rootDir: string) {
   if (scope) return normalizeScope(scope)
 
   throw new Error("Could not determine the project npm scope from its workspaces.")
-}
-
-function checkIsPathWithinRoot(rootDir: string, path: string) {
-  const pathFromRoot = relative(rootDir, path)
-
-  return (
-    pathFromRoot !== ""
-    && pathFromRoot !== ".."
-    && !pathFromRoot.startsWith(`..${sep}`)
-    && !isAbsolute(pathFromRoot)
-  )
-}
-
-export function resolvePathWithinRoot(rootDir: string, relativePath: string) {
-  const resolvedRootDir = resolve(rootDir)
-  const path = resolve(resolvedRootDir, relativePath)
-
-  if (!checkIsPathWithinRoot(resolvedRootDir, path)) {
-    throw new Error(`Cleanup path must be within the project: ${relativePath}.`)
-  }
-
-  return path
-}
-
-export async function removePath(rootDir: string, relativePath: string) {
-  await rm(resolvePathWithinRoot(rootDir, relativePath), { force: true, recursive: true })
-}
-
-export function checkIsRemovedByCleanup(
-  rootDir: string,
-  relativePath: string,
-  cleanupPaths: readonly string[]
-) {
-  const path = resolve(rootDir, relativePath)
-
-  return cleanupPaths.some((cleanupPath) => {
-    const cleanupTarget = resolve(rootDir, cleanupPath)
-    return path === cleanupTarget || checkIsPathWithinRoot(cleanupTarget, path)
-  })
-}
-
-function joinAroundRemovedSection(before: string, after: string) {
-  const trailingNewlines = /\n*$/.exec(before)?.[0] ?? ""
-  const leadingNewlines = /^\n*/.exec(after)?.[0] ?? ""
-  const isAtStart = before.length === trailingNewlines.length
-  const isAtEnd = after.length === leadingNewlines.length
-
-  if (isAtStart) return after.slice(leadingNewlines.length)
-  if (isAtEnd) return `${before.slice(0, before.length - trailingNewlines.length)}\n`
-  if (trailingNewlines.length === 0 || leadingNewlines.length === 0) return before + after
-
-  return `${before.slice(0, before.length - trailingNewlines.length)}\n\n${after.slice(leadingNewlines.length)}`
-}
-
-export function removeTemplateSections(contents: string) {
-  let remaining = contents
-
-  while (remaining.includes(TEMPLATE_SECTION_START)) {
-    const start = remaining.indexOf(TEMPLATE_SECTION_START)
-    const end = remaining.indexOf(TEMPLATE_SECTION_END, start)
-    if (end === -1) {
-      throw new Error(`Expected ${TEMPLATE_SECTION_END} after each ${TEMPLATE_SECTION_START}.`)
-    }
-
-    remaining = joinAroundRemovedSection(
-      remaining.slice(0, start),
-      remaining.slice(end + TEMPLATE_SECTION_END.length)
-    )
-  }
-
-  return remaining
-}
-
-export async function runCommand(
-  [command, ...args]: readonly [string, ...string[]],
-  rootDir: string
-) {
-  const child = spawn(command, args, { cwd: rootDir, stdio: "inherit" })
-  const exitCode = await new Promise<number | null>((resolve, reject) => {
-    child.once("error", reject).once("close", resolve)
-  })
-
-  if (exitCode !== 0) {
-    throw new Error(
-      `Command failed: ${[command, ...args].join(" ")}. Exited with code ${exitCode}.`
-    )
-  }
 }

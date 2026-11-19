@@ -4,7 +4,7 @@ import { dirname, join } from "node:path"
 import { afterEach, describe, expect, test } from "vitest"
 
 import { getExpoAppId, renameProject } from "../rename.ts"
-import { readPackageJson } from "../shared.ts"
+import { readPackageJson } from "../template.ts"
 
 const EXPO_CONFIG = 'const APP_ID = "v1"\nconst APP_NAME = "v1"\n'
 

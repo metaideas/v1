@@ -4,19 +4,19 @@ import { join } from "node:path"
 import { describe, expect, test } from "vitest"
 import * as z from "zod"
 
-import { TemplateCleanupSchema } from "../schemas.ts"
 import {
   checkIsRemovedByCleanup,
+  TemplateCleanupSchema,
   removeTemplateSections,
   TEMPLATE_SECTION_START,
-} from "../shared.ts"
+} from "../cleanup.ts"
 
-const ROOT = join(import.meta.dirname, "../../..")
+const ROOT = join(import.meta.dirname, "../../../../..")
 const { cleanupPaths, cleanupSections } = z
   .object({ v1: TemplateCleanupSchema })
   .parse(JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"))).v1
 
-// Setup removes the internal cleanup paths and this file, so the tests run only in the template.
+// Setup removes the v1-setup skill with these tests, so they run only in the template.
 describe("v1 cleanup lists", () => {
   test("cleanupPaths lists only paths that exist", () => {
     expect(cleanupPaths.filter((path) => !existsSync(join(ROOT, path)))).toEqual([])

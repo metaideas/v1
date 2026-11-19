@@ -10,7 +10,8 @@ const REPOSITORY = `https://github.com/${TEMPLATE}.git`
 // Each release tags the commit it publishes with the package name and version, so this version of
 // the initializer always downloads the template it was released with.
 const TAG = `${packageJson.name}@${packageJson.version}`
-const USAGE = "Usage: pnpm create @metaideas/v1 <directory> [pnpm template setup options]"
+const SETUP = ".agents/skills/v1-setup/scripts/setup.ts"
+const USAGE = "Usage: pnpm create @metaideas/v1 <directory> [setup options]"
 
 function run(command: string, args: readonly string[], cwd: string) {
   execFileSync(command, args, { cwd, stdio: "inherit" })
@@ -64,10 +65,10 @@ function create(directory: string, setupArgs: readonly string[]) {
 
   try {
     run("pnpm", ["install"], target)
-    run("pnpm", ["template", "setup", ...setupArgs], target)
+    run("node", [SETUP, ...setupArgs], target)
   } catch (error) {
     throw new Error(
-      `Setup did not finish. Run \`pnpm install && pnpm template setup\` in ${directory}.`,
+      `Setup did not finish. Run \`pnpm install && node ${SETUP}\` in ${directory}.`,
       { cause: error }
     )
   }

@@ -1,7 +1,4 @@
----
-name: new-feature
-description: Create a feature folder inside an application workspace. Use when the user asks for a new feature, screen, flow, or vertical slice in apps/app, apps/desktop, apps/mobile, or apps/extension.
----
+# Create a feature
 
 Features live in `src/features/<name>` and import only `shared` and dependencies, never another feature. A feature holds only the role files and folders in `docs/project-structure.md`, and the `v1/feature-files` lint rule rejects any other name. Scaffold the folder, then implement.
 

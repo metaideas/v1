@@ -8,7 +8,7 @@ import {
   readPackageJson,
   replaceTextInFiles,
   writeJson,
-} from "./shared.ts"
+} from "./template.ts"
 
 type RenameOptions = {
   projectName?: string

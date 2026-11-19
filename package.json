@@ -21,9 +21,7 @@
     "env:scan": "turbo run env:scan --continue",
     "fix": "adamantite fix",
     "generate": "turbo generate",
-    "scripts": "node scripts/index.ts",
     "start": "turbo run start",
-    "template": "node scripts/index.ts template",
     "test": "turbo run test test:template",
     "test:template": "vitest run",
     "test:watch": "turbo watch test test:template"
@@ -54,14 +52,13 @@
   "packageManager": "pnpm@12.9.0",
   "v1": {
     "cleanupPaths": [
+      ".agents/skills/v1-setup",
       ".changeset",
       ".github/assets/v1-nebula.png",
       ".github/workflows/pullfrog.yml",
       ".github/workflows/release.yml",
       ".github/workflows/scaffold.yml",
       "scripts/create",
-      "scripts/template/__tests__/template-cleanup.test.ts",
-      "scripts/template/__tests__/template-readme.test.ts",
       "apps/docs/vercel.json",
       "apps/web/vercel.json"
     ],
