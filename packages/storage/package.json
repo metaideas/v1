@@ -7,7 +7,6 @@
     "#*": "./src/*"
   },
   "exports": {
-    "./constants": "./src/constants.ts",
     "./errors": "./src/errors.ts",
     "./react": "./src/react.ts",
     "./server": "./src/server.ts"

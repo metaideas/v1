@@ -20,7 +20,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@sanely/errors": "0.1.0",
     "@tanstack/react-form-start": "1.33.5",
     "@tanstack/react-query": "5.107.1",
     "@tanstack/react-router": "1.170.44",

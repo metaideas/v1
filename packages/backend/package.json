@@ -10,9 +10,7 @@
   "exports": {
     "./api": "./src/functions/_generated/api.js",
     "./client": "./src/client/index.ts",
-    "./client/*": "./src/client/*.ts",
-    "./client/auth": "./src/client/auth/index.ts",
-    "./client/auth/*": "./src/client/auth/*.ts"
+    "./client/auth": "./src/client/auth/index.ts"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",

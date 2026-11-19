@@ -11,13 +11,10 @@ import {
   AUTH_SESSION_OPTIONS,
 } from "#constants.ts"
 
-export { APIError as AuthError } from "better-auth/api"
 export {
   type BetterAuthOptions as AuthOptions,
   betterAuth as createAuth,
 } from "better-auth/minimal"
-export { electron } from "@better-auth/electron"
-export { expo } from "@better-auth/expo"
 
 type ServerAuthOptions<Plugins extends BetterAuthPlugin[]> = {
   /**
