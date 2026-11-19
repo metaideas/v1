@@ -12,6 +12,7 @@ const files = execFileSync(
     "package.json",
     ":(glob)apps/*/package.json",
     ":(glob)packages/*/package.json",
+    "scripts/create/package.json",
     ":(glob)tooling/*/package.json",
     "turbo/generators/templates/scaffolds/new-package/package.package.json.hbs",
   ],
