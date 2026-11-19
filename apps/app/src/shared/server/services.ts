@@ -39,7 +39,7 @@ export const services = { auth, database, mailer }
 /**
  * Closes every service that holds a connection.
  */
-async function close() {
+export async function close() {
   await database.close()
 }
 
