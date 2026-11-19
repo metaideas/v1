@@ -1,7 +1,7 @@
 ---
 import { getLocale } from "#shared/internationalization/runtime.js"
 import { m } from "#shared/internationalization/messages.js"
-import { SITE_NAME, SITE_URL } from "#shared/constants.ts"
+import { SITE_NAME } from "#shared/constants.ts"
 import "@v1/ui/globals.css"
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 
 const locale = getLocale()
 const { description = m.web_home_description(), title = SITE_NAME } = Astro.props
-const canonicalUrl = new URL(Astro.url.pathname, SITE_URL)
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site)
 ---
 
 <!doctype html>
