@@ -74,7 +74,7 @@ const SETUPS: Record<RealtimeApp, RealtimeSetup> = {
     check: async (appPath) => {
       const isConnected =
         (await hasExport(`${appPath}/src/shared/auth.ts`, "auth"))
-        && (await hasExport(`${appPath}/src/shared/utils.ts`, "buildApiUrl"))
+        && (await hasExport(`${appPath}/src/shared/api-url.ts`, "buildApiUrl"))
 
       if (isConnected) return
 

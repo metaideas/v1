@@ -41,7 +41,7 @@ To create a new package workspace, the skill runs `pnpm run generate new-package
 
 ### `v1-feature`
 
-Create a feature folder with `pnpm run generate new-feature`, or connect an application workspace to `apps/api` or `packages/backend` from the reference sources in `references/backend/`.
+Create a feature folder with `pnpm run generate new-feature`, or connect an application workspace to `apps/api` or `packages/backend` with `pnpm run generate connect-backend` and the steps in `references/backend.md`.
 
 ### `v1-update`
 

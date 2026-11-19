@@ -6,4 +6,4 @@ description: Add a feature or a backend connection to an application workspace i
 Pick the reference that matches the request and follow it:
 
 - `references/feature.md`: create a feature folder in an application workspace with the `new-feature` generator.
-- `references/backend.md`: connect an application workspace to `apps/api` or `packages/backend`, from the source templates in `references/backend/`.
+- `references/backend.md`: connect an application workspace to `apps/api` or `packages/backend` with the `connect-backend` generator, then finish the edits it can't make.

@@ -25,7 +25,14 @@ Both scaffolds preserve existing files on a repeat run.
 
 ## Connect a backend
 
-Backend connections are not a generator. The `backend` reference of the `v1-feature` skill in `.agents/skills/v1-feature/` carries the supported connections, their environment keys, and reference sources. A coding agent applies it and verifies the result with `pnpm run check`, `pnpm run analyze`, and `VARLOCK_ENV=development pnpm run env:check`.
+`connect-backend` writes the client files that connect `apps/app`, `apps/desktop`, `apps/extension`, or `apps/mobile` to `apps/api` through Hono RPC or tRPC, or to Convex in `packages/backend`. It asks for the app, the backend, whether to add sign-in, and whether to add an example route, and it stops for a connection its templates don't cover.
+
+```bash
+pnpm run generate connect-backend
+pnpm turbo gen connect-backend --args mobile hono true false
+```
+
+A connection also edits files the app already has, such as its dependencies, environment contract, and provider tree. The `backend` reference of the `v1-feature` skill in `.agents/skills/v1-feature/` lists those steps. A coding agent follows it and verifies the result with `pnpm run check`, `pnpm run analyze`, and `VARLOCK_ENV=development pnpm run env:check`.
 
 ## Add Sentry
 
