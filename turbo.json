@@ -19,6 +19,26 @@
           "allow": []
         }
       },
+      "capability": {
+        "dependencies": {
+          "allow": ["foundation", "tooling"]
+        }
+      },
+      "composing": {
+        "dependencies": {
+          "allow": ["capability", "foundation", "tooling"]
+        }
+      },
+      "core": {
+        "dependencies": {
+          "allow": ["tooling", "utils"]
+        }
+      },
+      "ui": {
+        "dependencies": {
+          "allow": ["tooling"]
+        }
+      },
       "utils": {
         "dependencies": {
           "allow": ["tooling"]
