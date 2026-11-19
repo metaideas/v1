@@ -59,6 +59,7 @@
       ".github/workflows/release.yml",
       ".github/workflows/scaffold.yml",
       "scripts/create",
+      "scripts/template/__tests__/template-cleanup.test.ts",
       "scripts/template/__tests__/template-readme.test.ts",
       "apps/docs/vercel.json",
       "apps/web/vercel.json"
